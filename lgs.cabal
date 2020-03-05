@@ -25,13 +25,12 @@ executable lgs
                       ,aeson
                       ,containers
                       ,http-types
-                      ,lucid
-                      ,miso
                       ,mtl
                       ,network-uri
                       ,servant-server
-                      ,servant-lucid
                       ,text
                       ,wai
                       ,warp
+                      ,sort
+                      ,HUnit
   default-language:    Haskell2010

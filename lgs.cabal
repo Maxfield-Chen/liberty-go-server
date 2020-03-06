@@ -15,6 +15,9 @@ executable lgs
                   , aeson
                   , attoparsec
                   , base-compat
+                  , beam-core
+                  , beam-migrate
+                  , beam-sqlite
                   , blaze-html
                   , blaze-markup
                   , bytestring

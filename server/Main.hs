@@ -38,24 +38,6 @@ import Servant.Types.SourceT (source)
 import qualified Data.Aeson.Parser
 import qualified Text.Blaze.Html
 
--- Define JSON instances for Game data structures
--- TODO: Decide if this should go back into the LGL package.
-instance ToJSON Game
-instance FromJSON Game
-instance ToJSON GameState
-instance FromJSON GameState
-instance ToJSON Group
-instance ToJSON MoveError
-instance ToJSON Outcome
-instance ToJSON Space
-instance FromJSON Space
-instance FromJSONKey Space
-instance ToJSONKey Space
-instance ToJSON (Game.Pair Int)
-instance FromJSON (Game.Pair Int)
-instance ToJSONKey (Game.Pair Int)
-instance FromJSONKey (Game.Pair Int)
-
 type GameAPI = "users" :> Get '[JSON] [Game]
                 :<|> "id" :> ReqBody '[JSON] Game :> Post '[JSON] Game
 

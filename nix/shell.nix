@@ -13,6 +13,7 @@ pkgs.mkShell {
     haskell.ghcid
     haskell.ghcide
     haskell.hlint
+    haskell.hindent
   ];
 
   # Use the libraries from the derivation created by ghcWithHoogle.

@@ -4,7 +4,7 @@ let
   inherit (pkgs.haskell) ghcVersion;
 
   # determine why the inherited haskell version from overlay isn't picked up
-  hsPkgs = pkgs.haskell.packages.ghc865;
+  hsPkgs = pkgs.haskell.packages.${ghcVersion};
 
   pkgDrv = hsPkgs.callCabal2nix "lgs" ../.. {};
   haskellDeps = pkgDrv.getBuildInputs.haskellBuildInputs;
@@ -13,5 +13,5 @@ let
 in
 {
   inherit ghc;
-  inherit (hsPkgs) cabal-install ghcide hlint ghcid;
+  inherit (hsPkgs) cabal-install ghcide hlint hindent ghcid;
 }

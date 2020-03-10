@@ -4,10 +4,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
-
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE StandaloneDeriving #-}
-
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 
@@ -16,14 +14,15 @@ module GameDB where
 import Database.Beam
 import Database.Beam.Sqlite
 import Database.SQLite.Simple
-
 import Data.Text (Text)
+import Game
 
 data UserT f
-  = User {_userEmail :: Columnar f Text
-         ,_userFirstName :: Columnar f Text
-         ,_userLastName :: Columnar f Text
-         ,_userPassword :: Columnar f Text} deriving (Generic, Beamable)
+  = User {_userId :: Columnar f Int
+         ,_userEmail :: Columnar f Text
+         ,_userName :: Columnar f Text
+         ,_userPasswordHash :: Columnar f Text
+         ,_userRank :: Columnar f Double} deriving (Generic, Beamable)
 
 type User = UserT Identity
 type UserId = PrimaryKey UserT Identity
@@ -32,54 +31,33 @@ deriving instance Show User
 deriving instance Eq User
 
 instance Table UserT where
-  data PrimaryKey UserT f = UserId (Columnar f Text) deriving (Generic, Beamable)
-  primaryKey = UserId . _userEmail
+  data PrimaryKey UserT f = UserId (Columnar f Int) deriving (Generic, Beamable)
+  primaryKey = UserId . _userId
 
-data AddressT f =
-  Address
-    { _addressId :: Columnar f Int
-    , _addressLine1 :: Columnar f Text
-    , _addressLine2 :: Columnar f Text
-    , _addressForUser :: PrimaryKey UserT f
-    }
-  deriving (Generic, Beamable)
+data GameRecordT f
+  = GameRecord {_gameId :: Columnar f Int
+               ,_game :: Columnar f Game
+               ,_whitePlayer :: PrimaryKey UserT f
+               ,_blackPlayer :: PrimaryKey UserT f
+               } deriving (Generic, Beamable)
 
-type Address = AddressT Identity
+type GameRecord = GameRecordT Identity
+deriving instance Show GameRecord
 deriving instance Show (PrimaryKey UserT Identity)
-deriving instance Show Address
 
-instance Table AddressT where
-  data PrimaryKey AddressT f = AddressId (Columnar f Int)
-                               deriving (Generic, Beamable)
-  primaryKey = AddressId . _addressId
+instance Table GameRecordT where
+  data PrimaryKey GameRecordT f = GameRecordId (Columnar f Int) deriving (Generic, Beamable)
+  primaryKey = GameRecordId . _gameId
 
-type AddressId = PrimaryKey AddressT Identity
+type GameRecordId = PrimaryKey GameRecordT Identity
 
-
-data ShoppingCartDb f =
-  ShoppingCartDb
-    { _shoppingCartUsers :: f (TableEntity UserT)
-     ,_shoppingCartAddresses :: f (TableEntity AddressT)
+data LGSDb f =
+  LGSDb
+    { _LGSUsers :: f (TableEntity UserT)
+     ,_LGSGameRecords :: f (TableEntity GameRecordT)
     }
   deriving (Generic, Database be)
 
-shoppingCartDb :: DatabaseSettings be ShoppingCartDb
-shoppingCartDb =
-  defaultDbSettings `withDbModification`
-  dbModification
-    { _shoppingCartAddresses =
-        setEntityName "addresses" <>
-        modifyTableFields
-          tableModification
-            { _addressLine1 = fieldNamed "address1"
-            , _addressLine2 = fieldNamed "address2"
-            }
-    , _shoppingCartUsers = setEntityName "users"
-    }
-
-getAllUsersDb =
-  let allUsers = all_ (_shoppingCartUsers shoppingCartDb)
-   in do conn <- open "./server/shoppingcart1.db"
-         runBeamSqliteDebug putStrLn conn $ do
-           users <- runSelectReturningList $ select allUsers
-           mapM_ (liftIO . print) users
+lgsDb :: DatabaseSettings be LGSDb
+lgsDb =
+  defaultDbSettings

@@ -33,6 +33,7 @@ executable lgs
                   , servant-server
                   , sort
                   , string-conversions
+                  , sqlite-simple
                   , text
                   , wai
                   , warp

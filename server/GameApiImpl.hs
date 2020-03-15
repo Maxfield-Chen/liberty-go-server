@@ -38,6 +38,9 @@ import Servant.Types.SourceT (source)
 import qualified Data.Aeson.Parser
 import qualified Text.Blaze.Html
 
+createNewUser :: Text -> Text -> Text -> Handler ()
+createNewUser email name password = liftIO $ insertUser email name password
+
 createNewGame :: Int -> Int -> Handler ()
 createNewGame bPlayerId wPlayerId = do
   player <- liftIO (insertGame bPlayerId wPlayerId newGame)

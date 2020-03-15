@@ -27,7 +27,7 @@ userIdToUser userId = do
     pure mUser
 
 --TODO: Hash password before storage
-insertUser :: Text -> Text -> Text ->  IO ()
+insertUser :: Text -> Text -> Text -> IO ()
 insertUser userEmail userName userPassword = do
   conn <- liftIO $ open dbFilename
   runBeamSqlite conn $ do

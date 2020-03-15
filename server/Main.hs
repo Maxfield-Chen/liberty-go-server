@@ -43,18 +43,26 @@ import qualified Text.Blaze.Html
 
 data NewGameStatus = Accepted | Rejected | Proposed | UserNotFound
 
-type GameAPI = "play" :> Capture "gameId" Int :> Post '[JSON] (Maybe GameRecord)
-               :<|> "play" :> "newGame"
-                           :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int
-                           :> Post '[JSON] ()
-               :<|> "play" :> "placeStone"
-                           :> ReqBody '[JSON] Int :> ReqBody '[JSON] Position
-                           :> Put '[JSON] ((Either MoveError Outcome), Game)
+type GameAPI ="users" :> "register"
+              :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text
+                :> Post '[JSON] ()
 
+              :<|> "play" :> Capture "gameId" Int
+                :> Post '[JSON] (Maybe GameRecord)
+
+              :<|> "play" :> "newGame"
+                :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int
+                :> Post '[JSON] ()
+
+              :<|> "play" :> "placeStone"
+                :> ReqBody '[JSON] Int :> ReqBody '[JSON] Position
+                :> Put '[JSON] ((Either MoveError Outcome), Game)
+
+-- TODO: Extract all configuration variables into a common file
 dbFilename = "LGS.db"
 
 server1 :: Server GameAPI
-server1 = getGameId :<|> createNewGame :<|> placeStone
+server1 = createNewUser :<|> getGameId :<|> createNewGame :<|> placeStone
 
 gameAPI :: Proxy GameAPI
 gameAPI = Proxy

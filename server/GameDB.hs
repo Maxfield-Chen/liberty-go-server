@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveAnyClass #-}
@@ -11,10 +12,11 @@
 
 module GameDB where
 
-import Database.Beam
 import Database.Beam.Sqlite
-import Database.SQLite.Simple
-import Data.Text (Text)
+import Database.Beam
+import Database.Beam.Backend.SQL
+import Data.Text (Text, unpack)
+import Data.Aeson.Types
 import Game
 
 data UserT f
@@ -37,19 +39,28 @@ instance Table UserT where
 data GameRecordT f
   = GameRecord {_gameId :: Columnar f Int
                ,_game :: Columnar f Game
-               ,_whitePlayer :: PrimaryKey UserT f
                ,_blackPlayer :: PrimaryKey UserT f
+               ,_whitePlayer :: PrimaryKey UserT f
                } deriving (Generic, Beamable)
 
 type GameRecord = GameRecordT Identity
 deriving instance Show GameRecord
+deriving instance ToJSON GameRecord
 deriving instance Show (PrimaryKey UserT Identity)
+deriving instance ToJSON (PrimaryKey UserT Identity)
 
 instance Table GameRecordT where
   data PrimaryKey GameRecordT f = GameRecordId (Columnar f Int) deriving (Generic, Beamable)
   primaryKey = GameRecordId . _gameId
 
 type GameRecordId = PrimaryKey GameRecordT Identity
+
+-- TODO: Decide if this should go in LGL.
+instance HasSqlValueSyntax be String => HasSqlValueSyntax be Game where
+  sqlValueSyntax = autoSqlValueSyntax
+
+instance FromBackendRow Sqlite Game where
+  fromBackendRow = read . unpack <$> fromBackendRow
 
 data LGSDb f =
   LGSDb
@@ -59,5 +70,4 @@ data LGSDb f =
   deriving (Generic, Database be)
 
 lgsDb :: DatabaseSettings be LGSDb
-lgsDb =
-  defaultDbSettings
+lgsDb = defaultDbSettings

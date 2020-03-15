@@ -23,8 +23,7 @@ data UserT f
   = User {_userId :: Columnar f Int
          ,_userEmail :: Columnar f Text
          ,_userName :: Columnar f Text
-         ,_userPasswordHash :: Columnar f Text
-         ,_userRank :: Columnar f Double} deriving (Generic, Beamable)
+         ,_userPasswordHash :: Columnar f Text} deriving (Generic, Beamable)
 
 type User = UserT Identity
 type UserId = PrimaryKey UserT Identity

@@ -35,6 +35,7 @@ executable lgs
                   , string-conversions
                   , sqlite-simple
                   , text
+                  , transformers
                   , wai
                   , warp
   default-language: Haskell2010

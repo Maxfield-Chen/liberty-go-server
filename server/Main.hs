@@ -26,8 +26,8 @@ import Data.String.Conversions
 import GHC.Generics
 import Lucid
 import Game
-import GameLogic
 import GameDB
+import GameApiImpl
 import GameExpressions
 import Proofs
 import Network.HTTP.Media ((//), (/:))
@@ -43,19 +43,18 @@ import qualified Text.Blaze.Html
 
 data NewGameStatus = Accepted | Rejected | Proposed | UserNotFound
 
-type GameAPI = "play" :> Capture "gameId" Int :> ReqBody '[JSON] Game :> Post '[JSON] (Maybe GameRecord)
+type GameAPI = "play" :> Capture "gameId" Int :> Post '[JSON] (Maybe GameRecord)
                :<|> "play" :> "newGame"
-                           :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int :> Post '[JSON] ()
+                           :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int
+                           :> Post '[JSON] ()
+               :<|> "play" :> "placeStone"
+                           :> ReqBody '[JSON] Int :> ReqBody '[JSON] Position
+                           :> Post '[JSON] ((Either MoveError Outcome), Game)
 
 dbFilename = "LGS.db"
 
-createNewGame :: Int -> Int -> Handler ()
-createNewGame bPlayerId wPlayerId = do
-  player <- liftIO (insertGame bPlayerId wPlayerId newGame)
-  pure player
-
 server1 :: Server GameAPI
-server1 = (pure . liftIO . gameIdToGame) :<|> createNewGame
+server1 = getGameId :<|> createNewGame :<|> placeStone
 
 gameAPI :: Proxy GameAPI
 gameAPI = Proxy

@@ -26,6 +26,18 @@ userIdToUser userId = do
     mUser <- runSelectReturningOne $ lookup_ (_LGSUsers lgsDb) (UserId userId)
     pure mUser
 
+--TODO: Hash password before storage
+insertUser :: Text -> Text -> Text ->  IO ()
+insertUser userEmail userName userPassword = do
+  conn <- liftIO $ open dbFilename
+  runBeamSqlite conn $ do
+    runInsert $
+      insert
+        (_LGSUsers lgsDb)
+        (insertExpressions
+           [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
+
+
 gameIdToGame :: Int -> IO (Maybe GameRecord)
 gameIdToGame gameId = do
   conn <- liftIO $ open dbFilename

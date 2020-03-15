@@ -49,7 +49,7 @@ type GameAPI = "play" :> Capture "gameId" Int :> Post '[JSON] (Maybe GameRecord)
                            :> Post '[JSON] ()
                :<|> "play" :> "placeStone"
                            :> ReqBody '[JSON] Int :> ReqBody '[JSON] Position
-                           :> Post '[JSON] ((Either MoveError Outcome), Game)
+                           :> Put '[JSON] ((Either MoveError Outcome), Game)
 
 dbFilename = "LGS.db"
 

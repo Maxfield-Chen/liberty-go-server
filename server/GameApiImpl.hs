@@ -23,7 +23,7 @@ import Control.Monad.State
 import GHC.Generics
 import Game
 import Theory.Named
-import GameLogic
+import qualified GameLogic
 import GameDB
 import GameExpressions
 import Proofs
@@ -64,4 +64,8 @@ placeStone gameId pos =
     Unbound -> pure (Left OutOfBounds, newGame)
 
 proposeCounting :: Int -> Bool -> Handler (Either MoveError GameStatus)
-proposeCounting gameId shouldCount = liftIO $ updateCountingStatus shouldCount gameId
+proposeCounting gameId shouldCount = liftIO $ updateCountingProposal gameId shouldCount
+
+proposeTerritory :: Int -> Bool -> Territory -> Handler (Either MoveError GameStatus)
+proposeTerritory gameId shouldCount territory =
+  liftIO $ updateTerritoryProposal territory gameId shouldCount

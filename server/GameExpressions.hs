@@ -12,9 +12,11 @@ module GameExpressions where
 
 import Data.Text (Text)
 import Database.Beam
+import Control.Monad
 import Database.Beam.Sqlite
 import Database.SQLite.Simple
 import Game
+import qualified GameLogic as GL
 import GameDB
 
 dbFilename = "LGS.db"
@@ -63,29 +65,31 @@ insertGame blackPlayer whitePlayer game = do
                (val_ (UserId whitePlayer))
            ])
 
+updateCountingProposal :: Int -> Bool -> IO (Either MoveError GameStatus)
+updateCountingProposal = updateProposal GL.updateCountingProposal
+
+updateTerritoryProposal :: Territory -> Int -> Bool -> IO (Either MoveError GameStatus)
+updateTerritoryProposal territory = updateProposal (GL.updateTerritoryProposal territory)
+
 -- TODO: Field access is beginning to get unwieldly. Convert to lenses for DB types?
-updateCountingStatus :: Bool -> Int -> IO (Either MoveError GameStatus)
-updateCountingStatus shouldCount gameId = do
+updateProposal ::
+     (Bool -> Game -> Game)
+  -> Int
+  -> Bool
+  -> IO (Either MoveError GameStatus)
+updateProposal updateProposal gameId shouldCount = do
   conn <- liftIO $ open dbFilename
   runBeamSqlite conn $ do
     mGameRecord <- liftIO $ gameIdToGameRecord gameId
     case mGameRecord of
       Just gameRecord ->
-        let game = _game gameRecord
-            oldStatus = _status game
-            getNewStatus old req
-              | old == GameProposed ||
-                  old == OutcomeProposed || old == OutcomeAccepted = old
-              | old == InProgress && req = CountingProposed
-              | old == CountingProposed && req = CountingAccepted
-              | otherwise = InProgress
-         in do runUpdate $
-                 save
-                   (_LGSGameRecords lgsDb)
-                   (gameRecord
-                      { _game =
-                          game
-                            {_status = getNewStatus (_status game) shouldCount}
-                      })
-               pure (Right CountingProposed)
+        let oldGame = _game gameRecord
+            oldStatus = _status oldGame
+            newGame = updateProposal shouldCount oldGame
+            newStatus = _status newGame
+         in do when
+                 (oldStatus /= newStatus)
+                 (runUpdate
+                    (save (_LGSGameRecords lgsDb) (gameRecord {_game = newGame})))
+               pure (Right newStatus)
       Nothing -> pure (Left NoBoard)

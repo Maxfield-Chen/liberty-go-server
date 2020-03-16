@@ -62,11 +62,19 @@ type GameAPI ="users" :> "register"
                 :> ReqBody '[JSON] Bool
                 :> Put '[JSON] (Either MoveError GameStatus)
 
+              :<|> "play" :> Capture "gameId" Int :> "proposeOutcome"
+                :> ReqBody '[JSON] Bool
+                :> ReqBody '[JSON] Territory
+                :> Put '[JSON] (Either MoveError GameStatus)
+
 -- TODO: Extract all configuration variables into a common file
 dbFilename = "LGS.db"
 
 server1 :: Server GameAPI
-server1 = createNewUser :<|> getGameId :<|> createNewGame :<|> placeStone :<|> proposeCounting
+server1 =
+  createNewUser :<|> getGameId :<|> createNewGame :<|> placeStone :<|>
+  proposeCounting :<|>
+  proposeTerritory
 
 gameAPI :: Proxy GameAPI
 gameAPI = Proxy

@@ -41,23 +41,27 @@ import qualified Text.Blaze.Html
 createNewUser :: Text -> Text -> Text -> Handler ()
 createNewUser email name password = liftIO $ insertUser email name password
 
+-- TODO: Make gameproposals require acceptance from the other player
 createNewGame :: Int -> Int -> Handler ()
 createNewGame bPlayerId wPlayerId = do
   player <- liftIO (insertGame bPlayerId wPlayerId newGame)
   pure player
 
 getGameId :: Int -> Handler (Maybe GameRecord)
-getGameId = liftIO . gameIdToGame
+getGameId = liftIO . gameIdToGameRecord
 
 -- TODO: find a more graceful return type when unbound or game not found
 placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)
 placeStone gameId pos =
   name pos $ \case
     Bound pos -> do
-      mGameRecord <- liftIO (gameIdToGame gameId)
+      mGameRecord <- liftIO (gameIdToGameRecord gameId)
       case mGameRecord of
         Just gameRecord ->
           pure $
           runState (runExceptT (GameLogic.placeStone pos)) (_game gameRecord)
         Nothing -> pure (Left NoBoard, newGame)
     Unbound -> pure (Left OutOfBounds, newGame)
+
+proposeCounting :: Int -> Bool -> Handler (Either MoveError GameStatus)
+proposeCounting gameId shouldCount = liftIO $ updateCountingStatus shouldCount gameId

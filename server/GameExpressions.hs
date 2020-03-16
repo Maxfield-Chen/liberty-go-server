@@ -19,6 +19,9 @@ import GameDB
 
 dbFilename = "LGS.db"
 
+--TODO: Put additional thought into naming conventions, not a huge fan
+--      of how overly verbose these are becoming.
+
 userIdToUser :: Int -> IO (Maybe User)
 userIdToUser userId = do
   conn <- liftIO $ open dbFilename
@@ -38,8 +41,8 @@ insertUser userEmail userName userPassword = do
            [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
 
-gameIdToGame :: Int -> IO (Maybe GameRecord)
-gameIdToGame gameId = do
+gameIdToGameRecord :: Int -> IO (Maybe GameRecord)
+gameIdToGameRecord gameId = do
   conn <- liftIO $ open dbFilename
   runBeamSqlite conn $ do
     mGame <- runSelectReturningOne $ lookup_ (_LGSGameRecords lgsDb) (GameRecordId gameId)
@@ -59,3 +62,30 @@ insertGame blackPlayer whitePlayer game = do
                (val_ (UserId blackPlayer))
                (val_ (UserId whitePlayer))
            ])
+
+-- TODO: Field access is beginning to get unwieldly. Convert to lenses for DB types?
+updateCountingStatus :: Bool -> Int -> IO (Either MoveError GameStatus)
+updateCountingStatus shouldCount gameId = do
+  conn <- liftIO $ open dbFilename
+  runBeamSqlite conn $ do
+    mGameRecord <- liftIO $ gameIdToGameRecord gameId
+    case mGameRecord of
+      Just gameRecord ->
+        let game = _game gameRecord
+            oldStatus = _status game
+            getNewStatus old req
+              | old == GameProposed ||
+                  old == OutcomeProposed || old == OutcomeAccepted = old
+              | old == InProgress && req = CountingProposed
+              | old == CountingProposed && req = CountingAccepted
+              | otherwise = InProgress
+         in do runUpdate $
+                 save
+                   (_LGSGameRecords lgsDb)
+                   (gameRecord
+                      { _game =
+                          game
+                            {_status = getNewStatus (_status game) shouldCount}
+                      })
+               pure (Right CountingProposed)
+      Nothing -> pure (Left NoBoard)

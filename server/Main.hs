@@ -48,7 +48,7 @@ type GameAPI ="users" :> "register"
                 :> Post '[JSON] ()
 
               :<|> "play" :> Capture "gameId" Int
-                :> Post '[JSON] (Maybe GameRecord)
+                :> Get '[JSON] (Maybe GameRecord)
 
               :<|> "play" :> "newGame"
                 :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int

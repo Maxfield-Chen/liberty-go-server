@@ -62,7 +62,7 @@ type GameAPI ="users" :> "register"
                 :> ReqBody '[JSON] Bool
                 :> Put '[JSON] (Either MoveError GameStatus)
 
-              :<|> "play" :> Capture "gameId" Int :> "proposeOutcome"
+              :<|> "play" :> Capture "gameId" Int :> "proposeTerritory"
                 :> ReqBody '[JSON] Bool
                 :> ReqBody '[JSON] Territory
                 :> Put '[JSON] (Either MoveError GameStatus)

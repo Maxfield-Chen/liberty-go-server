@@ -24,8 +24,8 @@ dbFilename = "LGS.db"
 --TODO: Put additional thought into naming conventions, not a huge fan
 --      of how overly verbose these are becoming.
 
-userIdToUser :: Int -> IO (Maybe User)
-userIdToUser userId = do
+getUser :: Int -> IO (Maybe User)
+getUser userId = do
   conn <- liftIO $ open dbFilename
   runBeamSqlite conn $ do
     mUser <- runSelectReturningOne $ lookup_ (_LGSUsers lgsDb) (UserId userId)
@@ -43,8 +43,8 @@ insertUser userEmail userName userPassword = do
            [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
 
-gameIdToGameRecord :: Int -> IO (Maybe GameRecord)
-gameIdToGameRecord gameId = do
+getGameRecord :: Int -> IO (Maybe GameRecord)
+getGameRecord gameId = do
   conn <- liftIO $ open dbFilename
   runBeamSqlite conn $ do
     mGame <- runSelectReturningOne $ lookup_ (_LGSGameRecords lgsDb) (GameRecordId gameId)
@@ -68,6 +68,7 @@ insertGame blackPlayer whitePlayer game = do
 updateCountingProposal :: Int -> Bool -> IO (Either MoveError GameStatus)
 updateCountingProposal = updateProposal GL.updateCountingProposal
 
+-- TODO: Add a check which computes and saves the final score once the territory has been accepted
 updateTerritoryProposal :: Territory -> Int -> Bool -> IO (Either MoveError GameStatus)
 updateTerritoryProposal territory = updateProposal (GL.updateTerritoryProposal territory)
 
@@ -80,7 +81,7 @@ updateProposal ::
 updateProposal updateProposal gameId shouldCount = do
   conn <- liftIO $ open dbFilename
   runBeamSqlite conn $ do
-    mGameRecord <- liftIO $ gameIdToGameRecord gameId
+    mGameRecord <- liftIO $ getGameRecord gameId
     case mGameRecord of
       Just gameRecord ->
         let oldGame = _game gameRecord

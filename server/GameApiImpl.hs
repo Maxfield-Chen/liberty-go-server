@@ -48,14 +48,14 @@ createNewGame bPlayerId wPlayerId = do
   pure player
 
 getGameId :: Int -> Handler (Maybe GameRecord)
-getGameId = liftIO . gameIdToGameRecord
+getGameId = liftIO . getGameRecord
 
 -- TODO: find a more graceful return type when unbound or game not found
 placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)
 placeStone gameId pos =
   name pos $ \case
     Bound pos -> do
-      mGameRecord <- liftIO (gameIdToGameRecord gameId)
+      mGameRecord <- liftIO (getGameRecord gameId)
       case mGameRecord of
         Just gameRecord ->
           pure $

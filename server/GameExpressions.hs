@@ -21,9 +21,6 @@ import GameDB
 
 dbFilename = "LGS.db"
 
---TODO: Put additional thought into naming conventions, not a huge fan
---      of how overly verbose these are becoming.
-
 getUser :: Int -> IO (Maybe User)
 getUser userId = do
   conn <- liftIO $ open dbFilename
@@ -41,6 +38,21 @@ insertUser userEmail userName userPassword = do
         (_LGSUsers lgsDb)
         (insertExpressions
            [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
+
+getGameRecords :: Int -> IO [GameRecord]
+getGameRecords playerId = do
+  conn <- liftIO $ open dbFilename
+  relatedGames <-
+    runBeamSqlite conn $
+    runSelectReturningList $
+    select $ do
+      user <- all_ (_LGSUsers lgsDb)
+      gameRecord <- all_ (_LGSGameRecords lgsDb)
+      guard_
+        (_blackPlayer gameRecord `references_` user ||. _whitePlayer gameRecord `references_`
+         user)
+      pure gameRecord
+  pure relatedGames
 
 
 getGameRecord :: Int -> IO (Maybe GameRecord)
@@ -64,6 +76,10 @@ insertGame blackPlayer whitePlayer game = do
                (val_ (UserId blackPlayer))
                (val_ (UserId whitePlayer))
            ])
+
+
+updateGameProposal :: Int -> Bool -> IO (Either MoveError GameStatus)
+updateGameProposal = updateProposal GL.updateGameProposal
 
 updateCountingProposal :: Int -> Bool -> IO (Either MoveError GameStatus)
 updateCountingProposal = updateProposal GL.updateCountingProposal

@@ -41,14 +41,19 @@ import qualified Text.Blaze.Html
 createNewUser :: Text -> Text -> Text -> Handler ()
 createNewUser email name password = liftIO $ insertUser email name password
 
--- TODO: Make gameproposals require acceptance from the other player
 createNewGame :: Int -> Int -> Handler ()
 createNewGame bPlayerId wPlayerId = do
   player <- liftIO (insertGame bPlayerId wPlayerId newGame)
   pure player
 
+proposeGame :: Int -> Bool -> Handler (Either MoveError GameStatus)
+proposeGame gameId shouldAccept = liftIO $ updateGameProposal gameId shouldAccept
+
 getGameId :: Int -> Handler (Maybe GameRecord)
 getGameId = liftIO . getGameRecord
+
+getGamesForPlayer :: Int -> Handler [GameRecord]
+getGamesForPlayer = liftIO . getGameRecords
 
 -- TODO: find a more graceful return type when unbound or game not found
 placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)

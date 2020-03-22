@@ -44,8 +44,11 @@ import qualified Text.Blaze.Html
 data NewGameStatus = Accepted | Rejected | Proposed | UserNotFound
 
 type GameAPI ="users" :> "register"
-              :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text
+                :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text
                 :> Post '[JSON] ()
+
+                :<|> "users" :> Capture "userId" Int
+                :> Post '[JSON] [GameRecord]
 
               :<|> "play" :> Capture "gameId" Int
                 :> Get '[JSON] (Maybe GameRecord)
@@ -53,6 +56,10 @@ type GameAPI ="users" :> "register"
               :<|> "play" :> "newGame"
                 :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int
                 :> Post '[JSON] ()
+
+              :<|> "play" :> Capture "gameId" Int :> "acceptGameProposal"
+                :> ReqBody '[JSON] Bool
+                :> Post '[JSON] (Either MoveError GameStatus)
 
               :<|> "play" :> Capture "gameId" Int :> "placeStone"
                 :> ReqBody '[JSON] Position
@@ -72,7 +79,12 @@ dbFilename = "LGS.db"
 
 server1 :: Server GameAPI
 server1 =
-  createNewUser :<|> getGameId :<|> createNewGame :<|> placeStone :<|>
+  createNewUser :<|>
+  getGamesForPlayer :<|>
+  getGameId :<|>
+  createNewGame  :<|>
+  proposeGame :<|>
+  placeStone :<|>
   proposeCounting :<|>
   proposeTerritory
 

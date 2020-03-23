@@ -23,7 +23,7 @@ dbFilename = "LGS.db"
 
 getUser :: Int -> IO (Maybe User)
 getUser userId = do
-  conn <- liftIO $ open dbFilename
+  conn <- open dbFilename
   runBeamSqlite conn $ do
     mUser <- runSelectReturningOne $ lookup_ (_LGSUsers lgsDb) (UserId userId)
     pure mUser
@@ -31,7 +31,7 @@ getUser userId = do
 --TODO: Hash password before storage
 insertUser :: Text -> Text -> Text -> IO ()
 insertUser userEmail userName userPassword = do
-  conn <- liftIO $ open dbFilename
+  conn <- open dbFilename
   runBeamSqlite conn $ do
     runInsert $
       insert
@@ -41,7 +41,7 @@ insertUser userEmail userName userPassword = do
 
 getGameRecords :: Int -> IO [GameRecord]
 getGameRecords playerId = do
-  conn <- liftIO $ open dbFilename
+  conn <- open dbFilename
   relatedGames <-
     runBeamSqlite conn $
     runSelectReturningList $
@@ -57,14 +57,14 @@ getGameRecords playerId = do
 
 getGameRecord :: Int -> IO (Maybe GameRecord)
 getGameRecord gameId = do
-  conn <- liftIO $ open dbFilename
+  conn <- open dbFilename
   runBeamSqlite conn $ do
     mGame <- runSelectReturningOne $ lookup_ (_LGSGameRecords lgsDb) (GameRecordId gameId)
     pure mGame
 
 insertGame :: Int -> Int -> Game -> IO ()
 insertGame blackPlayer whitePlayer game = do
-  conn <- liftIO $ open dbFilename
+  conn <- open dbFilename
   runBeamSqlite conn $ do
     runInsert $
       insert
@@ -78,24 +78,37 @@ insertGame blackPlayer whitePlayer game = do
            ])
 
 
-updateGameProposal :: Int -> Bool -> IO (Either MoveError GameStatus)
+updateGameProposal :: Int -> Bool -> IO (Maybe GameStatus)
 updateGameProposal = updateProposal GL.updateGameProposal
 
-updateCountingProposal :: Int -> Bool -> IO (Either MoveError GameStatus)
+updateCountingProposal :: Int -> Bool -> IO (Maybe GameStatus)
 updateCountingProposal = updateProposal GL.updateCountingProposal
 
 -- TODO: Add a check which computes and saves the final score once the territory has been accepted
-updateTerritoryProposal :: Territory -> Int -> Bool -> IO (Either MoveError GameStatus)
-updateTerritoryProposal territory = updateProposal (GL.updateTerritoryProposal territory)
+updateTerritoryProposal ::  Int -> Bool -> IO (Maybe GameStatus)
+updateTerritoryProposal = updateProposal GL.updateTerritoryProposal
+
+updateGame :: (Game -> Game) -> Int -> IO (Maybe Game)
+updateGame f gameId = do
+  conn <- open dbFilename
+  runBeamSqlite conn $ do
+    mGameRecord <- liftIO $ getGameRecord gameId
+    case mGameRecord of
+      Just gameRecord -> do
+        let newGame = f (_game gameRecord)
+        runUpdate (save (_LGSGameRecords lgsDb) (gameRecord {_game = newGame}))
+        pure (Just newGame)
+      Nothing -> pure Nothing
 
 -- TODO: Field access is beginning to get unwieldly. Convert to lenses for DB types?
+-- TODO: Should this return a Maybe GameStatus instead?
 updateProposal ::
      (Bool -> Game -> Game)
   -> Int
   -> Bool
-  -> IO (Either MoveError GameStatus)
+  -> IO (Maybe GameStatus)
 updateProposal updateProposal gameId shouldCount = do
-  conn <- liftIO $ open dbFilename
+  conn <- open dbFilename
   runBeamSqlite conn $ do
     mGameRecord <- liftIO $ getGameRecord gameId
     case mGameRecord of
@@ -108,5 +121,5 @@ updateProposal updateProposal gameId shouldCount = do
                  (oldStatus /= newStatus)
                  (runUpdate
                     (save (_LGSGameRecords lgsDb) (gameRecord {_game = newGame})))
-               pure (Right newStatus)
-      Nothing -> pure (Left NoBoard)
+               pure (Just newStatus)
+      Nothing -> pure Nothing

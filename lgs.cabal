@@ -26,6 +26,7 @@ executable lgs
                   , http-media
                   , http-types
                   , lgl
+                  , lens
                   , lucid
                   , mtl
                   , servant

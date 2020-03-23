@@ -26,7 +26,7 @@ import Data.String.Conversions
 import GHC.Generics
 import Lucid
 import Game
-import GameDB
+import GameDB hiding (User)
 import GameApiImpl
 import GameExpressions
 import Proofs
@@ -41,38 +41,44 @@ import Servant.Types.SourceT (source)
 import qualified Data.Aeson.Parser
 import qualified Text.Blaze.Html
 
-data NewGameStatus = Accepted | Rejected | Proposed | UserNotFound
 
+  -- TODO: Factor out common API endpoints
 type GameAPI ="users" :> "register"
-                :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text :> ReqBody '[JSON] Text
+                :> ReqBody '[JSON] User
                 :> Post '[JSON] ()
 
-                :<|> "users" :> Capture "userId" Int :> "games"
+              :<|> "users" :> Capture "userId" Int :> "games"
                 :> Post '[JSON] [GameRecord]
+
+              :<|> "play" :> "proposeGame"
+                :> ReqBody '[JSON] (Int,Int)
+                :> Post '[JSON] ()
 
               :<|> "play" :> Capture "gameId" Int
                 :> Get '[JSON] (Maybe GameRecord)
 
-              :<|> "play" :> "newGame"
-                :> ReqBody '[JSON] Int :> ReqBody '[JSON] Int
-                :> Post '[JSON] ()
-
               :<|> "play" :> Capture "gameId" Int :> "acceptGameProposal"
                 :> ReqBody '[JSON] Bool
-                :> Post '[JSON] (Either MoveError GameStatus)
+                :> Post '[JSON] (Maybe GameStatus)
+
+              :<|> "play" :> Capture "gameId" Int :> "proposeCounting"
+                :> Put '[JSON] (Maybe GameStatus)
+
+              :<|> "play" :> Capture "gameId" Int :> "acceptCountingProposal"
+                :> ReqBody '[JSON] Bool
+                :> Put '[JSON] (Maybe GameStatus)
+
+              :<|> "play" :> Capture "gameId" Int :> "proposeTerritory"
+                :> ReqBody '[JSON] Territory
+                :> Put '[JSON] (Maybe GameStatus)
+
+              :<|> "play" :> Capture "gameId" Int :> "acceptTerritoryProposal"
+                :> ReqBody '[JSON] Bool
+                :> Put '[JSON] (Maybe GameStatus)
 
               :<|> "play" :> Capture "gameId" Int :> "placeStone"
                 :> ReqBody '[JSON] Position
-                :> Put '[JSON] ((Either MoveError Outcome), Game)
-
-              :<|> "play" :> Capture "gameId" Int :> "proposeCounting"
-                :> ReqBody '[JSON] Bool
-                :> Put '[JSON] (Either MoveError GameStatus)
-
-              :<|> "play" :> Capture "gameId" Int :> "proposeTerritory"
-                :> ReqBody '[JSON] Bool
-                :> ReqBody '[JSON] Territory
-                :> Put '[JSON] (Either MoveError GameStatus)
+                :> Put '[JSON] ((Either MoveError Outcome),Game)
 
 -- TODO: Extract all configuration variables into a common file
 dbFilename = "LGS.db"
@@ -81,12 +87,14 @@ server1 :: Server GameAPI
 server1 =
   createNewUser :<|>
   getGamesForPlayer :<|>
+  proposeGame  :<|>
   getGameId :<|>
-  createNewGame  :<|>
-  proposeGame :<|>
-  placeStone :<|>
+  acceptGameProposal :<|>
   proposeCounting :<|>
-  proposeTerritory
+  acceptCountingProposal :<|>
+  proposeTerritory :<|>
+  acceptTerritoryProposal :<|>
+  placeStone
 
 gameAPI :: Proxy GameAPI
 gameAPI = Proxy

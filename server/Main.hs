@@ -48,7 +48,7 @@ type GameAPI ="users" :> "register"
                 :> Post '[JSON] ()
 
               :<|> "users" :> Capture "userId" Int :> "games"
-                :> Post '[JSON] [GameRecord]
+                :> Get '[JSON] [GameRecord]
 
               :<|> "play" :> "proposeGame"
                 :> ReqBody '[JSON] (Int,Int)
@@ -79,9 +79,6 @@ type GameAPI ="users" :> "register"
               :<|> "play" :> Capture "gameId" Int :> "placeStone"
                 :> ReqBody '[JSON] Position
                 :> Put '[JSON] ((Either MoveError Outcome),Game)
-
--- TODO: Extract all configuration variables into a common file
-dbFilename = "LGS.db"
 
 server1 :: Server GameAPI
 server1 =

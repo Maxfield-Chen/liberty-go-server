@@ -49,7 +49,7 @@ getGameRecords playerId = do
       user <- all_ (_LGSUsers lgsDb)
       gameRecord <- all_ (_LGSGameRecords lgsDb)
       guard_
-        (_blackPlayer gameRecord `references_` user ||. _whitePlayer gameRecord `references_`
+        (_black_player gameRecord `references_` user ||. _white_player gameRecord `references_`
          user)
       pure gameRecord
   pure relatedGames

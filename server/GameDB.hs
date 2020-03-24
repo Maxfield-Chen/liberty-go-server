@@ -38,8 +38,8 @@ instance Table UserT where
 data GameRecordT f
   = GameRecord {_gameId :: Columnar f Int
                ,_game :: Columnar f Game
-               ,_blackPlayer :: PrimaryKey UserT f
-               ,_whitePlayer :: PrimaryKey UserT f
+               ,_black_player :: PrimaryKey UserT f
+               ,_white_player :: PrimaryKey UserT f
                } deriving (Generic, Beamable)
 
 type GameRecord = GameRecordT Identity
@@ -69,4 +69,9 @@ data LGSDb f =
   deriving (Generic, Database be)
 
 lgsDb :: DatabaseSettings be LGSDb
-lgsDb = defaultDbSettings
+lgsDb =
+  defaultDbSettings `withDbModification`
+  dbModification
+    { _LGSGameRecords = setEntityName "game_records"
+    , _LGSUsers = setEntityName "users"
+    }

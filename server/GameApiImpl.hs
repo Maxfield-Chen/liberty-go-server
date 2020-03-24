@@ -56,11 +56,14 @@ placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)
 placeStone gameId pos =
   name pos $ \case
     Bound pos -> do
-      mGameRecord <- liftIO (getGameRecord gameId)
+      mGameRecord <- liftIO $ getGameRecord gameId
       case mGameRecord of
         Just gameRecord ->
-          pure $
-          runState (runExceptT (GameLogic.placeStone pos)) (_game gameRecord)
+          let ret@(_, game) =
+                runState
+                  (runExceptT (GameLogic.placeStone pos))
+                  (_game gameRecord)
+           in liftIO $ updateGame (const game) gameId >> pure ret
         Nothing -> pure (Left NoBoard, newGame)
     Unbound -> pure (Left OutOfBounds, newGame)
 

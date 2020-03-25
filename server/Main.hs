@@ -54,50 +54,46 @@ type GameAPI ="users" :> "register"
                 :> ReqBody '[JSON] (Int,Int)
                 :> Post '[JSON] ()
 
-              :<|> "play" :> Capture "gameId" Int
-                :> Get '[JSON] (Maybe GameRecord)
+              :<|> "play" :> (Capture "gameId" Int :>
+                (Get '[JSON] (Maybe GameRecord)
+                :<|>  "acceptGameProposal" :> ReqBody '[JSON] Bool
+                                           :> Post '[JSON] (Maybe GameStatus)
 
-              :<|> "play" :> Capture "gameId" Int :> "acceptGameProposal"
-                :> ReqBody '[JSON] Bool
-                :> Post '[JSON] (Maybe GameStatus)
+                :<|> "proposeCounting" :> Put '[JSON] (Maybe GameStatus)
 
-              :<|> "play" :> Capture "gameId" Int :> "proposeCounting"
-                :> Put '[JSON] (Maybe GameStatus)
+                :<|>  "acceptCountingProposal" :> ReqBody '[JSON] Bool
+                                               :> Put '[JSON] (Maybe GameStatus)
 
-              :<|> "play" :> Capture "gameId" Int :> "acceptCountingProposal"
-                :> ReqBody '[JSON] Bool
-                :> Put '[JSON] (Maybe GameStatus)
+                :<|> "proposeTerritory" :> ReqBody '[JSON] Territory
+                                        :> Put '[JSON] (Maybe GameStatus)
 
-              :<|> "play" :> Capture "gameId" Int :> "proposeTerritory"
-                :> ReqBody '[JSON] Territory
-                :> Put '[JSON] (Maybe GameStatus)
+                :<|> "acceptTerritoryProposal" :> ReqBody '[JSON] Bool
+                                               :> Put '[JSON] (Maybe GameStatus)
 
-              :<|> "play" :> Capture "gameId" Int :> "acceptTerritoryProposal"
-                :> ReqBody '[JSON] Bool
-                :> Put '[JSON] (Maybe GameStatus)
+                :<|> "placeStone" :> ReqBody '[JSON] Position
+                                  :> Put '[JSON] ((Either MoveError Outcome),Game)))
 
-              :<|> "play" :> Capture "gameId" Int :> "placeStone"
-                :> ReqBody '[JSON] Position
-                :> Put '[JSON] ((Either MoveError Outcome),Game)
-
-server1 :: Server GameAPI
-server1 =
+lgsServer :: Server GameAPI
+lgsServer =
   createNewUser :<|>
   getGamesForPlayer :<|>
   proposeGame  :<|>
-  getGameId :<|>
-  acceptGameProposal :<|>
-  proposeCounting :<|>
-  acceptCountingProposal :<|>
-  proposeTerritory :<|>
-  acceptTerritoryProposal :<|>
-  placeStone
+  gameOperations
+
+gameOperations gameId =
+  getGameId gameId :<|>
+  acceptGameProposal gameId :<|>
+  proposeCounting gameId :<|>
+  acceptCountingProposal gameId :<|>
+  proposeTerritory gameId :<|>
+  acceptTerritoryProposal gameId :<|>
+  placeStone gameId
 
 gameAPI :: Proxy GameAPI
 gameAPI = Proxy
 
 app1 :: Application
-app1 = serve gameAPI server1
+app1 = serve gameAPI lgsServer
 
 main :: IO ()
 main = run 9999 app1

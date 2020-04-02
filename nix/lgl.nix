@@ -4,7 +4,7 @@
 mkDerivation {
   pname = "lgl";
   version = "0.1.0.0";
-  src = /home/nihliphobe/projects/haskell/lgl;
+  src = /home/nihliphobe/projects/haskell/liberty-go-logic;
   libraryHaskellDepends = [
     aeson base Cabal containers gdp HUnit lens mtl sort transformers
   ];

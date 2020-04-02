@@ -14,6 +14,7 @@ module GameDB where
 
 import Database.Beam.Sqlite
 import Database.Beam
+import Database.Beam.Schema
 import Database.Beam.Backend.SQL
 import Data.Text (Text, unpack)
 import Data.Aeson.Types
@@ -69,9 +70,4 @@ data LGSDb f =
   deriving (Generic, Database be)
 
 lgsDb :: DatabaseSettings be LGSDb
-lgsDb =
-  defaultDbSettings `withDbModification`
-  dbModification
-    { _LGSGameRecords = setEntityName "game_records"
-    , _LGSUsers = setEntityName "users"
-    }
+lgsDb = defaultDbSettings 

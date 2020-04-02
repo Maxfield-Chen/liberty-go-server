@@ -9,7 +9,9 @@ cabal-version:      >= 1.10
 
 executable lgs
   main-is:          Main.hs
-  hs-source-dirs:   server, shared
+  if impl(ghcjs)
+     buildable: False
+  hs-source-dirs:   src
   build-depends:    base
                   , HUnit
                   , aeson

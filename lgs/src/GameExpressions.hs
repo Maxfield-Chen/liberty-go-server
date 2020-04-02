@@ -101,7 +101,6 @@ updateGame f gameId = do
       Nothing -> pure Nothing
 
 -- TODO: Field access is beginning to get unwieldly. Convert to lenses for DB types?
--- TODO: Should this return a Maybe GameStatus instead?
 updateProposal ::
      (Bool -> Game -> Game)
   -> Int

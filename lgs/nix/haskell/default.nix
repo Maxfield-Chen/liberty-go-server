@@ -2,16 +2,19 @@
 
 let
   inherit (pkgs.haskell) ghcVersion;
+  inherit (pkgs.haskell.packages) ghcjs86;
 
-  # determine why the inherited haskell version from overlay isn't picked up
   hsPkgs = pkgs.haskell.packages.${ghcVersion};
 
-  pkgDrv = hsPkgs.callCabal2nix "lgs" ../.. {};
-  haskellDeps = pkgDrv.getBuildInputs.haskellBuildInputs;
+  server = hsPkgs.callCabal2nix "lgs" ../.. {};
+  haskellDeps = server.getBuildInputs.haskellBuildInputs;
   ghc = hsPkgs.ghcWithHoogle (_: haskellDeps);
+
+  client = ghcjs86.callCabal2nix "lgs" ../.. {};
 
 in
 {
+  inherit client;
   inherit ghc;
   inherit (hsPkgs) cabal-install ghcide hlint hindent ghcid;
 }

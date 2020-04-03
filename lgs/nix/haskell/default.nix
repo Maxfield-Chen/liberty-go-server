@@ -10,8 +10,6 @@ let
   haskellDeps = server.getBuildInputs.haskellBuildInputs;
   ghc = hsPkgs.ghcWithHoogle (_: haskellDeps);
 
-  client = ghcjs86.callCabal2nix "lgs" ../.. {};
-
 in
 {
   inherit client;

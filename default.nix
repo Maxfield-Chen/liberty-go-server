@@ -1,8 +1,8 @@
-{ reflex-platform ? import ./nix/reflex-platform.nix {} 
+{ reflex-platform ? import ./nix/reflex-platform.nix {}
 , withHoogle ? false
 }:
 
-reflex-platform.project ({ pkgs, ... }: {
+reflex-platform.project ({ pkgs, ... }: rec {
   inherit withHoogle;
   useWarp = true;
   packages = {
@@ -16,36 +16,40 @@ reflex-platform.project ({ pkgs, ... }: {
     ghcjs = ["common" "lgc"];
   };
 
-  shellToolOverrides = self: super: {
+  overrides = self: super: {
+    gdp =
+      self.callPackage ./nix/gdp.nix { };
+    lgl =
+      self.callPackage ./nix/lgl.nix { };
   };
 
-  overrides = self: super: {
-   ghcide = pkgs.haskell.lib.dontCheck (self.callCabal2nix
-        "ghcide"
-        (builtins.fetchGit {
-          url = "https://github.com/digital-asset/ghcide.git";
-          rev = "0838dcbbd139e87b0f84165261982c82ca94fd08";
-        })
-        {});
-      hie-bios = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-        pkg = "hie-bios";
-        ver = "0.3.2";
-        sha256 = "08b3z2k5il72ccj2h0c10flsmz4akjs6ak9j167i8cah34ymygk6";
-      } {});
-      haskell-lsp = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-        pkg = "haskell-lsp";
-        ver = "0.18.0.0";
-        sha256 = "0pd7kxfp2limalksqb49ykg41vlb1a8ihg1bsqsnj1ygcxjikziz";
-      } {});
-      haskell-lsp-types = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-        pkg = "haskell-lsp-types";
-        ver = "0.18.0.0";
-        sha256 = "1s3q3d280qyr2yn15zb25kv6f5xcizj3vl0ycb4xhl00kxrgvd5f";
-      } {});
-      shake = pkgs.haskell.lib.dontCheck (self.callHackage "shake" "0.18.3" {});
-      gdp =
-        self.callPackage ./nix/gdp.nix { };
-      lgl =
-        self.callPackage ./nix/lgl.nix { };
+  shellToolOverrides = self: super: {
+    ghcide = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "ghcide";
+      ver = "0.1.0";
+      sha256 = "sha256:0vwaaqb74dzsvx5xdfkzbi8zzvbd5w9l1wdhl3rhvi8ibnrchgfs";
+     } { hie-bios = self.hie-bios;
+        haskell-lsp = self.haskell-lsp;
+        haskell-lsp-types = self.haskell-lsp-types;
+       });
+
+    hie-bios = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "hie-bios";
+      ver = "0.4.0";
+      sha256 = "sha256:19lpg9ymd9656cy17vna8wr1hvzfal94gpm2d3xpnw1d5qr37z7x";
+    } {});
+
+    haskell-lsp = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "haskell-lsp";
+      ver = "0.19.0.0";
+      sha256 = "sha256:1v0r57g2dhradnjnvp40jmv5swawg9k3d735kj50dca1gbx66y0c";
+    } {haskell-lsp-type = self.haskell-lsp-types;});
+
+    haskell-lsp-types = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "haskell-lsp-types";
+      ver = "0.19.0.0";
+      sha256 = "sha256:1z0c9c2zjb4ad3ffzng9njyn9ci874xd8mmqwnvnm3hyncf1430g";
+    } {});
+    shake = pkgs.haskell.lib.dontCheck (self.callHackage "shake" "0.18.3" {});
   };
 })

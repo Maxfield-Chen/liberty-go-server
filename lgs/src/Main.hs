@@ -49,7 +49,7 @@ type GameAPI ="users" :> "register"
                 :> Get '[JSON] [GameRecord]
 
               :<|> "play" :> "proposeGame"
-                :> ReqBody '[JSON] (Int,Int)
+                :> ReqBody '[JSON] ProposedGame
                 :> Post '[JSON] ()
 
               :<|> "play" :> (Capture "gameId" Int :>

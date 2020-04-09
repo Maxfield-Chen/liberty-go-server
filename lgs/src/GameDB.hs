@@ -17,6 +17,7 @@ import Database.Beam
 import Database.Beam.Schema
 import Database.Beam.Backend.SQL
 import Data.Text (Text, unpack)
+import qualified Data.Time as Time
 import Data.Aeson.Types
 import Game
 
@@ -41,13 +42,20 @@ data GameRecordT f
                ,_game :: Columnar f Game
                ,_black_player :: PrimaryKey UserT f
                ,_white_player :: PrimaryKey UserT f
+               ,_black_teacher :: PrimaryKey UserT (Nullable f)
+               ,_white_teacher :: PrimaryKey UserT (Nullable f)
+               ,_black_focus :: Columnar f Text
+               ,_white_focus :: Columnar f Text
+               ,_timestamp :: Columnar f Time.LocalTime
                } deriving (Generic, Beamable)
 
 type GameRecord = GameRecordT Identity
 deriving instance Show GameRecord
 deriving instance ToJSON GameRecord
 deriving instance Show (PrimaryKey UserT Identity)
+deriving instance Show (PrimaryKey UserT (Nullable Identity))
 deriving instance ToJSON (PrimaryKey UserT Identity)
+deriving instance ToJSON (PrimaryKey UserT (Nullable Identity))
 
 instance Table GameRecordT where
   data PrimaryKey GameRecordT f = GameRecordId (Columnar f Int) deriving (Generic, Beamable)
@@ -55,7 +63,6 @@ instance Table GameRecordT where
 
 type GameRecordId = PrimaryKey GameRecordT Identity
 
--- TODO: Decide if this should go in LGL.
 instance HasSqlValueSyntax be String => HasSqlValueSyntax be Game where
   sqlValueSyntax = autoSqlValueSyntax
 
@@ -70,4 +77,4 @@ data LGSDb f =
   deriving (Generic, Database be)
 
 lgsDb :: DatabaseSettings be LGSDb
-lgsDb = defaultDbSettings 
+lgsDb = defaultDbSettings

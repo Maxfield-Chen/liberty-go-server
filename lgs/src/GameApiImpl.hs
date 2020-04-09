@@ -45,10 +45,16 @@ data User =
     { userEmail :: Text
     , userName :: Text
     , userPassword :: Text
-    } deriving Generic
+    } deriving (Generic, ToJSON, FromJSON)
 
-instance ToJSON User
-instance FromJSON User
+data ProposedGame =
+  ProposedGame {_pg_black_player :: Int,
+           _pg_white_player :: Int,
+           _pg_black_teacher :: Maybe Int,
+           _pg_white_teacher :: Maybe Int,
+           _pg_black_focus :: Text,
+           _pg_white_focus :: Text
+           } deriving (Generic, ToJSON, FromJSON)
 
 -- TODO: find a more graceful return type when unbound or game not found
 placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)
@@ -75,10 +81,8 @@ getGameId = liftIO . getGameRecord
 getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
-proposeGame :: (Int,Int) -> Handler ()
-proposeGame (bPlayerId, wPlayerId) = do
-  player <- liftIO (insertGame bPlayerId wPlayerId newGame)
-  pure player
+proposeGame :: ProposedGame -> Handler ()
+proposeGame g = do liftIO (insertGame (_pg_black_player g) (_pg_white_player g) (_pg_black_teacher g) (_pg_white_teacher g) (_pg_black_focus g) (_pg_white_focus g) newGame)
 
 acceptGameProposal :: Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal gameId shouldAccept = liftIO $ updateGameProposal gameId shouldAccept

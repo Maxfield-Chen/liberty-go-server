@@ -18,6 +18,7 @@ import Database.SQLite.Simple
 import Game
 import qualified GameLogic as GL
 import GameDB
+import qualified Data.Time as Time
 
 dbFilename = "LGS.db"
 
@@ -54,7 +55,6 @@ getGameRecords playerId = do
       pure gameRecord
   pure relatedGames
 
-
 getGameRecord :: Int -> IO (Maybe GameRecord)
 getGameRecord gameId = do
   conn <- open dbFilename
@@ -62,8 +62,13 @@ getGameRecord gameId = do
     mGame <- runSelectReturningOne $ lookup_ (_LGSGameRecords lgsDb) (GameRecordId gameId)
     pure mGame
 
-insertGame :: Int -> Int -> Game -> IO ()
-insertGame blackPlayer whitePlayer game = do
+mPlayerIdToExpr mPlayerId = case mPlayerId of
+  Just playerId -> just_ (val_ (UserId playerId))
+  Nothing -> nothing_
+
+insertGame :: Int -> Int -> Maybe Int -> Maybe Int -> Text -> Text -> Game -> IO ()
+insertGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus game =
+  do
   conn <- open dbFilename
   runBeamSqlite conn $ do
     runInsert $
@@ -75,6 +80,11 @@ insertGame blackPlayer whitePlayer game = do
                (val_ game)
                (val_ (UserId blackPlayer))
                (val_ (UserId whitePlayer))
+               (mPlayerIdToExpr mBlackTeacher)
+               (mPlayerIdToExpr mWhiteTeacher)
+               (val_ blackFocus)
+               (val_ whiteFocus)
+               currentTimestamp_
            ])
 
 

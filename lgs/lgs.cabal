@@ -38,6 +38,7 @@ executable lgs
                   , string-conversions
                   , sqlite-simple
                   , text
+                  , time
                   , transformers
                   , wai
                   , warp

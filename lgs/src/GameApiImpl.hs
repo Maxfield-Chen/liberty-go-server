@@ -11,6 +11,7 @@
 
 module GameApiImpl where
 
+import qualified AuthValidator
 import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.Reader
@@ -24,7 +25,6 @@ import           Data.Text                  (Text)
 import           Game
 import           GameDB                     hiding (User)
 import           GameExpressions
-import qualified GameLogic
 import qualified GameLogic                  as GL
 import           GHC.Generics
 import           Prelude                    ()
@@ -33,22 +33,9 @@ import           Proofs
 import           Servant
 import           Servant.Auth.Server
 import           Theory.Named
+import qualified UserInput
 
-data User =
-  User
-    { userEmail    :: Text
-    , userName     :: Text
-    , userPassword :: Text
-    } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
-data ProposedGame =
-  ProposedGame {_pg_black_player :: Int,
-           _pg_white_player      :: Int,
-           _pg_black_teacher     :: Maybe Int,
-           _pg_white_teacher     :: Maybe Int,
-           _pg_black_focus       :: Text,
-           _pg_white_focus       :: Text
-           } deriving (Generic, ToJSON, FromJSON)
 
 -- TODO: find a more graceful return type when unbound or game not found
 placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)
@@ -60,14 +47,14 @@ placeStone gameId pos =
         Just gameRecord ->
           let ret@(_, game) =
                 runState
-                  (runExceptT (GameLogic.placeStone pos))
+                  (runExceptT (GL.placeStone pos))
                   (_game gameRecord)
            in liftIO $ updateGame (const game) gameId >> pure ret
         Nothing -> pure (Left NoBoard, newGame)
     Unbound -> pure (Left OutOfBounds, newGame)
 
-createNewUser :: User -> Handler ()
-createNewUser user = liftIO $ insertUser (userEmail user) (userName user) (userPassword user)
+createNewUser :: UserInput.User -> Handler ()
+createNewUser user = liftIO $ insertUser (UserInput.userEmail user) (UserInput.userName user) (UserInput.userPassword user)
 
 getGameId :: Int -> Handler (Maybe GameRecord)
 getGameId = liftIO . getGameRecord
@@ -75,8 +62,12 @@ getGameId = liftIO . getGameRecord
 getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
-proposeGame :: ProposedGame -> Handler ()
-proposeGame g = do liftIO (insertGame (_pg_black_player g) (_pg_white_player g) (_pg_black_teacher g) (_pg_white_teacher g) (_pg_black_focus g) (_pg_white_focus g) newGame)
+--TODO: Perform auth check here that the proposed game contains the user as one of the parties
+proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
+proposeGame user g =
+  do
+    AuthValidator.proposeGame user g
+    liftIO (insertGame (UserInput._pg_black_player g) (UserInput._pg_white_player g) (UserInput._pg_black_teacher g) (UserInput._pg_white_teacher g) (UserInput._pg_black_focus g) (UserInput._pg_white_focus g) newGame)
 
 acceptGameProposal :: Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal gameId shouldAccept = liftIO $ updateGameProposal gameId shouldAccept

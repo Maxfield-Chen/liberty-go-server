@@ -27,17 +27,14 @@ import           Network.Wai.Handler.Warp            (run)
 import           Servant
 import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
-
-data Login =
-  Login { userName     :: Text,
-          userPassword :: Text} deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
+import qualified UserInput
 
 type Unprotected = "users" :> "register"
-                :> ReqBody '[JSON] User
+                :> ReqBody '[JSON] UserInput.User
                 :> Post '[JSON] ()
 
               :<|> "users" :> "login"
-                :> ReqBody '[JSON] Login
+                :> ReqBody '[JSON] UserInput.Login
                 :> Verb 'POST 204 '[JSON] (Headers '[ Header "Set-Cookie" SetCookie
                                                     , Header "Set-Cookie" SetCookie]
                                                     NoContent)
@@ -47,7 +44,7 @@ type Unprotected = "users" :> "register"
 
 
 type GameAPI = "play" :> "proposeGame"
-                :> ReqBody '[JSON] ProposedGame
+                :> ReqBody '[JSON] UserInput.ProposedGame
                 :> Post '[JSON] ()
 
               :<|> "play" :> (Capture "gameId" Int :>
@@ -74,13 +71,13 @@ unprotected cs jwts = createNewUser
                  :<|> checkCreds cs jwts
                  :<|> getGamesForPlayer
 
-protected :: Servant.Auth.Server.AuthResult User -> Server GameAPI
+protected :: Servant.Auth.Server.AuthResult UserInput.User -> Server GameAPI
 protected (Servant.Auth.Server.Authenticated user) =
-  proposeGame  :<|>
-  gameOperations
+  proposeGame user  :<|>
+  gameOperations user
 
 
-gameOperations gameId =
+gameOperations user gameId =
   getGameId gameId :<|>
   acceptGameProposal gameId :<|>
   updatePassProposal gameId :<|>
@@ -89,7 +86,7 @@ gameOperations gameId =
   placeStone gameId
 
 
-type API auths = (Servant.Auth.Server.Auth auths User :> GameAPI) :<|> Unprotected
+type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|> Unprotected
 
 server :: CookieSettings -> JWTSettings -> Server (API auths)
 server cookieSettings jwtSettings = protected :<|> unprotected cookieSettings jwtSettings
@@ -105,11 +102,11 @@ main = do
 --TODO: Hash password before lookup
 checkCreds :: CookieSettings
            -> JWTSettings
-           -> Login
+           -> UserInput.Login
            -> Handler (Headers '[ Header "Set-Cookie" SetCookie
                                 , Header "Set-Cookie" SetCookie]
                                 NoContent)
-checkCreds cookieSettings jwtSettings (Login name pass) = do
+checkCreds cookieSettings jwtSettings (UserInput.Login name pass) = do
   mUser <- liftIO $ getUserViaCreds name pass
   case mUser of
     Nothing -> throwError err401

@@ -32,6 +32,16 @@ getUserViaCreds name pass = do
       guard_ (_userName user ==. val_ name &&._userPasswordHash user ==. val_ pass)
       pure user
 
+getUserViaName :: Text -> IO (Maybe User)
+getUserViaName name = do
+  conn <- open dbFilename
+  runBeamSqlite conn $
+    runSelectReturningOne $
+    select $ do
+      user <- all_ (_LGSUsers lgsDb)
+      guard_ (_userName user ==. val_ name)
+      pure user
+
 getUser :: Int -> IO (Maybe User)
 getUser userId = do
   conn <- open dbFilename

@@ -116,18 +116,19 @@ main = do
       api = Proxy :: Proxy (API '[Cookie])
   run 8888 $ serveWithContext api cfg (server defaultCookieSettings jwtCfg)
 
-
---TODO: Make this an actual db lookup instead of a mock
+--TODO: Hash password before lookup
 checkCreds :: CookieSettings
            -> JWTSettings
            -> Login
            -> Handler (Headers '[ Header "Set-Cookie" SetCookie
                                 , Header "Set-Cookie" SetCookie]
                                 NoContent)
-checkCreds cookieSettings jwtSettings (Login "name" "pass") = do
-  let usr = User "user@email.com" "name" "pass"
-  mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings usr
-  case mApplyCookies of
-    Nothing           -> throwError err401
-    Just applyCookies -> pure $ applyCookies NoContent
-checkCreds _ _ _ = throwError err401
+checkCreds cookieSettings jwtSettings (Login name pass) = do
+  mUser <- liftIO $ getUserViaCreds name pass
+  case mUser of
+    Nothing -> throwError err401
+    Just user -> do
+      mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings user
+      case mApplyCookies of
+        Nothing           -> throwError err401
+        Just applyCookies -> pure $ applyCookies NoContent

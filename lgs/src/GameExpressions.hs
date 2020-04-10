@@ -22,6 +22,16 @@ import qualified GameLogic              as GL
 
 dbFilename = "LGS.db"
 
+getUserViaCreds :: Text -> Text -> IO (Maybe User)
+getUserViaCreds name pass = do
+  conn <- open dbFilename
+  runBeamSqlite conn $
+    runSelectReturningOne $
+    select $ do
+      user <- all_ (_LGSUsers lgsDb)
+      guard_ (_userName user ==. val_ name &&._userPasswordHash user ==. val_ pass)
+      pure user
+
 getUser :: Int -> IO (Maybe User)
 getUser userId = do
   conn <- open dbFilename

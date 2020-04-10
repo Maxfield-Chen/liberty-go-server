@@ -14,19 +14,8 @@ module Main where
 import           Prelude                             ()
 import           Prelude.Compat
 
-import           Control.Concurrent                  (forkIO)
-import           Control.Monad                       (forever)
-import           Control.Monad.Except
-import           Control.Monad.Reader
-import           Control.Monad.Trans                 (liftIO)
-import           Data.Aeson
-import qualified Data.Aeson.Parser
-import           Data.Aeson.Types
-import           Data.Attoparsec.ByteString
-import           Data.ByteString                     (ByteString)
-import           Data.List
-import           Data.Maybe
-import           Data.String.Conversions
+import           Control.Monad.Except                (liftIO)
+import           Data.Aeson                          (FromJSON, ToJSON)
 import           Data.Text                           (Text)
 import           Game
 import           GameApiImpl
@@ -34,13 +23,10 @@ import           GameDB                              hiding (User)
 import           GameExpressions
 import           GHC.Generics                        (Generic)
 import           Network.HTTP.Media                  ((//), (/:))
-import           Network.Wai
-import           Network.Wai.Handler.Warp
-import           Proofs
+import           Network.Wai.Handler.Warp            (run)
 import           Servant
 import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
-import           System.Directory
 
 data Login =
   Login { userName     :: Text,

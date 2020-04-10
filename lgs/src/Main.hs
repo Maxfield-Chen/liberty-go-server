@@ -1,44 +1,40 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeOperators              #-}
 
 module Main where
 
-import Prelude ()
-import Prelude.Compat
+import           Prelude                    ()
+import           Prelude.Compat
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Aeson
-import Data.Aeson.Types
-import Data.Attoparsec.ByteString
-import Data.ByteString (ByteString)
-import Data.Text (Text)
-import Data.List
-import Data.Maybe
-import Data.String.Conversions
-import GHC.Generics
-import Lucid
-import Game
-import GameDB hiding (User)
-import GameApiImpl
-import GameExpressions
-import Proofs
-import Network.HTTP.Media ((//), (/:))
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Servant
-import System.Directory
-import Text.Blaze
-import Text.Blaze.Html.Renderer.Utf8
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.Aeson
 import qualified Data.Aeson.Parser
-import qualified Text.Blaze.Html
+import           Data.Aeson.Types
+import           Data.Attoparsec.ByteString
+import           Data.ByteString            (ByteString)
+import           Data.List
+import           Data.Maybe
+import           Data.String.Conversions
+import           Data.Text                  (Text)
+import           Game
+import           GameApiImpl
+import           GameDB                     hiding (User)
+import           GameExpressions
+import           GHC.Generics
+import           Network.HTTP.Media         ((//), (/:))
+import           Network.Wai
+import           Network.Wai.Handler.Warp
+import           Proofs
+import           Servant
+import           System.Directory
 
 
 type GameAPI ="users" :> "register"
@@ -57,10 +53,9 @@ type GameAPI ="users" :> "register"
                 :<|>  "acceptGameProposal" :> ReqBody '[JSON] Bool
                                            :> Post '[JSON] (Maybe GameStatus)
 
-                :<|> "proposeCounting" :> Put '[JSON] (Maybe GameStatus)
-
-                :<|>  "acceptCountingProposal" :> ReqBody '[JSON] Bool
-                                               :> Put '[JSON] (Maybe GameStatus)
+                :<|> "pass"
+                  :> ReqBody '[JSON] Space
+                  :> Put '[JSON] (Maybe GameStatus)
 
                 :<|> "proposeTerritory" :> ReqBody '[JSON] Territory
                                         :> Put '[JSON] (Maybe GameStatus)
@@ -81,8 +76,7 @@ lgsServer =
 gameOperations gameId =
   getGameId gameId :<|>
   acceptGameProposal gameId :<|>
-  proposeCounting gameId :<|>
-  acceptCountingProposal gameId :<|>
+  updatePassProposal gameId :<|>
   proposeTerritory gameId :<|>
   acceptTerritoryProposal gameId :<|>
   placeStone gameId

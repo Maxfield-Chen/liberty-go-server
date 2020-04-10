@@ -1,24 +1,24 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module GameExpressions where
 
-import Data.Text (Text)
-import Database.Beam
-import Control.Monad
-import Database.Beam.Sqlite
-import Database.SQLite.Simple
-import Game
-import qualified GameLogic as GL
-import GameDB
-import qualified Data.Time as Time
+import           Control.Monad
+import           Data.Text              (Text)
+import qualified Data.Time              as Time
+import           Database.Beam
+import           Database.Beam.Sqlite
+import           Database.SQLite.Simple
+import           Game
+import           GameDB
+import qualified GameLogic              as GL
 
 dbFilename = "LGS.db"
 
@@ -64,7 +64,7 @@ getGameRecord gameId = do
 
 mPlayerIdToExpr mPlayerId = case mPlayerId of
   Just playerId -> just_ (val_ (UserId playerId))
-  Nothing -> nothing_
+  Nothing       -> nothing_
 
 insertGame :: Int -> Int -> Maybe Int -> Maybe Int -> Text -> Text -> Game -> IO ()
 insertGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus game =
@@ -90,9 +90,6 @@ insertGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteF
 
 updateGameProposal :: Int -> Bool -> IO (Maybe GameStatus)
 updateGameProposal = updateProposal GL.updateGameProposal
-
-updateCountingProposal :: Int -> Bool -> IO (Maybe GameStatus)
-updateCountingProposal = updateProposal GL.updateCountingProposal
 
 -- TODO: Add a check which computes and saves the final score once the territory has been accepted
 updateTerritoryProposal ::  Int -> Bool -> IO (Maybe GameStatus)
@@ -124,7 +121,7 @@ updateProposal updateProposal gameId shouldCount = do
       Just gameRecord ->
         let oldGame = _game gameRecord
             oldStatus = _status oldGame
-            newGame = updateProposal shouldCount oldGame
+            newgame = updateProposal shouldCount oldGame
             newStatus = _status newGame
          in do when
                  (oldStatus /= newStatus)

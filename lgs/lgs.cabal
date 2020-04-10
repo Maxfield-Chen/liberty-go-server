@@ -18,10 +18,7 @@ executable lgs
                   , attoparsec
                   , base-compat
                   , beam-core
-                  , beam-migrate
                   , beam-sqlite
-                  , blaze-html
-                  , blaze-markup
                   , bytestring
                   , directory
                   , gdp                == 0.0.3.0
@@ -29,10 +26,9 @@ executable lgs
                   , http-types
                   , lgl
                   , lens
-                  , lucid
                   , mtl
                   , servant
-                  , servant-lucid
+                  , servant-auth-server
                   , servant-server
                   , sort
                   , string-conversions

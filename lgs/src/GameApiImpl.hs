@@ -1,59 +1,52 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module GameApiImpl where
 
-import Prelude ()
-import Control.Lens
-import Prelude.Compat
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Text (Text)
-import Data.Maybe
-import Data.String.Conversions
-import Control.Monad.Trans.Except
-import Control.Monad.State
-import GHC.Generics
-import Game
-import Theory.Named
-import qualified GameLogic
-import GameDB hiding (User)
-import GameExpressions
-import qualified GameLogic as GL
-import Proofs
-import Network.HTTP.Media ((//), (/:))
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Servant
-import System.Directory
-import Text.Blaze
-import Data.Aeson.Types
-import Text.Blaze.Html.Renderer.Utf8
+import           Control.Lens
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Control.Monad.State
+import           Control.Monad.Trans.Except
 import qualified Data.Aeson.Parser
-import qualified Text.Blaze.Html
+import           Data.Aeson.Types
+import           Data.Maybe
+import           Data.String.Conversions
+import           Data.Text                  (Text)
+import           Game
+import           GameDB                     hiding (User)
+import           GameExpressions
+import qualified GameLogic
+import qualified GameLogic                  as GL
+import           GHC.Generics
+import           Prelude                    ()
+import           Prelude.Compat
+import           Proofs
+import           Servant
+import           Theory.Named
 
 data User =
   User
-    { userEmail :: Text
-    , userName :: Text
+    { userEmail    :: Text
+    , userName     :: Text
     , userPassword :: Text
     } deriving (Generic, ToJSON, FromJSON)
 
 data ProposedGame =
   ProposedGame {_pg_black_player :: Int,
-           _pg_white_player :: Int,
-           _pg_black_teacher :: Maybe Int,
-           _pg_white_teacher :: Maybe Int,
-           _pg_black_focus :: Text,
-           _pg_white_focus :: Text
+           _pg_white_player      :: Int,
+           _pg_black_teacher     :: Maybe Int,
+           _pg_white_teacher     :: Maybe Int,
+           _pg_black_focus       :: Text,
+           _pg_white_focus       :: Text
            } deriving (Generic, ToJSON, FromJSON)
 
 -- TODO: find a more graceful return type when unbound or game not found
@@ -87,22 +80,19 @@ proposeGame g = do liftIO (insertGame (_pg_black_player g) (_pg_white_player g) 
 acceptGameProposal :: Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal gameId shouldAccept = liftIO $ updateGameProposal gameId shouldAccept
 
-proposeCounting :: Int -> Handler (Maybe GameStatus)
-proposeCounting gameId = do
-  mGame <- liftIO $ updateGame GL.proposeCounting gameId
+updatePassProposal :: Int -> Space -> Handler (Maybe GameStatus)
+updatePassProposal gameId space = do
+  mGame <- liftIO $ updateGame (GL.proposePass space) gameId
   case mGame of
     Just game -> pure (Just (game ^. status))
-    Nothing -> pure Nothing
-
-acceptCountingProposal :: Int -> Bool -> Handler (Maybe GameStatus)
-acceptCountingProposal gameId shouldCount = liftIO $ updateCountingProposal gameId shouldCount
+    Nothing   -> pure Nothing
 
 proposeTerritory :: Int -> Territory -> Handler (Maybe GameStatus)
 proposeTerritory gameId territory = do
   mGame <- liftIO $ updateGame (GL.proposeTerritory territory) gameId
   case mGame of
     Just game -> pure (Just (game ^. status))
-    Nothing -> pure Nothing
+    Nothing   -> pure Nothing
 
 acceptTerritoryProposal :: Int -> Bool -> Handler (Maybe GameStatus)
 acceptTerritoryProposal gameId shouldAccept =

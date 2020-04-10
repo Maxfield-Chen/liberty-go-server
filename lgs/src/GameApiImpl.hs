@@ -31,6 +31,7 @@ import           Prelude                    ()
 import           Prelude.Compat
 import           Proofs
 import           Servant
+import           Servant.Auth.Server
 import           Theory.Named
 
 data User =
@@ -38,7 +39,7 @@ data User =
     { userEmail    :: Text
     , userName     :: Text
     , userPassword :: Text
-    } deriving (Generic, ToJSON, FromJSON)
+    } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 data ProposedGame =
   ProposedGame {_pg_black_player :: Int,

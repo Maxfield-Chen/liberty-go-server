@@ -42,16 +42,16 @@ type Unprotected = "users" :> "register"
               :<|> "users" :> Capture "userId" Int :> "games"
                 :> Get '[JSON] [GameRecord]
 
+              :<|> "play" :> Capture "gameId" Int :> Get '[JSON] (Maybe GameRecord)
+
 
 type GameAPI = "play" :> "proposeGame"
                 :> ReqBody '[JSON] UserInput.ProposedGame
                 :> Post '[JSON] ()
 
-              :<|> "play" :> (Capture "gameId" Int :>
-                (Get '[JSON] (Maybe GameRecord)
-                :<|>  "acceptGameProposal" :> ReqBody '[JSON] Bool
-                                           :> Post '[JSON] (Maybe GameStatus)
-
+              :<|> "play" :> Capture "gameId" Int :>
+                ("acceptGameProposal" :> ReqBody '[JSON] Bool
+                                     :> Post '[JSON] (Maybe GameStatus)
                 :<|> "pass"
                   :> ReqBody '[JSON] Space
                   :> Put '[JSON] (Maybe GameStatus)
@@ -63,13 +63,14 @@ type GameAPI = "play" :> "proposeGame"
                                                :> Put '[JSON] (Maybe GameStatus)
 
                 :<|> "placeStone" :> ReqBody '[JSON] Position
-                                  :> Put '[JSON] ((Either MoveError Outcome),Game)))
+                                  :> Put '[JSON] (Either MoveError Outcome,Game))
 
 
 unprotected :: CookieSettings -> JWTSettings -> Server Unprotected
 unprotected cs jwts = createNewUser
                  :<|> checkCreds cs jwts
                  :<|> getGamesForPlayer
+                 :<|> getGameId
 
 protected :: Servant.Auth.Server.AuthResult UserInput.User -> Server GameAPI
 protected (Servant.Auth.Server.Authenticated user) =
@@ -78,8 +79,7 @@ protected (Servant.Auth.Server.Authenticated user) =
 
 
 gameOperations user gameId =
-  getGameId gameId :<|>
-  acceptGameProposal gameId :<|>
+  acceptGameProposal user gameId :<|>
   updatePassProposal gameId :<|>
   proposeTerritory gameId :<|>
   acceptTerritoryProposal gameId :<|>

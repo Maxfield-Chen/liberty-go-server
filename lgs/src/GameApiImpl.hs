@@ -62,15 +62,16 @@ getGameId = liftIO . getGameRecord
 getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
---TODO: Perform auth check here that the proposed game contains the user as one of the parties
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
-proposeGame user g =
+proposeGame user proposedGame =
   do
-    AuthValidator.proposeGame user g
-    liftIO (insertGame (UserInput._pg_black_player g) (UserInput._pg_white_player g) (UserInput._pg_black_teacher g) (UserInput._pg_white_teacher g) (UserInput._pg_black_focus g) (UserInput._pg_white_focus g) newGame)
+    AuthValidator.proposeGame user proposedGame
+    liftIO $ insertGame proposedGame newGame
 
-acceptGameProposal :: Int -> Bool -> Handler (Maybe GameStatus)
-acceptGameProposal gameId shouldAccept = liftIO $ updateGameProposal gameId shouldAccept
+acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
+acceptGameProposal user gameId shouldAccept = do
+  -- AuthValidator.acceptGameProposal user gameId
+  liftIO $ updateGameProposal gameId shouldAccept
 
 updatePassProposal :: Int -> Space -> Handler (Maybe GameStatus)
 updatePassProposal gameId space = do

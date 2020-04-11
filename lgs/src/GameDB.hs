@@ -43,15 +43,19 @@ instance Table UserT where
   primaryKey = UserId . _userId
 
 data GameRecordT f
-  = GameRecord {_gameId        :: Columnar f Int
-               ,_game          :: Columnar f Game
-               ,_black_player  :: PrimaryKey UserT f
-               ,_white_player  :: PrimaryKey UserT f
-               ,_black_teacher :: PrimaryKey UserT (Nullable f)
-               ,_white_teacher :: PrimaryKey UserT (Nullable f)
-               ,_black_focus   :: Columnar f Text
-               ,_white_focus   :: Columnar f Text
-               ,_timestamp     :: Columnar f Time.LocalTime
+  = GameRecord {_gameId                 :: Columnar f Int
+               ,_game                   :: Columnar f Game
+               ,_black_player           :: PrimaryKey UserT f
+               ,_white_player           :: PrimaryKey UserT f
+               ,_black_teacher          :: PrimaryKey UserT (Nullable f)
+               ,_white_teacher          :: PrimaryKey UserT (Nullable f)
+               ,_black_player_accepted  :: Columnar f Bool
+               ,_white_player_accepted  :: Columnar f Bool
+               ,_black_teacher_accepted :: Columnar f (Maybe Bool)
+               ,_white_teacher_accepted :: Columnar f (Maybe Bool)
+               ,_black_focus            :: Columnar f Text
+               ,_white_focus            :: Columnar f Text
+               ,_timestamp              :: Columnar f Time.LocalTime
                } deriving (Generic, Beamable)
 
 type GameRecord = GameRecordT Identity

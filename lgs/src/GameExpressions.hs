@@ -19,6 +19,7 @@ import           Database.SQLite.Simple
 import           Game
 import           GameDB
 import qualified GameLogic              as GL
+import qualified UserInput
 
 dbFilename = "LGS.db"
 
@@ -86,8 +87,12 @@ mPlayerIdToExpr mPlayerId = case mPlayerId of
   Just playerId -> just_ (val_ (UserId playerId))
   Nothing       -> nothing_
 
-insertGame :: Int -> Int -> Maybe Int -> Maybe Int -> Text -> Text -> Game -> IO ()
-insertGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus game =
+mTeacherIdToBool mTeacherId = case mTeacherId of
+  Just teacherId -> just_ (val_ True)
+  Nothing        -> nothing_
+
+insertGame :: UserInput.ProposedGame -> Game -> IO ()
+insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus) game =
   do
   conn <- open dbFilename
   runBeamSqlite conn $ do
@@ -102,6 +107,10 @@ insertGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteF
                (val_ (UserId whitePlayer))
                (mPlayerIdToExpr mBlackTeacher)
                (mPlayerIdToExpr mWhiteTeacher)
+               (val_ True)
+               (val_ False)
+               (mTeacherIdToBool mBlackTeacher)
+               (mTeacherIdToBool mWhiteTeacher)
                (val_ blackFocus)
                (val_ whiteFocus)
                currentTimestamp_

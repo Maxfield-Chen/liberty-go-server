@@ -12,26 +12,12 @@
 module UserInput where
 
 import           Control.Lens
-import           Control.Monad.Except
-import           Control.Monad.Reader
-import           Control.Monad.State
-import           Control.Monad.Trans.Except
 import qualified Data.Aeson.Parser
 import           Data.Aeson.Types
 import           Data.Maybe
-import           Data.String.Conversions
-import           Data.Text                  (Text)
-import           Game
-import           GameDB                     hiding (User)
-import           GameExpressions
-import qualified GameLogic                  as GL
+import           Data.Text           (Text)
 import           GHC.Generics
-import           Prelude                    ()
-import           Prelude.Compat
-import           Proofs
-import           Servant
 import           Servant.Auth.Server
-import           Theory.Named
 
 
 data User =

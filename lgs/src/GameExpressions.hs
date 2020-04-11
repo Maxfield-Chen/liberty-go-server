@@ -131,9 +131,9 @@ updateGame f gameId = do
     mGameRecord <- liftIO $ getGameRecord gameId
     case mGameRecord of
       Just gameRecord -> do
-        let newGame = f (_game gameRecord)
-        runUpdate (save (_game_records lgsDb) (gameRecord {_game = newGame}))
-        pure (Just newGame)
+        let updatedGame = f (_game gameRecord)
+        runUpdate (save (_game_records lgsDb) (gameRecord {_game = updatedGame}))
+        pure (Just updatedGame)
       Nothing -> pure Nothing
 
 -- TODO: Field access is beginning to get unwieldly. Convert to lenses for DB types?
@@ -150,11 +150,11 @@ updateProposal updateProposal gameId shouldCount = do
       Just gameRecord ->
         let oldGame = _game gameRecord
             oldStatus = _status oldGame
-            newgame = updateProposal shouldCount oldGame
-            newStatus = _status newGame
+            updatedGame = updateProposal shouldCount oldGame
+            newStatus = _status updatedGame
          in do when
                  (oldStatus /= newStatus)
                  (runUpdate
-                    (save (_game_records lgsDb) (gameRecord {_game = newGame})))
+                    (save (_game_records lgsDb) (gameRecord {_game = updatedGame})))
                pure (Just newStatus)
       Nothing -> pure Nothing

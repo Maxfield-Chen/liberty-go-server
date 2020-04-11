@@ -29,7 +29,7 @@ getUserViaCreds name pass = do
   runBeamSqlite conn $
     runSelectReturningOne $
     select $ do
-      user <- all_ (_LGSUsers lgsDb)
+      user <- all_ (_users lgsDb)
       guard_ (_userName user ==. val_ name &&._userPasswordHash user ==. val_ pass)
       pure user
 
@@ -39,7 +39,7 @@ getUserViaName name = do
   runBeamSqlite conn $
     runSelectReturningOne $
     select $ do
-      user <- all_ (_LGSUsers lgsDb)
+      user <- all_ (_users lgsDb)
       guard_ (_userName user ==. val_ name)
       pure user
 
@@ -47,7 +47,7 @@ getUser :: Int -> IO (Maybe User)
 getUser userId = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
-    mUser <- runSelectReturningOne $ lookup_ (_LGSUsers lgsDb) (UserId userId)
+    mUser <- runSelectReturningOne $ lookup_ (_users lgsDb) (UserId userId)
     pure mUser
 
 --TODO: Hash password before storage
@@ -57,7 +57,7 @@ insertUser userEmail userName userPassword = do
   runBeamSqlite conn $ do
     runInsert $
       insert
-        (_LGSUsers lgsDb)
+        (_users lgsDb)
         (insertExpressions
            [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
@@ -68,8 +68,8 @@ getGameRecords playerId = do
     runBeamSqlite conn $
     runSelectReturningList $
     select $ do
-      user <- all_ (_LGSUsers lgsDb)
-      gameRecord <- all_ (_LGSGameRecords lgsDb)
+      user <- all_ (_users lgsDb)
+      gameRecord <- all_ (_game_records lgsDb)
       guard_
         (_black_player gameRecord `references_` user ||. _white_player gameRecord `references_`
          user)
@@ -80,7 +80,7 @@ getGameRecord :: Int -> IO (Maybe GameRecord)
 getGameRecord gameId = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
-    mGame <- runSelectReturningOne $ lookup_ (_LGSGameRecords lgsDb) (GameRecordId gameId)
+    mGame <- runSelectReturningOne $ lookup_ (_game_records lgsDb) (GameRecordId gameId)
     pure mGame
 
 mPlayerIdToExpr mPlayerId = case mPlayerId of
@@ -98,7 +98,7 @@ insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteT
   runBeamSqlite conn $ do
     runInsert $
       insert
-        (_LGSGameRecords lgsDb)
+        (_game_records lgsDb)
         (insertExpressions
            [ GameRecord
                default_
@@ -132,7 +132,7 @@ updateGame f gameId = do
     case mGameRecord of
       Just gameRecord -> do
         let newGame = f (_game gameRecord)
-        runUpdate (save (_LGSGameRecords lgsDb) (gameRecord {_game = newGame}))
+        runUpdate (save (_game_records lgsDb) (gameRecord {_game = newGame}))
         pure (Just newGame)
       Nothing -> pure Nothing
 
@@ -155,6 +155,6 @@ updateProposal updateProposal gameId shouldCount = do
          in do when
                  (oldStatus /= newStatus)
                  (runUpdate
-                    (save (_LGSGameRecords lgsDb) (gameRecord {_game = newGame})))
+                    (save (_game_records lgsDb) (gameRecord {_game = newGame})))
                pure (Just newStatus)
       Nothing -> pure Nothing

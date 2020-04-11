@@ -37,10 +37,37 @@ deriving instance ToJWT User
 deriving instance FromJWT User
 deriving instance ToJSON User
 deriving instance FromJSON User
+deriving instance Show (PrimaryKey UserT Identity)
+deriving instance Show (PrimaryKey UserT (Nullable Identity))
+deriving instance ToJSON (PrimaryKey UserT Identity)
+deriving instance ToJSON (PrimaryKey UserT (Nullable Identity))
+deriving instance FromJSON (PrimaryKey UserT Identity)
 
 instance Table UserT where
   data PrimaryKey UserT f = UserId (Columnar f Int) deriving (Generic, Beamable)
   primaryKey = UserId . _userId
+
+
+data AwaiterT f
+  = Awaiter {_awaiter_id      :: Columnar f Int
+            ,_awaiter_user_id :: PrimaryKey UserT f
+            ,_game_id         :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
+
+type Awaiter = AwaiterT Identity
+type AwaiterId = PrimaryKey AwaiterT Identity
+
+deriving instance Show Awaiter
+deriving instance ToJSON Awaiter
+deriving instance FromJSON Awaiter
+
+deriving instance Show (PrimaryKey AwaiterT Identity)
+deriving instance ToJSON (PrimaryKey AwaiterT Identity)
+deriving instance FromJSON (PrimaryKey AwaiterT Identity)
+
+instance Table AwaiterT where
+  data PrimaryKey AwaiterT f = AwaiterId (Columnar f Int) deriving (Generic, Beamable)
+  primaryKey = AwaiterId . _awaiter_id
+
 
 data GameRecordT f
   = GameRecord {_gameId                 :: Columnar f Int
@@ -61,10 +88,9 @@ data GameRecordT f
 type GameRecord = GameRecordT Identity
 deriving instance Show GameRecord
 deriving instance ToJSON GameRecord
-deriving instance Show (PrimaryKey UserT Identity)
-deriving instance Show (PrimaryKey UserT (Nullable Identity))
-deriving instance ToJSON (PrimaryKey UserT Identity)
-deriving instance ToJSON (PrimaryKey UserT (Nullable Identity))
+deriving instance Show (PrimaryKey GameRecordT Identity)
+deriving instance ToJSON (PrimaryKey GameRecordT Identity)
+deriving instance FromJSON (PrimaryKey GameRecordT Identity)
 
 instance Table GameRecordT where
   data PrimaryKey GameRecordT f = GameRecordId (Columnar f Int) deriving (Generic, Beamable)
@@ -72,16 +98,19 @@ instance Table GameRecordT where
 
 type GameRecordId = PrimaryKey GameRecordT Identity
 
+-- LGL SQL Representation Definitions
 instance HasSqlValueSyntax be String => HasSqlValueSyntax be Game where
   sqlValueSyntax = autoSqlValueSyntax
 
 instance FromBackendRow Sqlite Game where
   fromBackendRow = read . unpack <$> fromBackendRow
 
+
 data LGSDb f =
   LGSDb
-    { _LGSUsers       :: f (TableEntity UserT)
-     ,_LGSGameRecords :: f (TableEntity GameRecordT)
+    { _users        :: f (TableEntity UserT)
+     ,_game_records :: f (TableEntity GameRecordT)
+     ,_awaiters     :: f (TableEntity AwaiterT)
     }
   deriving (Generic, Database be)
 

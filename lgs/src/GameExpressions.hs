@@ -46,9 +46,17 @@ getUserViaName name = do
 getUser :: Int -> IO (Maybe User)
 getUser userId = do
   conn <- open dbFilename
-  runBeamSqlite conn $ do
-    mUser <- runSelectReturningOne $ lookup_ (_users lgsDb) (UserId userId)
-    pure mUser
+  runBeamSqlite conn $ runSelectReturningOne $ lookup_ (_users lgsDb) (UserId userId)
+
+-- getAwaitingGames :: Int -> IO [Int]
+-- getAwaitingGames playerId =
+--   do
+--     conn <- opendbFilename
+--     runBeamSqlite conn $
+--       runSelectReturningList $
+--       select $ do
+--       awaiter <- all_ (_awaiters lgsDb)
+--       guard_ (_)
 
 --TODO: Hash password before storage
 insertUser :: Text -> Text -> Text -> IO ()
@@ -71,8 +79,7 @@ getGameRecords playerId = do
       user <- all_ (_users lgsDb)
       gameRecord <- all_ (_game_records lgsDb)
       guard_
-        (_black_player gameRecord `references_` user ||. _white_player gameRecord `references_`
-         user)
+        (_userId user ==. val_ playerId &&. (_black_player gameRecord `references_` user ||. _white_player gameRecord `references_` user))
       pure gameRecord
   pure relatedGames
 
@@ -86,10 +93,6 @@ getGameRecord gameId = do
 mPlayerIdToExpr mPlayerId = case mPlayerId of
   Just playerId -> just_ (val_ (UserId playerId))
   Nothing       -> nothing_
-
-mTeacherIdToBool mTeacherId = case mTeacherId of
-  Just teacherId -> just_ (val_ True)
-  Nothing        -> nothing_
 
 insertGame :: UserInput.ProposedGame -> Game -> IO ()
 insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus) game =
@@ -107,10 +110,6 @@ insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteT
                (val_ (UserId whitePlayer))
                (mPlayerIdToExpr mBlackTeacher)
                (mPlayerIdToExpr mWhiteTeacher)
-               (val_ True)
-               (val_ False)
-               (mTeacherIdToBool mBlackTeacher)
-               (mTeacherIdToBool mWhiteTeacher)
                (val_ blackFocus)
                (val_ whiteFocus)
                currentTimestamp_

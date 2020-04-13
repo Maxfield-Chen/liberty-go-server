@@ -37,6 +37,7 @@ deriving instance ToJWT User
 deriving instance FromJWT User
 deriving instance ToJSON User
 deriving instance FromJSON User
+deriving instance Eq (PrimaryKey UserT Identity)
 deriving instance Show (PrimaryKey UserT Identity)
 deriving instance Show (PrimaryKey UserT (Nullable Identity))
 deriving instance ToJSON (PrimaryKey UserT Identity)
@@ -51,11 +52,12 @@ instance Table UserT where
 data AwaiterT f
   = Awaiter {_awaiter_id      :: Columnar f Int
             ,_awaiter_user_id :: PrimaryKey UserT f
-            ,_game_id         :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
+            ,_awaiter_game_id :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
 
 type Awaiter = AwaiterT Identity
 type AwaiterId = PrimaryKey AwaiterT Identity
 
+deriving instance Eq Awaiter
 deriving instance Show Awaiter
 deriving instance ToJSON Awaiter
 deriving instance FromJSON Awaiter
@@ -84,6 +86,7 @@ data GameRecordT f
 type GameRecord = GameRecordT Identity
 deriving instance Show GameRecord
 deriving instance ToJSON GameRecord
+deriving instance Eq (PrimaryKey GameRecordT Identity)
 deriving instance Show (PrimaryKey GameRecordT Identity)
 deriving instance ToJSON (PrimaryKey GameRecordT Identity)
 deriving instance FromJSON (PrimaryKey GameRecordT Identity)

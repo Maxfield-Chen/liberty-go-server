@@ -48,15 +48,18 @@ getUser userId = do
   conn <- open dbFilename
   runBeamSqlite conn $ runSelectReturningOne $ lookup_ (_users lgsDb) (UserId userId)
 
--- getAwaitingGames :: Int -> IO [Int]
--- getAwaitingGames playerId =
---   do
---     conn <- opendbFilename
---     runBeamSqlite conn $
---       runSelectReturningList $
---       select $ do
---       awaiter <- all_ (_awaiters lgsDb)
---       guard_ (_)
+isPlayerAwaiter :: Int -> Int -> IO Bool
+isPlayerAwaiter playerId gameId =
+  do
+    conn <- open dbFilename
+    awaiters <- runBeamSqlite conn $
+      runSelectReturningList $
+      select $ do
+      awaiter <- all_ (_awaiters lgsDb)
+      guard_ (_awaiter_user_id awaiter ==. val_ (UserId playerId)
+             &&. _awaiter_game_id awaiter ==. val_ (GameRecordId gameId))
+      pure awaiter
+    pure (awaiters == [])
 
 --TODO: Hash password before storage
 insertUser :: Text -> Text -> Text -> IO ()

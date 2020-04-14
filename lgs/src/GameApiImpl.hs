@@ -59,30 +59,28 @@ getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
-proposeGame user proposedGame =
-  do
-    AuthValidator.proposeGame user proposedGame
-    liftIO $ insertGame proposedGame newGame
+proposeGame user proposedGame = do
+  AuthValidator.proposeGame user proposedGame
+  liftIO $ insertGame proposedGame newGame
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal user gameId shouldAccept = do
   AuthValidator.acceptGameProposal user gameId
-  liftIO $ updateGameProposal gameId shouldAccept
+  mGame <- liftIO $ updateGame (GL.updateGameProposal shouldAccept) gameId
+  pure ( mGame <&> (^. status))
 
-updatePassProposal :: Int -> Space -> Handler (Maybe GameStatus)
-updatePassProposal gameId space = do
+updatePassProposal :: UserInput.User -> Int -> Space -> Handler (Maybe GameStatus)
+updatePassProposal user gameId space = do
+  AuthValidator.updatePassProposal user gameId
   mGame <- liftIO $ updateGame (GL.proposePass space) gameId
-  case mGame of
-    Just game -> pure (Just (game ^. status))
-    Nothing   -> pure Nothing
+  pure ( mGame <&> (^. status))
 
 proposeTerritory :: Int -> Territory -> Handler (Maybe GameStatus)
 proposeTerritory gameId territory = do
   mGame <- liftIO $ updateGame (GL.proposeTerritory territory) gameId
-  case mGame of
-    Just game -> pure (Just (game ^. status))
-    Nothing   -> pure Nothing
+  pure ( mGame <&> (^. status))
 
 acceptTerritoryProposal :: Int -> Bool -> Handler (Maybe GameStatus)
-acceptTerritoryProposal gameId shouldAccept =
-  liftIO $ updateTerritoryProposal gameId shouldAccept
+acceptTerritoryProposal gameId shouldAccept = do
+  mGame <- liftIO $ updateGame (GL.updateTerritoryProposal shouldAccept) gameId
+  pure ( mGame <&> (^. status))

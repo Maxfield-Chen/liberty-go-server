@@ -61,16 +61,18 @@ isPlayerAwaiter playerId gameId =
       pure awaiter
     pure (null awaiters)
 
---TODO: Hash password before storage
-insertUser :: Text -> Text -> Text -> IO ()
-insertUser userEmail userName userPassword = do
+getGamePlayers :: Int -> IO [User]
+getGamePlayers gameId = do
   conn <- open dbFilename
-  runBeamSqlite conn $ do
-    runInsert $
-      insert
-        (_users lgsDb)
-        (insertExpressions
-           [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
+  runBeamSqlite conn $
+    runSelectReturningList $
+    select $ do
+    gameRecord <- all_ (_game_records lgsDb)
+    user <- all_ (_users lgsDb)
+    guard_ (_gameId gameRecord ==. val_ gameId
+           &&. (_black_player gameRecord `references_` user
+           ||.  _white_player gameRecord `references_` user))
+    pure user
 
 getGameRecords :: Int -> IO [GameRecord]
 getGameRecords playerId = do
@@ -82,7 +84,9 @@ getGameRecords playerId = do
       user <- all_ (_users lgsDb)
       gameRecord <- all_ (_game_records lgsDb)
       guard_
-        (_userId user ==. val_ playerId &&. (_black_player gameRecord `references_` user ||. _white_player gameRecord `references_` user))
+        (_userId user ==. val_ playerId
+         &&. (_black_player gameRecord `references_` user
+         ||.  _white_player gameRecord `references_` user))
       pure gameRecord
   pure relatedGames
 
@@ -96,6 +100,17 @@ getGameRecord gameId = do
 mPlayerIdToExpr mPlayerId = case mPlayerId of
   Just playerId -> just_ (val_ (UserId playerId))
   Nothing       -> nothing_
+
+--TODO: Hash password before storage
+insertUser :: Text -> Text -> Text -> IO ()
+insertUser userEmail userName userPassword = do
+  conn <- open dbFilename
+  runBeamSqlite conn $ do
+    runInsert $
+      insert
+        (_users lgsDb)
+        (insertExpressions
+           [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
 insertGame :: UserInput.ProposedGame -> Game -> IO ()
 insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus) game =
@@ -118,14 +133,6 @@ insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteT
                currentTimestamp_
            ])
 
-
-updateGameProposal :: Int -> Bool -> IO (Maybe GameStatus)
-updateGameProposal = updateProposal GL.updateGameProposal
-
--- TODO: Add a check which computes and saves the final score once the territory has been accepted
-updateTerritoryProposal ::  Int -> Bool -> IO (Maybe GameStatus)
-updateTerritoryProposal = updateProposal GL.updateTerritoryProposal
-
 updateGame :: (Game -> Game) -> Int -> IO (Maybe Game)
 updateGame f gameId = do
   conn <- open dbFilename
@@ -136,27 +143,4 @@ updateGame f gameId = do
         let updatedGame = f (_game gameRecord)
         runUpdate (save (_game_records lgsDb) (gameRecord {_game = updatedGame}))
         pure (Just updatedGame)
-      Nothing -> pure Nothing
-
--- TODO: Field access is beginning to get unwieldly. Convert to lenses for DB types?
-updateProposal ::
-     (Bool -> Game -> Game)
-  -> Int
-  -> Bool
-  -> IO (Maybe GameStatus)
-updateProposal updateProposal gameId shouldCount = do
-  conn <- open dbFilename
-  runBeamSqlite conn $ do
-    mGameRecord <- liftIO $ getGameRecord gameId
-    case mGameRecord of
-      Just gameRecord ->
-        let oldGame = _game gameRecord
-            oldStatus = _status oldGame
-            updatedGame = updateProposal shouldCount oldGame
-            newStatus = _status updatedGame
-         in do when
-                 (oldStatus /= newStatus)
-                 (runUpdate
-                    (save (_game_records lgsDb) (gameRecord {_game = updatedGame})))
-               pure (Just newStatus)
       Nothing -> pure Nothing

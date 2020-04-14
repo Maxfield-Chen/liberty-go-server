@@ -51,3 +51,13 @@ acceptGameProposal (UserInput.User _ name _) gameId =
         do
           invalidUser <- not <$> (liftIO $ GEX.isPlayerAwaiter (GDB._userId user) gameId)
           when invalidUser $ throwError err401
+
+updatePassProposal :: UserInput.User -> Int -> Handler ()
+updatePassProposal (UserInput.User _ name _) gameId =
+  do
+    mUser <- liftIO $ GEX.getUserViaName name
+    players <- liftIO $ GEX.getGamePlayers gameId
+    case elem <$> mUser <*> Just players of
+      Nothing    -> throwError err401
+      Just False -> throwError err401
+      _          -> pure ()

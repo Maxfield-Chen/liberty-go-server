@@ -14,24 +14,18 @@ module GameApiImpl where
 import qualified AuthValidator
 import           Control.Lens
 import           Control.Monad.Except
-import           Control.Monad.Reader
 import           Control.Monad.State
-import           Control.Monad.Trans.Except
-import qualified Data.Aeson.Parser
-import           Data.Aeson.Types
 import           Data.Maybe
-import           Data.String.Conversions
-import           Data.Text                  (Text)
+import           Data.Text            (Text)
 import           Game
-import           GameDB                     hiding (User)
+import           GameDB               hiding (User)
 import           GameExpressions
-import qualified GameLogic                  as GL
+import qualified GameLogic            as GL
 import           GHC.Generics
-import           Prelude                    ()
+import           Prelude              ()
 import           Prelude.Compat
 import           Proofs
 import           Servant
-import           Servant.Auth.Server
 import           Theory.Named
 import qualified UserInput
 
@@ -53,6 +47,8 @@ placeStone gameId pos =
         Nothing -> pure (Left NoBoard, newGame)
     Unbound -> pure (Left OutOfBounds, newGame)
 
+-- TODO: Validate that user does not already exist in DB
+-- TODO: Perform validation on regex of inputs allowed
 createNewUser :: UserInput.User -> Handler ()
 createNewUser user = liftIO $ insertUser (UserInput.userEmail user) (UserInput.userName user) (UserInput.userPassword user)
 
@@ -70,7 +66,7 @@ proposeGame user proposedGame =
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal user gameId shouldAccept = do
-  -- AuthValidator.acceptGameProposal user gameId
+  AuthValidator.acceptGameProposal user gameId
   liftIO $ updateGameProposal gameId shouldAccept
 
 updatePassProposal :: Int -> Space -> Handler (Maybe GameStatus)

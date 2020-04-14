@@ -59,7 +59,7 @@ isPlayerAwaiter playerId gameId =
       guard_ (_awaiter_user_id awaiter ==. val_ (UserId playerId)
              &&. _awaiter_game_id awaiter ==. val_ (GameRecordId gameId))
       pure awaiter
-    pure (awaiters == [])
+    pure (null awaiters)
 
 --TODO: Hash password before storage
 insertUser :: Text -> Text -> Text -> IO ()

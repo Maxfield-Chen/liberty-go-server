@@ -38,16 +38,16 @@ proposeGame (UserInput.User _ name _) (UserInput.ProposedGame bp wp bt wt _ _) =
                     (\uid t -> t || uid == GDB._userId user)
                     False
                     [bp, wp, fromMaybe (-1) bt,  fromMaybe (-1) wt]
-        when callingUserIncluded $ throwError err401
+        when (not callingUserIncluded) $ throwError err401
 
 
--- acceptGameProposal :: UserInput.User -> Int -> Handler (Maybe G.GameStatus)
--- acceptGameProposal (UserInput.User _ name _) gameId =
---   do
---     mUser <- liftIO $ GEX.getUserViaName name
---     case mUser of
---       Nothing -> throwError err401
---       Just user ->
---         do
---           userGames <- liftIO $ GEX.getGameRecords (GDB._userId user)
---           let gameBelongsToUser = filter (\gr -> GDB._userId user == _black_player gr )
+acceptGameProposal :: UserInput.User -> Int -> Handler ()
+acceptGameProposal (UserInput.User _ name _) gameId =
+  do
+    mUser <- liftIO $ GEX.getUserViaName name
+    case mUser of
+      Nothing -> throwError err401
+      Just user ->
+        do
+          invalidUser <- not <$> (liftIO $ GEX.isPlayerAwaiter (GDB._userId user) gameId)
+          when invalidUser $ throwError err401

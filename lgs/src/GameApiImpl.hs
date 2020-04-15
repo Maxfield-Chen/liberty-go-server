@@ -29,22 +29,27 @@ import           Servant
 import           Theory.Named
 import qualified UserInput
 
-
-
--- TODO: find a more graceful return type when unbound or game not found
-placeStone :: Int -> Position -> Handler ((Either MoveError Outcome),Game)
-placeStone gameId pos =
+-- TODO: Clean this up using some monadic binds or other handling.
+-- Clear triangle of doom :(
+placeStone :: UserInput.User -> Int -> Position -> Handler ((Either MoveError Outcome),Game)
+placeStone user gameId pos = do
+  AuthValidator.placeStone user gameId
   name pos $ \case
     Bound pos -> do
       mGameRecord <- liftIO $ getGameRecord gameId
-      case mGameRecord of
-        Just gameRecord ->
-          let ret@(_, game) =
-                runState
-                  (runExceptT (GL.placeStone pos))
-                  (_game gameRecord)
-           in liftIO $ updateGame (const game) gameId >> pure ret
-        Nothing -> pure (Left NoBoard, newGame)
+      mPlayerColor <- liftIO $ getPlayerColor user gameId
+      let mPlaceStone = GL.placeStone <$> mPlayerColor <*> Just pos
+      case mPlaceStone of
+        Just placeStone ->
+          case mGameRecord of
+            Just gameRecord ->
+              let ret@(_, game) =
+                    runState
+                      (runExceptT placeStone)
+                      (_game gameRecord)
+              in liftIO $ updateGame (const game) gameId >> pure ret
+            Nothing -> pure (Left NoBoard, newGame)
+        Nothing -> pure (Left IllegalPlayer, newGame)
     Unbound -> pure (Left OutOfBounds, newGame)
 
 -- TODO: Validate that user does not already exist in DB
@@ -85,7 +90,7 @@ acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameS
 acceptTerritoryProposal user gameId shouldAccept = do
   AuthValidator.acceptTerritoryProposal user gameId
   mPlayerColor <- liftIO $ getPlayerColor user gameId
-  let mUpdateState = (GL.acceptTerritoryProposal <$> mPlayerColor <*> Just shouldAccept)
+  let mUpdateState = GL.acceptTerritoryProposal <$> mPlayerColor <*> Just shouldAccept
   case mUpdateState of
     Nothing -> pure Nothing
     Just updateState -> do

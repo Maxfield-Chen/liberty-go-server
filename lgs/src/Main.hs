@@ -83,7 +83,7 @@ gameOperations user gameId =
   proposePass user gameId :<|>
   proposeTerritory user gameId :<|>
   acceptTerritoryProposal user gameId :<|>
-  placeStone gameId
+  placeStone user gameId
 
 
 type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|> Unprotected

@@ -26,6 +26,10 @@ import           Servant.Server
 import           Theory.Named
 import qualified UserInput
 
+
+placeStone :: UserInput.User -> Int -> Handler ()
+placeStone = errPlayerExcluded
+
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
 proposeGame (UserInput.User _ name _) (UserInput.ProposedGame bp wp bt wt _ _) =
   do

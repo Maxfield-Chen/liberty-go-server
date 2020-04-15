@@ -81,7 +81,7 @@ protected (Servant.Auth.Server.Authenticated user) =
 gameOperations user gameId =
   acceptGameProposal user gameId :<|>
   updatePassProposal user gameId :<|>
-  proposeTerritory gameId :<|>
+  proposeTerritory user gameId :<|>
   acceptTerritoryProposal gameId :<|>
   placeStone gameId
 

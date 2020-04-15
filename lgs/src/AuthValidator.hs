@@ -40,7 +40,6 @@ proposeGame (UserInput.User _ name _) (UserInput.ProposedGame bp wp bt wt _ _) =
                     [bp, wp, fromMaybe (-1) bt,  fromMaybe (-1) wt]
         when (not callingUserIncluded) $ throwError err401
 
-
 acceptGameProposal :: UserInput.User -> Int -> Handler ()
 acceptGameProposal (UserInput.User _ name _) gameId =
   do
@@ -53,7 +52,13 @@ acceptGameProposal (UserInput.User _ name _) gameId =
           when invalidUser $ throwError err401
 
 updatePassProposal :: UserInput.User -> Int -> Handler ()
-updatePassProposal (UserInput.User _ name _) gameId =
+updatePassProposal = errPlayerExcluded
+
+proposeTerritory :: UserInput.User -> Int -> Handler ()
+proposeTerritory = errPlayerExcluded
+
+errPlayerExcluded :: UserInput.User -> Int -> Handler ()
+errPlayerExcluded (UserInput.User _ name _) gameId =
   do
     mUser <- liftIO $ GEX.getUserViaName name
     players <- liftIO $ GEX.getGamePlayers gameId

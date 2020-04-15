@@ -75,8 +75,9 @@ updatePassProposal user gameId space = do
   mGame <- liftIO $ updateGame (GL.proposePass space) gameId
   pure ( mGame <&> (^. status))
 
-proposeTerritory :: Int -> Territory -> Handler (Maybe GameStatus)
-proposeTerritory gameId territory = do
+proposeTerritory :: UserInput.User -> Int -> Territory -> Handler (Maybe GameStatus)
+proposeTerritory user gameId territory = do
+  AuthValidator.proposeTerritory user gameId
   mGame <- liftIO $ updateGame (GL.proposeTerritory territory) gameId
   pure ( mGame <&> (^. status))
 

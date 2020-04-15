@@ -18,7 +18,7 @@ import           Control.Monad.State
 import           Data.Maybe
 import           Data.Text            (Text)
 import           Game
-import           GameDB               hiding (User)
+import           GameDB
 import           GameExpressions
 import qualified GameLogic            as GL
 import           GHC.Generics
@@ -69,9 +69,9 @@ acceptGameProposal user gameId shouldAccept = do
   mGame <- liftIO $ updateGame (GL.updateGameProposal shouldAccept) gameId
   pure ( mGame <&> (^. status))
 
-updatePassProposal :: UserInput.User -> Int -> Space -> Handler (Maybe GameStatus)
-updatePassProposal user gameId space = do
-  AuthValidator.updatePassProposal user gameId
+proposePass :: UserInput.User -> Int -> Space -> Handler (Maybe GameStatus)
+proposePass user gameId space = do
+  AuthValidator.proposePass user gameId
   mGame <- liftIO $ updateGame (GL.proposePass space) gameId
   pure ( mGame <&> (^. status))
 
@@ -81,7 +81,13 @@ proposeTerritory user gameId territory = do
   mGame <- liftIO $ updateGame (GL.proposeTerritory territory) gameId
   pure ( mGame <&> (^. status))
 
-acceptTerritoryProposal :: Int -> Bool -> Handler (Maybe GameStatus)
-acceptTerritoryProposal gameId shouldAccept = do
-  mGame <- liftIO $ updateGame (GL.updateTerritoryProposal shouldAccept) gameId
-  pure ( mGame <&> (^. status))
+acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
+acceptTerritoryProposal user gameId shouldAccept = do
+  AuthValidator.acceptTerritoryProposal user gameId
+  mPlayerColor <- liftIO $ getPlayerColor user gameId
+  let mUpdateState = (GL.acceptTerritoryProposal <$> mPlayerColor <*> Just shouldAccept)
+  case mUpdateState of
+    Nothing -> pure Nothing
+    Just updateState -> do
+      mGame <- liftIO $ updateGame updateState gameId
+      pure (mGame <&> (^. status))

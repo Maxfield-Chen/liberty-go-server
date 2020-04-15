@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE StandaloneDeriving    #-}
@@ -10,6 +11,7 @@
 
 module GameExpressions where
 
+import           Control.Lens           ((<&>))
 import           Control.Monad
 import           Data.Text              (Text)
 import qualified Data.Time              as Time
@@ -74,6 +76,34 @@ getGamePlayers gameId = do
            ||.  _white_player gameRecord `references_` user))
     pure user
 
+getBlackPlayer :: Int -> IO (Maybe User)
+getBlackPlayer gameId = referenceSingleUser _black_player gameId
+
+getWhitePlayer :: Int -> IO (Maybe User)
+getWhitePlayer gameId = referenceSingleUser _white_player gameId
+
+getPlayerColor :: UserInput.User -> Int -> IO (Maybe Space)
+getPlayerColor (UserInput.User _ name _) gameId = do
+  mPlayer <- getUserViaName name
+  mBlackPlayer <- getBlackPlayer gameId
+  mWhitePlayer <- getWhitePlayer gameId
+  pure $
+    (==) <$> mPlayer <*> mBlackPlayer
+    >>= (\case
+            True -> Just Black
+            False -> Just White)
+
+referenceSingleUser f gameId = do
+  conn <- open dbFilename
+  runBeamSqlite conn $
+    runSelectReturningOne $
+    select $ do
+    gameRecord <- all_ (_game_records lgsDb)
+    user <- all_ (_users lgsDb)
+    guard_ (_gameId gameRecord ==. val_ gameId
+           &&. f gameRecord `references_` user)
+    pure user
+
 getGameRecords :: Int -> IO [GameRecord]
 getGameRecords playerId = do
   conn <- open dbFilename
@@ -93,9 +123,7 @@ getGameRecords playerId = do
 getGameRecord :: Int -> IO (Maybe GameRecord)
 getGameRecord gameId = do
   conn <- open dbFilename
-  runBeamSqlite conn $ do
-    mGame <- runSelectReturningOne $ lookup_ (_game_records lgsDb) (GameRecordId gameId)
-    pure mGame
+  runBeamSqlite conn $ runSelectReturningOne $ lookup_ (_game_records lgsDb) (GameRecordId gameId)
 
 mPlayerIdToExpr mPlayerId = case mPlayerId of
   Just playerId -> just_ (val_ (UserId playerId))

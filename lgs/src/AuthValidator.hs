@@ -51,11 +51,14 @@ acceptGameProposal (UserInput.User _ name _) gameId =
           invalidUser <- not <$> (liftIO $ GEX.isPlayerAwaiter (GDB._userId user) gameId)
           when invalidUser $ throwError err401
 
-updatePassProposal :: UserInput.User -> Int -> Handler ()
-updatePassProposal = errPlayerExcluded
+proposePass :: UserInput.User -> Int -> Handler ()
+proposePass = errPlayerExcluded
 
 proposeTerritory :: UserInput.User -> Int -> Handler ()
 proposeTerritory = errPlayerExcluded
+
+acceptTerritoryProposal :: UserInput.User -> Int -> Handler ()
+acceptTerritoryProposal = errPlayerExcluded
 
 errPlayerExcluded :: UserInput.User -> Int -> Handler ()
 errPlayerExcluded (UserInput.User _ name _) gameId =

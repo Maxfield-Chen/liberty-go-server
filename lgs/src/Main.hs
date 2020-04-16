@@ -16,7 +16,7 @@ import           Data.Aeson                          (FromJSON, ToJSON)
 import           Data.Text                           (Text)
 import           Game
 import           GameApiImpl
-import           GameDB                              hiding (User)
+import           GameDB
 import           GameExpressions
 import           GHC.Generics                        (Generic)
 import           Network.HTTP.Media                  ((//), (/:))
@@ -74,6 +74,9 @@ protected (Servant.Auth.Server.Authenticated user) =
   proposeGame user  :<|>
   gameOperations user
 
+protected Servant.Auth.Server.BadPassword = throwAll err401
+protected Servant.Auth.Server.NoSuchUser = throwAll err404
+protected Servant.Auth.Server.Indefinite = throwAll err300
 
 gameOperations user gameId =
   acceptGameProposal user gameId :<|>
@@ -88,14 +91,26 @@ type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|>
 server :: CookieSettings -> JWTSettings -> Server (API auths)
 server cookieSettings jwtSettings = protected :<|> unprotected cookieSettings jwtSettings
 
+cookieSettings :: CookieSettings
+cookieSettings = CookieSettings
+    { cookieIsSecure    = NotSecure
+    , cookieMaxAge      = Nothing
+    , cookieExpires     = Nothing
+    , cookiePath        = Just "/"
+    , cookieSameSite    = AnySite
+    , sessionCookieName = "JWT-Cookie"
+    , cookieXsrfSetting = Nothing
+    }
+
+
 main :: IO ()
 main = do
   --TODO: Persist this key somewhere (DB?)
   signingKey <- generateKey
   let jwtCfg = defaultJWTSettings signingKey
-      cfg = defaultCookieSettings :. jwtCfg :. EmptyContext
-      api = Proxy :: Proxy (API '[Cookie])
-  run 8888 $ serveWithContext api cfg (server defaultCookieSettings jwtCfg)
+      cfg = cookieSettings :. jwtCfg :. EmptyContext
+      api = Proxy :: Proxy (API '[JWT,Cookie])
+  run 8888 $ serveWithContext api cfg (server cookieSettings jwtCfg)
 
 --TODO: Hash password before lookup
 checkCreds :: CookieSettings
@@ -104,12 +119,12 @@ checkCreds :: CookieSettings
            -> Handler (Headers '[ Header "Set-Cookie" SetCookie
                                 , Header "Set-Cookie" SetCookie]
                                 NoContent)
-checkCreds cookieSettings jwtSettings (UserInput.Login name pass) = do
+checkCreds cookieSettings jwtSettings userInput@(UserInput.Login name pass) = do
   mUser <- liftIO $ getUserViaCreds name pass
   case mUser of
     Nothing -> throwError err401
-    Just user -> do
-      mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings user
+    Just (User _ email name hash) -> do
+      mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings (UserInput.User email name "")
       case mApplyCookies of
         Nothing           -> throwError err401
         Just applyCookies -> pure $ applyCookies NoContent

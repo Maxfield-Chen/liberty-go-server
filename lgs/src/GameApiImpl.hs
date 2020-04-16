@@ -65,8 +65,11 @@ getGameId = liftIO . getGameRecord
 getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
+--TODO: Validate that all proposed users exist
+--TODO: Validate that all proposed users are unique
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
 proposeGame user proposedGame = do
+  liftIO $ print "Inside proposeGame"
   AuthValidator.proposeGame user proposedGame
   liftIO $ insertGame proposedGame newGame
 

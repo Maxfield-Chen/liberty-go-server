@@ -52,10 +52,12 @@ placeStone user gameId pos = do
         Nothing -> pure (Left IllegalPlayer, newGame)
     Unbound -> pure (Left OutOfBounds, newGame)
 
--- TODO: Validate that user does not already exist in DB
 -- TODO: Perform validation on regex of inputs allowed
 createNewUser :: UserInput.User -> Handler ()
-createNewUser user = liftIO $ insertUser (UserInput.userEmail user) (UserInput.userName user) (UserInput.userPassword user)
+createNewUser (UserInput.User email name password) = do
+  mUser <- liftIO $ getUserViaName name
+  when (isJust mUser) (throwError err401)
+  liftIO $ insertUser email name password
 
 getGameId :: Int -> Handler (Maybe GameRecord)
 getGameId = liftIO . getGameRecord

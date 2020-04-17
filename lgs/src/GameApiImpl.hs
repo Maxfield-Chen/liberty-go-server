@@ -15,6 +15,7 @@ import qualified AuthValidator
 import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.State
+import           Data.List            (nub)
 import           Data.Maybe
 import           Data.Text            (Text)
 import           Game
@@ -56,7 +57,7 @@ placeStone user gameId pos = do
 createNewUser :: UserInput.User -> Handler ()
 createNewUser (UserInput.User email name password) = do
   mUser <- liftIO $ getUserViaName name
-  when (isJust mUser) (throwError err401)
+  when (isJust mUser) (throwError err409)
   liftIO $ insertUser email name password
 
 getGameId :: Int -> Handler (Maybe GameRecord)
@@ -68,8 +69,14 @@ getGamesForPlayer = liftIO . getGameRecords
 --TODO: Validate that all proposed users exist
 --TODO: Validate that all proposed users are unique
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
-proposeGame user proposedGame = do
+proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   AuthValidator.proposeGame user proposedGame
+  let gameUsers = [bp
+                  ,wp
+                  ,fromMaybe (-1) mbt
+                  ,fromMaybe (-2) mwt]
+  when (nub gameUsers /= gameUsers) (throwError $
+                                     err406 {errBody = "All proposed users must be unique."})
   liftIO $ insertGame proposedGame newGame
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)

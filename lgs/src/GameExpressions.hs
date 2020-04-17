@@ -67,7 +67,9 @@ getAwaiters gameId = do
     runSelectReturningList $
     select $ do
     awaiter <- all_ (_awaiters (lgsDb))
-    guard (_awaiter_game_id awaiter ==. val_ (GameRecordId gameId))
+    gameRecord <- all_ (_game_records (lgsDb))
+    guard_ (_gameId gameRecord ==. val_ gameId
+           &&. _awaiter_game_id awaiter `references_` gameRecord)
     pure awaiter
 
 getGamePlayers :: Int -> IO [User]

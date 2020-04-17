@@ -86,17 +86,22 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
   AuthValidator.acceptGameProposal user gameId
-  --fromJust on mUser checked by auth validator above
+
   mUser <- liftIO $ getUserViaName name
-  when (isJust mGame && isJust mUser)
-       ((liftIO . (deleteAwaiter gameId) . _userId . fromJust) mUser)
+  --fromJust on mUser checked by auth validator above
+  (liftIO . (deleteAwaiter gameId) . _userId . fromJust) mUser
   awaiters <- liftIO $ getAwaiters gameId
+
   --Only update proposal once all players have accepted
-  when (null awaiters && shouldAccept)
-       (liftIO $ updateGame (GL.updateGameProposal True) gameId)
-  --TODO: clean up remaining awaiters when game is rejected
-  when (not shouldAccept) (liftIO $ updateGame (GL.updateGameProposal False) gameId)
-  pure ( mGame <&> (^. status))
+  case (null awaiters, shouldAccept) of
+    (True, True) -> do
+      mGame <- liftIO $ updateGame (GL.updateGameProposal True) gameId
+      pure (mGame <&> (^. status))
+    (False, True) -> pure (Just GameProposed)
+    (_, False)   -> do
+      --TODO: Clean up remaining awaiters here.
+      mGame <- liftIO $ updateGame (GL.updateGameProposal False) gameId
+      pure (mGame <&> (^. status))
 
 proposePass :: UserInput.User -> Int -> Space -> Handler (Maybe GameStatus)
 proposePass user gameId space = do

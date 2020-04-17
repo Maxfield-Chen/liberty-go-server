@@ -75,8 +75,8 @@ protected (Servant.Auth.Server.Authenticated user) =
   gameOperations user
 
 protected Servant.Auth.Server.BadPassword = throwAll err401
-protected Servant.Auth.Server.NoSuchUser = throwAll err404
-protected Servant.Auth.Server.Indefinite = throwAll err300
+protected Servant.Auth.Server.NoSuchUser = throwAll err410
+protected Servant.Auth.Server.Indefinite = throwAll err406
 
 gameOperations user gameId =
   acceptGameProposal user gameId :<|>

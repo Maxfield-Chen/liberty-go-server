@@ -35,7 +35,7 @@ proposeGame (UserInput.User _ name _) (UserInput.ProposedGame bp wp bt wt _ _) =
   do
     mUser <- liftIO $ GEX.getUserViaName name
     case mUser of
-      Nothing -> throwError err401
+      Nothing -> throwError err410
       Just user -> do
         let callingUserIncluded =
               foldr

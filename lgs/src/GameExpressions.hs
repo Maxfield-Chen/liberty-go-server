@@ -60,6 +60,16 @@ isPlayerAwaiter playerId gameId =
       pure awaiter
     pure (null awaiters)
 
+getAwaiters :: Int -> IO [Awaiter]
+getAwaiters gameId = do
+  conn <- open dbFilename
+  runBeamSqlite conn $
+    runSelectReturningList $
+    select $ do
+    awaiter <- all_ (_awaiters (lgsDb))
+    guard (_awaiter_game_id awaiter ==. val_ (GameRecordId gameId))
+    pure awaiter
+
 getGamePlayers :: Int -> IO [User]
 getGamePlayers gameId = do
   conn <- open dbFilename
@@ -127,23 +137,33 @@ mPlayerIdToExpr mPlayerId = case mPlayerId of
   Nothing       -> nothing_
 
 --TODO: Hash password before storage
-insertUser :: Text -> Text -> Text -> IO ()
+insertUser :: Text -> Text -> Text -> IO [User]
 insertUser userEmail userName userPassword = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
-    runInsert $
-      insert
+    runInsertReturningList $
+      insertReturning
         (_users lgsDb)
         (insertExpressions
            [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
-insertGame :: UserInput.ProposedGame -> Game -> IO ()
+insertAwaiter :: Int -> Int -> IO [Awaiter]
+insertAwaiter gameId userId = do
+  conn <- open dbFilename
+  runBeamSqlite conn $ do
+    runInsertReturningList $
+      insertReturning
+      (_awaiters lgsDb)
+      (insertExpressions
+        [Awaiter default_ (val_ (UserId userId )) (val_ (GameRecordId gameId ))])
+
+insertGame :: UserInput.ProposedGame -> Game -> IO [GameRecord]
 insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus) game =
   do
   conn <- open dbFilename
   runBeamSqlite conn $ do
-    runInsert $
-      insert
+    runInsertReturningList $
+      insertReturning
         (_game_records lgsDb)
         (insertExpressions
            [ GameRecord
@@ -169,3 +189,12 @@ updateGame f gameId = do
         runUpdate (save (_game_records lgsDb) (gameRecord {_game = updatedGame}))
         pure (Just updatedGame)
       Nothing -> pure Nothing
+
+deleteAwaiter :: Int -> Int -> IO ()
+deleteAwaiter gameId playerId  = do
+  conn <- open dbFilename
+  runBeamSqlite conn $ do
+    runDelete $
+      delete (_awaiters lgsDb)
+             (\awaiter -> _awaiter_user_id awaiter ==. val_ (UserId playerId)
+             &&. _awaiter_game_id awaiter ==. val_ (GameRecordId gameId ))

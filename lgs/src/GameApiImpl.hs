@@ -59,6 +59,7 @@ createNewUser (UserInput.User email name password) = do
   mUser <- liftIO $ getUserViaName name
   when (isJust mUser) (throwError err409)
   liftIO $ insertUser email name password
+  pure ()
 
 getGameId :: Int -> Handler (Maybe GameRecord)
 getGameId = liftIO . getGameRecord
@@ -66,23 +67,35 @@ getGameId = liftIO . getGameRecord
 getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
---TODO: Validate that all proposed users exist
---TODO: Validate that all proposed users are unique
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   AuthValidator.proposeGame user proposedGame
-  let gameUsers = [bp
-                  ,wp
-                  ,fromMaybe (-1) mbt
-                  ,fromMaybe (-2) mwt]
+  let gameUsers = catMaybes
+                  [Just bp
+                  ,Just wp
+                  ,mbt
+                  ,mwt]
+  mUsers <- mapM (liftIO . getUser) gameUsers
   when (nub gameUsers /= gameUsers) (throwError $
                                      err406 {errBody = "All proposed users must be unique."})
-  liftIO $ insertGame proposedGame newGame
+  when (elem Nothing mUsers) (throwError $ err400 {errBody = "All proposed users must exist."})
+  gameRecord:_ <- liftIO $ insertGame proposedGame newGame
+  mapM (liftIO . (insertAwaiter (_gameId gameRecord)) . _userId) (catMaybes mUsers)
+  pure ()
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
-acceptGameProposal user gameId shouldAccept = do
+acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
   AuthValidator.acceptGameProposal user gameId
-  mGame <- liftIO $ updateGame (GL.updateGameProposal shouldAccept) gameId
+  --fromJust on mUser checked by auth validator above
+  mUser <- liftIO $ getUserViaName name
+  when (isJust mGame && isJust mUser)
+       ((liftIO . (deleteAwaiter gameId) . _userId . fromJust) mUser)
+  awaiters <- liftIO $ getAwaiters gameId
+  --Only update proposal once all players have accepted
+  when (null awaiters && shouldAccept)
+       (liftIO $ updateGame (GL.updateGameProposal True) gameId)
+  --TODO: clean up remaining awaiters when game is rejected
+  when (not shouldAccept) (liftIO $ updateGame (GL.updateGameProposal False) gameId)
   pure ( mGame <&> (^. status))
 
 proposePass :: UserInput.User -> Int -> Space -> Handler (Maybe GameStatus)

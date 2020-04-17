@@ -49,7 +49,7 @@ acceptGameProposal (UserInput.User _ name _) gameId =
   do
     mUser <- liftIO $ GEX.getUserViaName name
     case mUser of
-      Nothing -> throwError err401
+      Nothing -> throwError err410
       Just user ->
         do
           invalidUser <- not <$> (liftIO $ GEX.isPlayerAwaiter (GDB._userId user) gameId)
@@ -70,6 +70,6 @@ errPlayerExcluded (UserInput.User _ name _) gameId =
     mUser <- liftIO $ GEX.getUserViaName name
     players <- liftIO $ GEX.getGamePlayers gameId
     case elem <$> mUser <*> Just players of
-      Nothing    -> throwError err401
+      Nothing    -> throwError err410
       Just False -> throwError err401
       _          -> pure ()

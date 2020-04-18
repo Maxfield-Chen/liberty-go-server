@@ -1,12 +1,9 @@
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 
 module GameApiImpl where
@@ -22,7 +19,6 @@ import           Game
 import           GameDB
 import           GameExpressions
 import qualified GameLogic            as GL
-import           GHC.Generics
 import           Prelude              ()
 import           Prelude.Compat
 import           Proofs
@@ -58,7 +54,7 @@ createNewUser :: UserInput.User -> Handler ()
 createNewUser (UserInput.User email name password) = do
   mUser <- liftIO $ getUserViaName name
   when (isJust mUser) (throwError err409)
-  liftIO $ insertUser email name password
+  _ <- liftIO $ insertUser email name password
   pure ()
 
 getGameId :: Int -> Handler (Maybe GameRecord)
@@ -78,9 +74,9 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   mUsers <- mapM (liftIO . getUser) gameUsers
   when (nub gameUsers /= gameUsers) (throwError $
                                      err406 {errBody = "All proposed users must be unique."})
-  when (elem Nothing mUsers) (throwError $ err400 {errBody = "All proposed users must exist."})
+  when (Nothing `elem` mUsers) (throwError $ err400 {errBody = "All proposed users must exist."})
   gameRecord:_ <- liftIO $ insertGame proposedGame newGame
-  mapM (liftIO . (insertAwaiter (_gameId gameRecord)) . _userId) (catMaybes mUsers)
+  mapM_ (liftIO . insertAwaiter (_gameId gameRecord) . _userId) (catMaybes mUsers)
   pure ()
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
@@ -89,7 +85,7 @@ acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
 
   mUser <- liftIO $ getUserViaName name
   --fromJust on mUser checked by auth validator above
-  (liftIO . (deleteAwaiter gameId) . _userId . fromJust) mUser
+  (liftIO . deleteAwaiter gameId . _userId . fromJust) mUser
   awaiters <- liftIO $ getAwaiters gameId
 
   --Only update proposal once all players have accepted

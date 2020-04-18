@@ -18,8 +18,6 @@ import           Game
 import           GameApiImpl
 import           GameDB
 import           GameExpressions
-import           GHC.Generics                        (Generic)
-import           Network.HTTP.Media                  ((//), (/:))
 import           Network.Wai.Handler.Warp            (run)
 import           Servant
 import           Servant.Auth.Server
@@ -119,11 +117,11 @@ checkCreds :: CookieSettings
            -> Handler (Headers '[ Header "Set-Cookie" SetCookie
                                 , Header "Set-Cookie" SetCookie]
                                 NoContent)
-checkCreds cookieSettings jwtSettings userInput@(UserInput.Login name pass) = do
+checkCreds cookieSettings jwtSettings (UserInput.Login name pass) = do
   mUser <- liftIO $ getUserViaCreds name pass
   case mUser of
     Nothing -> throwError err401
-    Just (User _ email name hash) -> do
+    Just (User _ email name _) -> do
       mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings (UserInput.User email name "")
       case mApplyCookies of
         Nothing           -> throwError err401

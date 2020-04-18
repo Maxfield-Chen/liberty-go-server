@@ -58,7 +58,7 @@ isPlayerAwaiter playerId gameId =
       guard_ (_awaiter_user_id awaiter ==. val_ (UserId playerId)
              &&. _awaiter_game_id awaiter ==. val_ (GameRecordId gameId))
       pure awaiter
-    pure (null awaiters)
+    pure (not $ null awaiters)
 
 getAwaiters :: Int -> IO [Awaiter]
 getAwaiters gameId = do

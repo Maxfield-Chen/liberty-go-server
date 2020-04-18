@@ -52,7 +52,7 @@ acceptGameProposal (UserInput.User _ name _) gameId =
       Nothing -> throwError err410
       Just user ->
         do
-          invalidUser <- not <$> (liftIO $ GEX.isPlayerAwaiter (GDB._userId user) gameId)
+          invalidUser <- not <$> liftIO  (GEX.isPlayerAwaiter (GDB._userId user) gameId)
           when invalidUser $ throwError err401
 
 proposePass :: UserInput.User -> Int -> Handler ()

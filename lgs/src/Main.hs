@@ -42,13 +42,12 @@ type Unprotected = "users" :> "register"
 
 type GameAPI = "play" :> "proposeGame"
                 :> ReqBody '[JSON] UserInput.ProposedGame
-                :> Post '[JSON] ()
+                :> Post '[JSON] GameRecord
 
               :<|> "play" :> Capture "gameId" Int :>
                 ("acceptGameProposal" :> ReqBody '[JSON] Bool
                                      :> Post '[JSON] (Maybe GameStatus)
                 :<|> "pass"
-                  :> ReqBody '[JSON] Space
                   :> Put '[JSON] (Maybe GameStatus)
 
                 :<|> "proposeTerritory" :> ReqBody '[JSON] Territory

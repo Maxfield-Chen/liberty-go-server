@@ -54,7 +54,7 @@ createNewUser :: UserInput.User -> Handler ()
 createNewUser (UserInput.User email name password) = do
   mUser <- liftIO $ getUserViaName name
   when (isJust mUser) (throwError err409)
-  _ <- liftIO $ insertUser email name password
+  liftIO $ insertUser email name password
   pure ()
 
 getGameId :: Int -> Handler (Maybe GameRecord)
@@ -63,7 +63,7 @@ getGameId = liftIO . getGameRecord
 getGamesForPlayer :: Int -> Handler [GameRecord]
 getGamesForPlayer = liftIO . getGameRecords
 
-proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
+proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler GameRecord
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   AuthValidator.proposeGame user proposedGame
   let gameUsers = catMaybes
@@ -77,7 +77,7 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   when (Nothing `elem` mUsers) (throwError $ err400 {errBody = "All proposed users must exist."})
   gameRecord:_ <- liftIO $ insertGame proposedGame newGame
   mapM_ (liftIO . insertAwaiter (_gameId gameRecord) . _userId) (catMaybes mUsers)
-  pure ()
+  pure gameRecord
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
@@ -99,17 +99,28 @@ acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
       mGame <- liftIO $ updateGame (GL.updateGameProposal False) gameId
       pure (mGame <&> (^. status))
 
-proposePass :: UserInput.User -> Int -> Space -> Handler (Maybe GameStatus)
-proposePass user gameId space = do
+proposePass :: UserInput.User -> Int -> Handler (Maybe GameStatus)
+proposePass user gameId = do
   AuthValidator.proposePass user gameId
-  mGame <- liftIO $ updateGame (GL.proposePass space) gameId
-  pure ( mGame <&> (^. status))
+  mSpace <- liftIO $ getPlayerColor user gameId
+  case mSpace of
+    Nothing -> throwError err410
+    Just space -> do
+      mGame <- liftIO $ updateGame (GL.proposePass space) gameId
+      pure ( mGame <&> (^. status))
 
 proposeTerritory :: UserInput.User -> Int -> Territory -> Handler (Maybe GameStatus)
 proposeTerritory user gameId territory = do
   AuthValidator.proposeTerritory user gameId
-  mGame <- liftIO $ updateGame (GL.proposeTerritory territory) gameId
-  pure ( mGame <&> (^. status))
+  mPlayerColor <- liftIO $ getPlayerColor user gameId
+  let mProposedColor = mPlayerColor
+  case mProposedColor of
+    Nothing -> throwError err410
+    Just proposedColor -> do
+      mGame <- liftIO $ updateGame
+        (GL.proposeTerritory territory proposedColor)
+        gameId
+      pure (mGame <&> (^. status))
 
 acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe GameStatus)
 acceptTerritoryProposal user gameId shouldAccept = do

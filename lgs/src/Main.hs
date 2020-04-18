@@ -88,6 +88,7 @@ type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|>
 server :: CookieSettings -> JWTSettings -> Server (API auths)
 server cookieSettings jwtSettings = protected :<|> unprotected cookieSettings jwtSettings
 
+--TODO: Change this to production settings.
 cookieSettings :: CookieSettings
 cookieSettings = CookieSettings
     { cookieIsSecure    = NotSecure

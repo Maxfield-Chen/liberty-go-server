@@ -42,6 +42,7 @@ deriving instance Show (PrimaryKey UserT (Nullable Identity))
 deriving instance ToJSON (PrimaryKey UserT Identity)
 deriving instance ToJSON (PrimaryKey UserT (Nullable Identity))
 deriving instance FromJSON (PrimaryKey UserT Identity)
+deriving instance FromJSON (PrimaryKey UserT (Nullable Identity))
 
 instance Table UserT where
   data PrimaryKey UserT f = UserId (Columnar f Int) deriving (Generic, Beamable)
@@ -85,6 +86,7 @@ data GameRecordT f
 type GameRecord = GameRecordT Identity
 deriving instance Show GameRecord
 deriving instance ToJSON GameRecord
+deriving instance FromJSON GameRecord
 deriving instance Eq (PrimaryKey GameRecordT Identity)
 deriving instance Show (PrimaryKey GameRecordT Identity)
 deriving instance ToJSON (PrimaryKey GameRecordT Identity)

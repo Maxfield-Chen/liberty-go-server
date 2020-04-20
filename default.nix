@@ -20,6 +20,7 @@ reflex-platform.project ({ pkgs, ... }: rec {
       self.callPackage ./nix/gdp.nix { };
     lgl =
       self.callPackage ./nix/lgl.nix { };
+    servant-reflex = self.callPackage ./nix/servant-reflex.nix {};
   };
 
    shellToolOverrides = ghc: super: {

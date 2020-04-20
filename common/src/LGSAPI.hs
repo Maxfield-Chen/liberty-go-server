@@ -8,6 +8,7 @@
 
 module LGSAPI where
 
+import           Data.Proxy
 import qualified Game                                as G
 import qualified GameDB                              as GDB
 import           Servant.API
@@ -51,3 +52,8 @@ type GameAPI = "play" :> "proposeGame"
                                   :> Put '[JSON] (Either G.MoveError G.Outcome,G.Game))
 
 type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|> Unprotected
+
+unprotectedAPI :: Proxy Unprotected
+unprotectedAPI = Proxy
+lgsAPI :: Proxy (API '[JWT,Cookie])
+lgsAPI = Proxy

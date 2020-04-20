@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 
 library
   ghc-options:         -Wall -O2
-  exposed-modules:     LGSAPI, UserInput
+  exposed-modules:     LGSAPI, UserInput, GameDB
   -- other-extensions:
   build-depends:       base >=4.9 && <4.13
                       ,aeson

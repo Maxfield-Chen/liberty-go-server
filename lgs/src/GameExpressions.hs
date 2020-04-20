@@ -15,37 +15,38 @@ import qualified Data.Time              as Time
 import           Database.Beam
 import           Database.Beam.Sqlite
 import           Database.SQLite.Simple
-import           Game
-import           GameDB
+import qualified Game                   as G
+import           GameDB                 (lgsDb)
+import qualified GameDB                 as GDB
 import qualified GameLogic              as GL
 import qualified UserInput
 
 dbFilename = "LGS.db"
 
-getUserViaCreds :: Text -> Text -> IO (Maybe User)
+getUserViaCreds :: Text -> Text -> IO (Maybe GDB.User)
 getUserViaCreds name pass = do
   conn <- open dbFilename
   runBeamSqlite conn $
     runSelectReturningOne $
     select $ do
-      user <- all_ (_users lgsDb)
-      guard_ (_userName user ==. val_ name &&._userPasswordHash user ==. val_ pass)
+      user <- all_ (GDB._users lgsDb)
+      guard_ (GDB._userName user ==. val_ name &&. GDB._userPasswordHash user ==. val_ pass)
       pure user
 
-getUserViaName :: Text -> IO (Maybe User)
+getUserViaName :: Text -> IO (Maybe GDB.User)
 getUserViaName name = do
   conn <- open dbFilename
   runBeamSqlite conn $
     runSelectReturningOne $
     select $ do
-      user <- all_ (_users lgsDb)
-      guard_ (_userName user ==. val_ name)
+      user <- all_ (GDB._users lgsDb)
+      guard_ (GDB._userName user ==. val_ name)
       pure user
 
-getUser :: Int -> IO (Maybe User)
+getUser :: Int -> IO (Maybe GDB.User)
 getUser userId = do
   conn <- open dbFilename
-  runBeamSqlite conn $ runSelectReturningOne $ lookup_ (_users lgsDb) (UserId userId)
+  runBeamSqlite conn $ runSelectReturningOne $ lookup_ (GDB._users lgsDb) (GDB.UserId userId)
 
 isPlayerAwaiter :: Int -> Int -> IO Bool
 isPlayerAwaiter playerId gameId =
@@ -54,44 +55,44 @@ isPlayerAwaiter playerId gameId =
     awaiters <- runBeamSqlite conn $
       runSelectReturningList $
       select $ do
-      awaiter <- all_ (_awaiters lgsDb)
-      guard_ (_awaiter_user_id awaiter ==. val_ (UserId playerId)
-             &&. _awaiter_game_id awaiter ==. val_ (GameRecordId gameId))
+      awaiter <- all_ (GDB._awaiters lgsDb)
+      guard_ (GDB._awaiter_user_id awaiter ==. val_ (GDB.UserId playerId)
+             &&. GDB._awaiter_game_id awaiter ==. val_ (GDB.GameRecordId gameId))
       pure awaiter
     pure (not $ null awaiters)
 
-getAwaiters :: Int -> IO [Awaiter]
+getAwaiters :: Int -> IO [GDB.Awaiter]
 getAwaiters gameId = do
   conn <- open dbFilename
   runBeamSqlite conn $
     runSelectReturningList $
     select $ do
-    awaiter <- all_ (_awaiters (lgsDb))
-    gameRecord <- all_ (_game_records (lgsDb))
-    guard_ (_gameId gameRecord ==. val_ gameId
-           &&. _awaiter_game_id awaiter `references_` gameRecord)
+    awaiter <- all_ (GDB._awaiters lgsDb)
+    gameRecord <- all_ (GDB._game_records (lgsDb))
+    guard_ (GDB._gameId gameRecord ==. val_ gameId
+           &&. GDB._awaiter_game_id awaiter `references_` gameRecord)
     pure awaiter
 
-getGamePlayers :: Int -> IO [User]
+getGamePlayers :: Int -> IO [GDB.User]
 getGamePlayers gameId = do
   conn <- open dbFilename
   runBeamSqlite conn $
     runSelectReturningList $
     select $ do
-    gameRecord <- all_ (_game_records lgsDb)
-    user <- all_ (_users lgsDb)
-    guard_ (_gameId gameRecord ==. val_ gameId
-           &&. (_black_player gameRecord `references_` user
-           ||.  _white_player gameRecord `references_` user))
+    gameRecord <- all_ (GDB._game_records lgsDb)
+    user <- all_ (GDB._users lgsDb)
+    guard_ (GDB._gameId gameRecord ==. val_ gameId
+           &&. (GDB._black_player gameRecord `references_` user
+           ||.  GDB._white_player gameRecord `references_` user))
     pure user
 
-getBlackPlayer :: Int -> IO (Maybe User)
-getBlackPlayer gameId = referenceSingleUser _black_player gameId
+getBlackPlayer :: Int -> IO (Maybe GDB.User)
+getBlackPlayer gameId = referenceSingleUser GDB._black_player gameId
 
-getWhitePlayer :: Int -> IO (Maybe User)
-getWhitePlayer gameId = referenceSingleUser _white_player gameId
+getWhitePlayer :: Int -> IO (Maybe GDB.User)
+getWhitePlayer gameId = referenceSingleUser GDB._white_player gameId
 
-getPlayerColor :: UserInput.User -> Int -> IO (Maybe Space)
+getPlayerColor :: UserInput.User -> Int -> IO (Maybe G.Space)
 getPlayerColor (UserInput.User _ name _) gameId = do
   mPlayer <- getUserViaName name
   mBlackPlayer <- getBlackPlayer gameId
@@ -99,80 +100,80 @@ getPlayerColor (UserInput.User _ name _) gameId = do
   pure $
     (==) <$> mPlayer <*> mBlackPlayer
     >>= (\case
-            True -> Just Black
-            False -> Just White)
+            True -> Just G.Black
+            False -> Just G.White)
 
 referenceSingleUser f gameId = do
   conn <- open dbFilename
   runBeamSqlite conn $
     runSelectReturningOne $
     select $ do
-    gameRecord <- all_ (_game_records lgsDb)
-    user <- all_ (_users lgsDb)
-    guard_ (_gameId gameRecord ==. val_ gameId
+    gameRecord <- all_ (GDB._game_records lgsDb)
+    user <- all_ (GDB._users lgsDb)
+    guard_ (GDB._gameId gameRecord ==. val_ gameId
            &&. f gameRecord `references_` user)
     pure user
 
-getGameRecords :: Int -> IO [GameRecord]
+getGameRecords :: Int -> IO [GDB.GameRecord]
 getGameRecords playerId = do
   conn <- open dbFilename
   relatedGames <-
     runBeamSqlite conn $
     runSelectReturningList $
     select $ do
-      user <- all_ (_users lgsDb)
-      gameRecord <- all_ (_game_records lgsDb)
+      user <- all_ (GDB._users lgsDb)
+      gameRecord <- all_ (GDB._game_records lgsDb)
       guard_
-        (_userId user ==. val_ playerId
-         &&. (_black_player gameRecord `references_` user
-         ||.  _white_player gameRecord `references_` user))
+        (GDB._userId user ==. val_ playerId
+         &&. (GDB._black_player gameRecord `references_` user
+         ||.  GDB._white_player gameRecord `references_` user))
       pure gameRecord
   pure relatedGames
 
-getGameRecord :: Int -> IO (Maybe GameRecord)
+getGameRecord :: Int -> IO (Maybe GDB.GameRecord)
 getGameRecord gameId = do
   conn <- open dbFilename
-  runBeamSqlite conn $ runSelectReturningOne $ lookup_ (_game_records lgsDb) (GameRecordId gameId)
+  runBeamSqlite conn $ runSelectReturningOne $ lookup_ (GDB._game_records lgsDb) (GDB.GameRecordId gameId)
 
 mPlayerIdToExpr mPlayerId = case mPlayerId of
-  Just playerId -> just_ (val_ (UserId playerId))
+  Just playerId -> just_ (val_ (GDB.UserId playerId))
   Nothing       -> nothing_
 
 --TODO: Hash password before storage
-insertUser :: Text -> Text -> Text -> IO [User]
+insertUser :: Text -> Text -> Text -> IO [GDB.User]
 insertUser userEmail userName userPassword = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
     runInsertReturningList $
       insertReturning
-        (_users lgsDb)
+        (GDB._users lgsDb)
         (insertExpressions
-           [User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
+           [GDB.User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
-insertAwaiter :: Int -> Int -> IO [Awaiter]
+insertAwaiter :: Int -> Int -> IO [GDB.Awaiter]
 insertAwaiter gameId userId = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
     runInsertReturningList $
       insertReturning
-      (_awaiters lgsDb)
+      (GDB._awaiters lgsDb)
       (insertExpressions
-        [Awaiter default_ (val_ (UserId userId )) (val_ (GameRecordId gameId ))])
+        [GDB.Awaiter default_ (val_ (GDB.UserId userId )) (val_ (GDB.GameRecordId gameId ))])
 
-insertGame :: UserInput.ProposedGame -> Game -> IO [GameRecord]
+insertGame :: UserInput.ProposedGame -> G.Game -> IO [GDB.GameRecord]
 insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus) game =
   do
   conn <- open dbFilename
   runBeamSqlite conn $ do
     runInsertReturningList $
       insertReturning
-        (_game_records lgsDb)
+        (GDB._game_records lgsDb)
         (insertExpressions
-           [ GameRecord
+           [ GDB.GameRecord
                default_
                (val_ game)
-               (val_ (UserId blackPlayer))
-               (val_ (UserId whitePlayer))
+               (val_ (GDB.UserId blackPlayer))
+               (val_ (GDB.UserId whitePlayer))
                (mPlayerIdToExpr mBlackTeacher)
                (mPlayerIdToExpr mWhiteTeacher)
                (val_ blackFocus)
@@ -180,15 +181,15 @@ insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteT
                currentTimestamp_
            ])
 
-updateGame :: (Game -> Game) -> Int -> IO (Maybe Game)
+updateGame :: (G.Game -> G.Game) -> Int -> IO (Maybe G.Game)
 updateGame f gameId = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
     mGameRecord <- liftIO $ getGameRecord gameId
     case mGameRecord of
       Just gameRecord -> do
-        let updatedGame = f (_game gameRecord)
-        runUpdate (save (_game_records lgsDb) (gameRecord {_game = updatedGame}))
+        let updatedGame = f (GDB._game gameRecord)
+        runUpdate (save (GDB._game_records lgsDb) (gameRecord {GDB._game = updatedGame}))
         pure (Just updatedGame)
       Nothing -> pure Nothing
 
@@ -197,6 +198,6 @@ deleteAwaiter gameId playerId  = do
   conn <- open dbFilename
   runBeamSqlite conn $ do
     runDelete $
-      delete (_awaiters lgsDb)
-             (\awaiter -> _awaiter_user_id awaiter ==. val_ (UserId playerId)
-             &&. _awaiter_game_id awaiter ==. val_ (GameRecordId gameId ))
+      delete (GDB._awaiters lgsDb)
+             (\awaiter -> GDB._awaiter_user_id awaiter ==. val_ (GDB.UserId playerId)
+             &&. GDB._awaiter_game_id awaiter ==. val_ (GDB.GameRecordId gameId ))

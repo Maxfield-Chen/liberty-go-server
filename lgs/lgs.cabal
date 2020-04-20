@@ -20,6 +20,7 @@ executable lgs
                   , beam-core
                   , beam-sqlite
                   , bytestring
+                  , common
                   , directory
                   , gdp                == 0.0.3.0
                   , http-media

@@ -16,7 +16,6 @@ import           Data.Text           (Text)
 import           GHC.Generics
 import           Servant.Auth.Server
 
-
 data User =
   User
     { userEmail    :: Text

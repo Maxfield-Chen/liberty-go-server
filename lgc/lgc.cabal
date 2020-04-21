@@ -20,6 +20,7 @@ executable frontend
   -- other-extensions:
   build-depends:       base >=4.9 && <4.13
                      , aeson
+                     , cookie
                      , common
                      , containers
                      , text
@@ -27,6 +28,7 @@ executable frontend
                      , reflex-dom
                      , servant-reflex
                      , servant
+                     , lgl
                      , file-embed
   hs-source-dirs:      src
   default-language:    Haskell2010

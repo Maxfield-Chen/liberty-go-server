@@ -36,20 +36,24 @@ type GameAPI = "play" :> "proposeGame"
                 :> ReqBody '[JSON] UserInput.ProposedGame
                 :> Post '[JSON] GDB.GameRecord
 
-              :<|> "play" :> Capture "gameId" Int :>
-                ("acceptGameProposal" :> ReqBody '[JSON] Bool
+                :<|> "play" :> Capture "gameId" Int
+                :> "acceptGameProposal" :> ReqBody '[JSON] Bool
                                      :> Post '[JSON] (Maybe G.GameStatus)
-                :<|> "pass"
+
+                :<|> "play" :> Capture "gameId" Int :> "pass"
                   :> Put '[JSON] (Maybe G.GameStatus)
 
-                :<|> "proposeTerritory" :> ReqBody '[JSON] G.Territory
-                                        :> Put '[JSON] (Maybe G.GameStatus)
+                :<|> "play" :> Capture "gameId" Int :> "proposeTerritory"
+                  :> ReqBody '[JSON] G.Territory
+                  :> Put '[JSON] (Maybe G.GameStatus)
 
-                :<|> "acceptTerritoryProposal" :> ReqBody '[JSON] Bool
-                                               :> Put '[JSON] (Maybe G.GameStatus)
+                :<|> "play" :> Capture "gameId" Int :> "acceptTerritoryProposal"
+                  :> ReqBody '[JSON] Bool
+                  :> Put '[JSON] (Maybe G.GameStatus)
 
-                :<|> "placeStone" :> ReqBody '[JSON] G.Position
-                                  :> Put '[JSON] (Either G.MoveError G.Outcome,G.Game))
+                :<|> "play" :> Capture "gameId" Int :> "placeStone"
+                  :> ReqBody '[JSON] G.Position
+                  :> Put '[JSON] (Either G.MoveError G.Outcome,G.Game)
 
 type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|> Unprotected
 

@@ -40,12 +40,12 @@ protected Servant.Auth.Server.BadPassword = throwAll err401
 protected Servant.Auth.Server.NoSuchUser = throwAll err410
 protected Servant.Auth.Server.Indefinite = throwAll err406
 
-gameOperations user gameId =
-  GI.acceptGameProposal user gameId :<|>
-  GI.proposePass user gameId :<|>
-  GI.proposeTerritory user gameId :<|>
-  GI.acceptTerritoryProposal user gameId :<|>
-  GI.placeStone user gameId
+gameOperations user  =
+  GI.acceptGameProposal user  :<|>
+  GI.proposePass user  :<|>
+  GI.proposeTerritory user  :<|>
+  GI.acceptTerritoryProposal user  :<|>
+  GI.placeStone user
 
 server :: CookieSettings -> JWTSettings -> Server (C.API auths)
 server cookieSettings jwtSettings = protected :<|> unprotected cookieSettings jwtSettings

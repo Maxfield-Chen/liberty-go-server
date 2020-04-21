@@ -8,16 +8,17 @@
 {-# LANGUAGE TemplateHaskell     #-}
 
 import           Data.FileEmbed
-import qualified Data.Map       as Map
-import           Data.Monoid    ((<>))
+import qualified Data.Map             as Map
+import           Data.Monoid          ((<>))
 import           Data.Proxy
-import qualified Data.Text      as T
-import qualified GameDB         as GDB
+import qualified Data.Text            as T
+import qualified GameDB               as GDB
 import           LGSAPI
 import           Reflex
 import           Reflex.Dom
 import           Servant.API
 import           Servant.Reflex
+import           Servant.Reflex.Multi
 import qualified UserInput
 
 devMain :: IO ()
@@ -42,8 +43,8 @@ bodyEl = do
 
 counterEl :: forall t m. MonadWidget t m => m ()
 counterEl = do
-  -- let (proposeGame :<|> acceptGameProposal :<|> proposePass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone :<|> createNewUser :<|> login :<|> getGamesForPlayer :<|> getGameId) = client lgsAPI (Proxy :: Proxy m) (Proxy :: Proxy []) (constDyn (BasePath "/"))
-  let (register :<|> login :<|> gamesForUser :<|> getGame) = client unprotectedAPI (Proxy :: Proxy m) (Proxy :: Proxy ()) (constDyn (BasePath "/"))
+  let ((proposeGame :<|> multi) :<|> register :<|> login :<|> gamesForUser :<|> getGame) =
+        clientA lgsAPI (Proxy :: Proxy m) (Proxy :: Proxy ()) (constDyn (BasePath "/"))
   rec el "h2" $ text "How High is the Sky?"
       number <- foldDyn ($) (0 :: Int) $ leftmost [(+ 1) <$ evInc, (+ (-1)) <$ evDec, (const 0) <$ evReset]
       el "div" $ display number

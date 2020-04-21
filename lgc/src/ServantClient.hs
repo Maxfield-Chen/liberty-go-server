@@ -1,18 +1,15 @@
-{-# LANGUAGE DataKinds                 #-}
-{-# LANGUAGE ExplicitForAll            #-}
-{-# LANGUAGE ExplicitNamespaces        #-}
+{-# LANGUAGE AllowAmbiguousTypes       #-}
+{-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE GADTs                     #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE RankNTypes                #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE PartialTypeSignatures     #-}
-{-# LANGUAGE RecursiveDo               #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeApplications          #-}
-{-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
-
-{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
-
 
 module ServantClient where
 
@@ -26,10 +23,8 @@ import           Servant.API
 import           Servant.Reflex
 import qualified UserInput
 
--- (proposeGame :<|> acceptGameProposal :<|> proposePass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone :<|> createNewUser :<|> login :<|> getGamesForPlayer :<|> getGameId) = client lgsAPI (Proxy @m) (Proxy @()) (constDyn (BasePath "/"))
 
--- apiClients :: forall t m. (MonadWidget t m) => _
--- apiClients = client lgsAPI (Proxy @m) (Proxy @()) (constDyn (BasePath "/"))
+apiClients :: forall t m. (MonadWidget t m) => _
+apiClients = client lgsAPI (Proxy :: Proxy m) (Proxy :: Proxy ()) (constDyn (BasePath "/"))
 
--- proposeGame ::
--- (proposeGame :<|> acceptGameProposal :<|> proposePass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone :<|> createNewUser :<|> login :<|> getGamesForPlayer :<|> getGameId) = apiClients
+((proposeGame :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> register :<|> login :<|> gamesForUser :<|> getGame) = apiClients

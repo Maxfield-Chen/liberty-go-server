@@ -108,7 +108,7 @@ instance Table GameRecordT where
 
 type GameRecordId = PrimaryKey GameRecordT Identity
 
-GameRecord (LensFor id) (LensFor game)
+GameRecord (LensFor grId) (LensFor game)
            (UserId (LensFor blackPlayer)) (UserId (LensFor whitePlayer))
            (UserId (LensFor blackTeacher)) (UserId (LensFor whiteTeacher))
            (LensFor blackFocus) (LensFor whiteFocus)
@@ -125,9 +125,9 @@ instance FromBackendRow Sqlite Game where
 
 data LGSDb f =
   LGSDb
-    { _users        :: f (TableEntity UserT)
-     ,_game_records :: f (TableEntity GameRecordT)
-     ,_awaiters     :: f (TableEntity AwaiterT)
+    { users        :: f (TableEntity UserT)
+     ,game_records :: f (TableEntity GameRecordT)
+     ,awaiters     :: f (TableEntity AwaiterT)
     }
   deriving (Generic, Database be)
 

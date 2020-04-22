@@ -12,16 +12,20 @@ import qualified AuthValidator
 import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.State
+import           Data.Functor
 import           Data.List            (nub)
 import           Data.Maybe
 import           Data.Text            (Text)
 import           Game                 (newGame)
 import qualified Game                 as G
+import           GameDB               (awaiter_game_id, awaiter_id,
+                                       awaiter_user_id, blackFocus, blackPlayer,
+                                       blackTeacher, game, grId, timestamp,
+                                       userEmail, userId, userName,
+                                       userPasswordHash, whiteFocus)
 import qualified GameDB               as GDB
 import qualified GameExpressions      as GEX
 import qualified GameLogic            as GL
-import           Prelude              ()
-import           Prelude.Compat
 import           Proofs
 import           Servant
 import           Theory.Named
@@ -41,11 +45,11 @@ placeStone user gameId pos = do
         Just placeStone ->
           case mGameRecord of
             Just gameRecord ->
-              let ret@(_, game) =
+              let ret@(_, updatedGame) =
                     runState
                       (runExceptT placeStone)
-                      (GDB._game gameRecord)
-              in liftIO $ GEX.updateGame (const game) gameId >> pure ret
+                      (gameRecord ^. game)
+              in liftIO $ GEX.updateGame (const updatedGame) gameId $> ret
             Nothing -> pure (Left G.NoBoard, newGame)
         Nothing -> pure (Left G.IllegalPlayer, newGame)
     Unbound -> pure (Left G.OutOfBounds, newGame)
@@ -77,7 +81,7 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
                                      err406 {errBody = "All proposed users must be unique."})
   when (Nothing `elem` mUsers) (throwError $ err400 {errBody = "All proposed users must exist."})
   gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
-  mapM_ (liftIO . GEX.insertAwaiter (GDB._gameId gameRecord) . GDB._userId) (catMaybes mUsers)
+  mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) (catMaybes mUsers)
   pure gameRecord
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe G.GameStatus)

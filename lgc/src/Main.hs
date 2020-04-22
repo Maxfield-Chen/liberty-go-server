@@ -20,7 +20,7 @@ import           Text.Read      (readMaybe)
 import qualified UserInput
 
 devMain :: IO ()
-devMain = mainWidgetWithCss css getGameEl
+devMain = mainWidgetWithCss css bodyEl
          where css = $(embedFile "./css/lgs.css")
 
 -- TODO: Determine why this returns 403 when finding css files using jsaddle.
@@ -37,10 +37,14 @@ headEl = do
 bodyEl :: MonadWidget t m => m ()
 bodyEl = do
   el "h1" $ text "This should be red."
+  _ <- getGameEl
   blank
 
+-- gameBoardEl :: forall t m. MonadWidget t m => m ()
+-- gameBoardEl = divclass "gameBoard" $ do
+--   rec
 
-getGameEl :: forall t m. MonadWidget t m => m ()
+getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe GameRecord))
 getGameEl = do
   rec el "br" blank
       gameId :: Dynamic t (Maybe Int) <-
@@ -49,4 +53,4 @@ getGameEl = do
       evFetchGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
       gameRecord <- foldDyn (mappend . T.pack . show) "" evFetchGR
       el "div" $ display gameRecord
-  pure ()
+  pure evFetchGR

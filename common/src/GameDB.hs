@@ -1,15 +1,17 @@
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
-
-
+{-# LANGUAGE DeriveAnyClass            #-}
+{-# LANGUAGE DeriveGeneric             #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE StandaloneDeriving        #-}
+{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE UndecidableInstances      #-}
+-- Needed for Beam Lenses
+{-# LANGUAGE ImpredicativeTypes        #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module GameDB where
 
 import           Data.Aeson.Types
@@ -48,6 +50,10 @@ instance Table UserT where
   data PrimaryKey UserT f = UserId (Columnar f Int) deriving (Generic, Beamable)
   primaryKey = UserId . _userId
 
+User (LensFor userId) (LensFor userEmail)
+     (LensFor userName) (LensFor userPasswordHash)
+     = tableLenses
+
 
 data AwaiterT f
   = Awaiter {_awaiter_id      :: Columnar f Int
@@ -70,6 +76,10 @@ instance Table AwaiterT where
   data PrimaryKey AwaiterT f = AwaiterId (Columnar f Int) deriving (Generic, Beamable)
   primaryKey = AwaiterId . _awaiter_id
 
+
+Awaiter (LensFor awaiter_id) (UserId (LensFor awaiter_user_id))
+        (GameRecordId (LensFor awaiter_game_id))
+        = tableLenses
 
 data GameRecordT f
   = GameRecord {_gameId        :: Columnar f Int
@@ -97,6 +107,13 @@ instance Table GameRecordT where
   primaryKey = GameRecordId . _gameId
 
 type GameRecordId = PrimaryKey GameRecordT Identity
+
+GameRecord (LensFor id) (LensFor game)
+           (UserId (LensFor blackPlayer)) (UserId (LensFor whitePlayer))
+           (UserId (LensFor blackTeacher)) (UserId (LensFor whiteTeacher))
+           (LensFor blackFocus) (LensFor whiteFocus)
+           (LensFor timestamp)
+           = tableLenses
 
 -- LGL SQL Representation Definitions
 instance HasSqlValueSyntax be String => HasSqlValueSyntax be Game where

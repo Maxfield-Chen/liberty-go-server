@@ -33,16 +33,20 @@ headEl = do
   styleSheet "./css/lgs.css"
     where styleSheet srcLink = elAttr "link" (Map.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $ pure ()
 
-
 bodyEl :: MonadWidget t m => m ()
 bodyEl = do
-  el "h1" $ text "This should be red."
-  _ <- getGameEl
-  blank
+  rec el "h1" $ text "This should be red."
+      evMGameRecord <- getGameEl
+      blank
+  pure ()
 
--- gameBoardEl :: forall t m. MonadWidget t m => m ()
--- gameBoardEl = divclass "gameBoard" $ do
+-- boardEl :: forall t m. MonadWidget t m => m ()
+-- boardEl = divclass "gameBoard" $ do
 --   rec
+
+boardRowEl :: forall t m. MonadWidget t m => Int -> m (Event t GameRecord) -> m ()
+boardRowEl numColumns evGR = pure ()
+
 
 getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe GameRecord))
 getGameEl = do

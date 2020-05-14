@@ -45,20 +45,20 @@ bodyEl :: MonadWidget t m => m ()
 bodyEl = do
       el "h1" $ text "This should be red."
       evMGameRecord <- getGameEl
-      let evMSpace = evMPosToSpace (Pair 0 0) evMGameRecord
-      dynButtonAttrs <- styleSpace (fmap (fromMaybe Game.Empty) evMSpace)
-      boardButton <- styledButton dynButtonAttrs
+      let evMSpace = evMPosToSpace (Pair 0 0) <$> evMGameRecord
+      buttonDyn <- holdDyn Game.Empty (fromMaybe Game.Empty <$> evMSpace)
+      boardButton <- styledButton buttonDyn
       pure ()
 
-evMPosToSpace :: forall t m. MonadWidget t m =>
-                 Position
-              -> Event t (Maybe GameRecord)
-              -> Event t (Maybe Space)
-evMPosToSpace pos evMGameRecord = do
+evMPosToSpace :: Position
+              -> Maybe GameRecord
+              -> Maybe Space
+evMPosToSpace pos mGameRecord = do
   name pos $ \case
-    Bound pos ->
-      fmapMaybe (fmap (Just . (GL.getPosition pos) . _game)) evMGameRecord
-    Unbound -> Nothing <$ evMGameRecord
+    Bound pos -> do
+      gameRecord <- mGameRecord
+      pure $ (GL.getPosition pos) (gameRecord ^. game)
+    Unbound -> Nothing
 
 -- boardRowEl :: MonadWidget t m =>
 --                 Int
@@ -68,23 +68,20 @@ evMPosToSpace pos evMGameRecord = do
 --       dynAttrs <- styleSpace <$> evSpaces
 --       styledButton <$> dynAttrs
 
-styledButton :: MonadWidget t m =>
-                Dynamic t (Map.Map T.Text T.Text)
+styledButton :: forall t m. MonadWidget t m =>
+                Dynamic t Space
              -> m (Event t ())
-styledButton dynAttr = do
-                (btn, _) <- elDynAttr' "button" dynAttr $ text "X"
+styledButton dynSpace = do
+                (btn, _) <- elDynAttr' "button" (ffor dynSpace styleSpace) $ text ""
                 pure $ domEvent Click btn
 
-styleSpace :: forall t m. MonadWidget t m =>
-              Event t Space
-           -> m (Dynamic t (Map.Map T.Text T.Text))
-styleSpace evSpace =
-  let spaceToStyle :: Space -> Map.Map T.Text T.Text -> Map.Map T.Text T.Text
-      spaceToStyle space _ = "style" =: ("class: " <> case space of
+styleSpace :: Space
+           -> Map.Map T.Text T.Text
+styleSpace space = "style" =: ("class: " <> case space of
                                   Game.Empty -> "space-empty"
                                   Black      -> "space-black"
-                                  White      -> "space-white") in
-                         foldDyn spaceToStyle ("style" =: "class: space-empty") evSpace
+                                  White      -> "space-white")
+
 
 
 

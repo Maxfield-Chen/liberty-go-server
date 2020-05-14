@@ -43,14 +43,12 @@ headEl = do
 
 bodyEl :: MonadWidget t m => m ()
 bodyEl = do
-  rec el "h1" $ text "This should be red."
+      el "h1" $ text "This should be red."
       evMGameRecord <- getGameEl
-      xsEvButtons <- boardRowEl 0 evMGameRecord
-  pure ()
-
--- boardEl :: forall t m. MonadWidget t m => m ()
--- boardEl = divclass "gameBoard" $ do
---   rec
+      let evMSpace = evMPosToSpace (Pair 0 0) evMGameRecord
+      dynButtonAttrs <- styleSpace (fmap (fromMaybe Game.Empty) evMSpace)
+      boardButton <- styledButton dynButtonAttrs
+      pure ()
 
 evMPosToSpace :: forall t m. MonadWidget t m =>
                  Position
@@ -62,12 +60,31 @@ evMPosToSpace pos evMGameRecord = do
       fmapMaybe (fmap (Just . (GL.getPosition pos) . _game)) evMGameRecord
     Unbound -> Nothing <$ evMGameRecord
 
-boardRowEl :: forall t m. MonadWidget t m => Int -> Event t (Maybe GameRecord) -> m [Event t ()]
-boardRowEl offset mEvGameRecord = do
-  divClass "boardRow" $ do
-    --TODO: Replace offset      VVVVVV with row size from mevgamerecord
-    cols <- mapM id $ replicate offset (button "")
-    pure cols
+-- boardRowEl :: MonadWidget t m =>
+--                 Int
+--              -> [Event t Space]
+--              -> [m (Event t ())]
+-- boardRowEl offset evSpaces = do
+--       dynAttrs <- styleSpace <$> evSpaces
+--       styledButton <$> dynAttrs
+
+styledButton :: MonadWidget t m =>
+                Dynamic t (Map.Map T.Text T.Text)
+             -> m (Event t ())
+styledButton dynAttr = do
+                (btn, _) <- elDynAttr' "button" dynAttr $ text "X"
+                pure $ domEvent Click btn
+
+styleSpace :: forall t m. MonadWidget t m =>
+              Event t Space
+           -> m (Dynamic t (Map.Map T.Text T.Text))
+styleSpace evSpace =
+  let spaceToStyle :: Space -> Map.Map T.Text T.Text -> Map.Map T.Text T.Text
+      spaceToStyle space _ = "style" =: ("class: " <> case space of
+                                  Game.Empty -> "space-empty"
+                                  Black      -> "space-black"
+                                  White      -> "space-white") in
+                         foldDyn spaceToStyle ("style" =: "class: space-empty") evSpace
 
 
 

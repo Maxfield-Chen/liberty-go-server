@@ -41,32 +41,25 @@ headEl = do
   styleSheet "./css/lgs.css"
     where styleSheet srcLink = elAttr "link" (Map.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $ pure ()
 
-bodyEl :: MonadWidget t m => m ()
+bodyEl :: forall t m . MonadWidget t m => m ()
 bodyEl = do
-      el "h1" $ text "This should be red."
       evMGameRecord <- getGameEl
-      let evMSpace = evMPosToSpace (Pair 0 0) <$> evMGameRecord
-      buttonDyn <- holdDyn Game.Empty (fromMaybe Game.Empty <$> evMSpace)
-      boardButton <- styledButton buttonDyn
+      dynGame <- holdDyn newGame $ (fromMaybe newGame . fmap (_game)) <$> evMGameRecord
+      buttonEvs <- boardEl dynGame
       pure ()
 
-evMPosToSpace :: Position
-              -> Maybe GameRecord
-              -> Maybe Space
-evMPosToSpace pos mGameRecord = do
-  name pos $ \case
-    Bound pos -> do
-      gameRecord <- mGameRecord
-      pure $ (GL.getPosition pos) (gameRecord ^. game)
-    Unbound -> Nothing
+boardEl :: forall t m . MonadWidget t m =>
+             Dynamic t Game
+          -> m (Event t Board)
+boardEl dynGame =
+  let buttonEvs = map
+      (\pos -> name pos $ \case
+        Bound boundPos ->
+          let dynSpace = (GL.getPosition boundPos) <$> dynGame
+          in (pos, styledButton dynSpace)
+        _ -> error "unbound position when creating boardEl") boardPositions
+  in (mergeMap (Map.fromList buttonEvs))
 
--- boardRowEl :: MonadWidget t m =>
---                 Int
---              -> [Event t Space]
---              -> [m (Event t ())]
--- boardRowEl offset evSpaces = do
---       dynAttrs <- styleSpace <$> evSpaces
---       styledButton <$> dynAttrs
 
 styledButton :: forall t m. MonadWidget t m =>
                 Dynamic t Space
@@ -81,9 +74,6 @@ styleSpace space = "style" =: ("class: " <> case space of
                                   Game.Empty -> "space-empty"
                                   Black      -> "space-black"
                                   White      -> "space-white")
-
-
-
 
 getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe GameRecord))
 getGameEl = do

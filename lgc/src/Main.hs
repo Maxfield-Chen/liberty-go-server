@@ -49,23 +49,27 @@ bodyEl = do
       pure ()
 
 boardEl :: forall t m . MonadWidget t m =>
-             Dynamic t Game
-          -> m (Event t [m (Event t ())])
-boardEl dynGame = pure $ foldr (\pos mEvents -> name pos $
-                           \case
-                              Bound boundPos -> do
-                                let dynSpace = (GL.getPosition boundPos) <$> dynGame
-                                (:) (styledButton dynSpace) <$> mEvents
-                              _ -> error "unbound position when creating boardEl")
-                  ([] <$ never)
-                  (concat boardPositions)
+           Dynamic t Game
+        -> m (Event t Position)
+boardEl dynGame = do
+    buttonEvs <- foldr (\pos mButtonEvs -> name pos $
+                                  \case
+                                      Bound boundPos -> do
+                                        let dynSpace = (GL.getPosition boundPos) <$> dynGame
+                                        buttonEv <- styledButton pos dynSpace
+                                        (:) (pos <$ buttonEv) <$> mButtonEvs
+                                      _ -> error "unbound position when creating boardEl")
+                                (pure [] :: m [Event t Position])
+                                (concat boardPositions)
+    pure $ leftmost buttonEvs
 
 styledButton :: forall t m. MonadWidget t m =>
-                Dynamic t Space
-             -> m (Event t ())
-styledButton dynSpace = do
+                Position
+             -> Dynamic t Space
+             -> m (Event t Position)
+styledButton pos dynSpace = do
                 (btn, _) <- elDynAttr' "button" (ffor dynSpace styleSpace) $ text ""
-                pure $ domEvent Click btn
+                pure $ pos <$ domEvent Click btn
 
 styleSpace :: Space
            -> Map.Map T.Text T.Text

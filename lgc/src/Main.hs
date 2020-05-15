@@ -44,22 +44,21 @@ headEl = do
 bodyEl :: forall t m . MonadWidget t m => m ()
 bodyEl = do
       evMGameRecord <- getGameEl
-      dynGame <- holdDyn newGame $ (fromMaybe newGame . fmap (_game)) <$> evMGameRecord
+      dynGame <- holdDyn newGame $ (maybe newGame _game) <$> evMGameRecord
       buttonEvs <- boardEl dynGame
       pure ()
 
 boardEl :: forall t m . MonadWidget t m =>
              Dynamic t Game
-          -> m (Event t Board)
-boardEl dynGame =
-  let buttonEvs = map
-      (\pos -> name pos $ \case
-        Bound boundPos ->
-          let dynSpace = (GL.getPosition boundPos) <$> dynGame
-          in (pos, styledButton dynSpace)
-        _ -> error "unbound position when creating boardEl") boardPositions
-  in (mergeMap (Map.fromList buttonEvs))
-
+          -> m (Event t [m (Event t ())])
+boardEl dynGame = pure $ foldr (\pos mEvents -> name pos $
+                           \case
+                              Bound boundPos -> do
+                                let dynSpace = (GL.getPosition boundPos) <$> dynGame
+                                (:) (styledButton dynSpace) <$> mEvents
+                              _ -> error "unbound position when creating boardEl")
+                  ([] <$ never)
+                  (concat boardPositions)
 
 styledButton :: forall t m. MonadWidget t m =>
                 Dynamic t Space

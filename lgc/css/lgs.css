@@ -1,3 +1,17 @@
-h1 {
-    color: red;
+.boardGrid {
+    display: grid;
+    grid-template-columns: repeat(19, 1fr);
+    grid-template-rows: repeat(19,minmax(50px,1fr));
+}
+
+.space-empty {
+    background-color: #aaaaaa;
+}
+
+.space-black {
+    background-color: #000000;
+}
+
+.space-white {
+    background-color: #ffffff;
 }

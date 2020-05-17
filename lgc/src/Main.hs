@@ -44,24 +44,29 @@ headEl = do
 bodyEl :: forall t m . MonadWidget t m => m ()
 bodyEl = do
       evMGameRecord <- getGameEl
+      loginB <- loginEl
       dynGame <- holdDyn newGame $ (maybe newGame _game) <$> evMGameRecord
-      buttonEvs <- boardEl dynGame
+      boardEv <- boardEl dynGame
+      posDyn <- holdDyn (Left "No Pos") $ Right <$> boardEv
+      evOutcome <- fmapMaybe reqSuccess <$>
+        SC.placeStone (constDyn (Right 20)) posDyn (() <$ boardEv)
       pure ()
 
 boardEl :: forall t m . MonadWidget t m =>
            Dynamic t Game
         -> m (Event t Position)
-boardEl dynGame = do
-    buttonEvs <- foldr (\pos mButtonEvs -> name pos $
-                                  \case
-                                      Bound boundPos -> do
-                                        let dynSpace = (GL.getPosition boundPos) <$> dynGame
-                                        buttonEv <- styledButton pos dynSpace
-                                        (:) (pos <$ buttonEv) <$> mButtonEvs
-                                      _ -> error "unbound position when creating boardEl")
-                                (pure [] :: m [Event t Position])
-                                (concat boardPositions)
-    pure $ leftmost buttonEvs
+boardEl dynGame =
+    elClass "div" "boardGrid" $ do
+      buttonEvs <- foldr (\pos mButtonEvs -> name pos $
+                                    \case
+                                        Bound boundPos -> do
+                                          let dynSpace = (GL.getPosition boundPos) <$> dynGame
+                                          buttonEv <- styledButton pos dynSpace
+                                          (:) buttonEv <$> mButtonEvs
+                                        _ -> error "unbound position when creating boardEl")
+                                  (pure [] :: m [Event t Position])
+                                  (concat boardPositions)
+      pure $ leftmost buttonEvs
 
 styledButton :: forall t m. MonadWidget t m =>
                 Position
@@ -73,10 +78,23 @@ styledButton pos dynSpace = do
 
 styleSpace :: Space
            -> Map.Map T.Text T.Text
-styleSpace space = "style" =: ("class: " <> case space of
-                                  Game.Empty -> "space-empty"
-                                  Black      -> "space-black"
-                                  White      -> "space-white")
+styleSpace space = "class" =: (case space of
+                                Game.Empty -> "space-empty"
+                                Black      -> "space-black"
+                                White      -> "space-white")
+
+loginEl :: forall t m. MonadWidget t m => m (Event t ())
+loginEl = do
+  userName :: Dynamic t T.Text <-
+    value <$> inputElement def
+  userPassword :: Dynamic t T.Text <-
+    value <$> inputElement def
+  b <- button "Login"
+  let loginDyn =
+        UserInput.Login <$> userName <*> userPassword
+  loginEv <- fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b
+  pure b
+
 
 getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe GameRecord))
 getGameEl = do
@@ -86,5 +104,4 @@ getGameEl = do
       b <- button "Retrieve Game"
       evFetchGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
       gameRecord <- foldDyn (mappend . T.pack . show) "" evFetchGR
-      el "div" $ display gameRecord
   pure evFetchGR

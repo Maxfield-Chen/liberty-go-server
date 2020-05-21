@@ -1,7 +1,7 @@
 Liberty Go Server
 ---
 
-This repository contains an API server based on Servant and a client based on Reflex. It's a full stack, open-source, Haskell Baduk Server!
+This repository contains an API server based on Servant and a client based on Reflex, which are used to create a full stack, open-source, Haskell Baduk Server!
 
 This library uses the [Liberty Go Logic](https://github.com/Maxfield-Chen/liberty-go-logic) repository to perform the logic of the Baduk game.
 

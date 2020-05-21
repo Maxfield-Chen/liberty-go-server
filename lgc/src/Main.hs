@@ -46,7 +46,7 @@ headEl = do
     where styleSheet srcLink = elAttr "link" (M.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $ pure ()
 
 bodyEl :: forall t m . MonadWidget t m => m ()
-bodyEl = do
+bodyEl = elClass "div" "page-grid" $ do
       curPage       <- headerEl
       evMGameRecord <- getGameEl
       loginB        <- loginEl

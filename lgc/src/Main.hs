@@ -11,11 +11,13 @@
 
 import           Control.Lens
 import           Data.FileEmbed
-import qualified Data.Map       as Map
+import qualified Data.Map       as M
 import           Data.Maybe
+import           Data.Text      (Text)
 import qualified Data.Text      as T
 import           Debug.Trace
-import           Game
+import           Game           (Position, Space (..), boardPositions, newGame)
+import qualified Game           as G
 import           GameDB
 import qualified GameLogic      as GL
 import           Proofs
@@ -26,6 +28,8 @@ import qualified ServantClient  as SC
 import           Text.Read      (readMaybe)
 import           Theory.Named
 import qualified UserInput
+
+data Page = Main | Register | Login | Play deriving (Show, Eq)
 
 devMain :: IO ()
 devMain = mainWidgetWithCss css bodyEl
@@ -39,62 +43,85 @@ headEl :: MonadWidget t m => m ()
 headEl = do
   el "title" $ text "LGS"
   styleSheet "./css/lgs.css"
-    where styleSheet srcLink = elAttr "link" (Map.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $ pure ()
+    where styleSheet srcLink = elAttr "link" (M.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $ pure ()
 
 bodyEl :: forall t m . MonadWidget t m => m ()
 bodyEl = do
+      curPage       <- headerEl
       evMGameRecord <- getGameEl
-      loginB <- loginEl
-      dynGame <- holdDyn newGame $ (maybe newGame _game) <$> evMGameRecord
-      boardEv <- boardEl dynGame
-      posDyn <- holdDyn (Left "No Pos") $ Right <$> boardEv
-      evOutcome <- fmapMaybe reqSuccess <$>
+      loginB        <- loginEl
+      dynGame       <- holdDyn newGame $ (maybe newGame _game) <$> evMGameRecord
+      dynPage       <- holdDyn Main curPage
+      boardEv       <- boardEl dynPage dynGame
+      posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
+      evOutcome     <- fmapMaybe reqSuccess <$>
         SC.placeStone (constDyn (Right 20)) posDyn (() <$ boardEv)
       pure ()
 
+headerEl :: forall t m. MonadWidget t m => m (Event t Page)
+headerEl = elClass "div" "header-el" $ do
+  homeBtn     <- elClass "div" "home-button" $ pageButton Main "Go Sensei"
+  registerBtn <- elClass "div" "register-button" $ pageButton Register "Register"
+  loginBtn    <- elClass "div" "login-button" $ pageButton Login "Login"
+  playBtn     <- elClass "div" "play-button" $ pageButton Play "Play"
+  pure $ leftmost [homeBtn, registerBtn, loginBtn, playBtn]
+
 boardEl :: forall t m . MonadWidget t m =>
-           Dynamic t Game
+           Dynamic t Page
+        -> Dynamic t G.Game
         -> m (Event t Position)
-boardEl dynGame =
-    elClass "div" "boardGrid" $ do
+boardEl dynPage dynGame =
+    elDynAttr "div" (shouldShow Play "board-grid" <$> dynPage) $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                     \case
                                         Bound boundPos -> do
                                           let dynSpace = (GL.getPosition boundPos) <$> dynGame
-                                          buttonEv <- styledButton pos dynSpace
+                                          buttonEv <- boardButton pos dynSpace
                                           (:) buttonEv <$> mButtonEvs
                                         _ -> error "unbound position when creating boardEl")
                                   (pure [] :: m [Event t Position])
                                   (concat boardPositions)
       pure $ leftmost buttonEvs
 
-styledButton :: forall t m. MonadWidget t m =>
+shouldShow :: Page -> Text -> Page -> M.Map Text Text
+shouldShow componentPage componentClass curPage
+  | componentPage == curPage = "class" =: componentClass
+  | otherwise = "class" =: "page-hidden"
+
+pageButton :: forall t m. MonadWidget t m =>
+              Page
+           -> Text
+           -> m (Event t Page)
+pageButton page btnText = do
+  (btn,_) <- elDynAttr' "button" mempty $ text btnText
+  pure $ page <$ domEvent Click btn
+
+boardButton :: forall t m. MonadWidget t m =>
                 Position
              -> Dynamic t Space
              -> m (Event t Position)
-styledButton pos dynSpace = do
+boardButton pos dynSpace = do
                 (btn, _) <- elDynAttr' "button" (ffor dynSpace styleSpace) $ text ""
                 pure $ pos <$ domEvent Click btn
 
 styleSpace :: Space
-           -> Map.Map T.Text T.Text
+           -> M.Map Text Text
 styleSpace space = "class" =: (case space of
-                                Game.Empty -> "space-empty"
-                                Black      -> "space-black"
-                                White      -> "space-white")
+                                G.Empty -> "space-empty"
+                                Black   -> "space-black"
+                                White   -> "space-white")
 
 loginEl :: forall t m. MonadWidget t m => m (Event t ())
 loginEl = do
-  userName :: Dynamic t T.Text <-
+  userName :: Dynamic t Text <-
     value <$> inputElement def
-  userPassword :: Dynamic t T.Text <-
+  userPassword :: Dynamic t Text <-
     value <$> inputElement def
   b <- button "Login"
   let loginDyn =
         UserInput.Login <$> userName <*> userPassword
   loginEv <- fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b
   pure b
-
 
 getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe GameRecord))
 getGameEl = do

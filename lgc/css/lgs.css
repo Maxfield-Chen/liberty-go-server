@@ -1,4 +1,4 @@
-.boardGrid {
+.board-grid {
     display: grid;
     grid-template-columns: repeat(19, 1fr);
     grid-template-rows: repeat(19,minmax(50px,1fr));
@@ -14,4 +14,8 @@
 
 .space-white {
     background-color: #ffffff;
+}
+
+.page-hidden {
+    display: none;
 }

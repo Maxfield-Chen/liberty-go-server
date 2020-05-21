@@ -9,4 +9,4 @@ This library powers [Go Sensei]() which is an effort to connect Baduk students a
 
 This focus based review system also allows students to search for games which highlight the issues they've been struggling with. If you have trouble playing with influence, you can search for games where students were working on that particular aspect of their game.
 
-Made with love my [Maxfield Chen](https://maxfieldchen.com)
+Made with love by [Maxfield Chen](https://maxfieldchen.com)

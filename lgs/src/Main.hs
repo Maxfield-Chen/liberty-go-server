@@ -20,6 +20,7 @@ import qualified GameDB                              as GDB
 import qualified GameExpressions                     as GEX
 import qualified LGSAPI                              as C
 import           Network.Wai.Handler.Warp            (run)
+import qualified RealTime                            as RT
 import           Servant
 import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
@@ -48,7 +49,9 @@ gameOperations user  =
   GI.placeStone user
 
 server :: CookieSettings -> JWTSettings -> Server (C.API auths)
-server cookieSettings jwtSettings = protected :<|> unprotected cookieSettings jwtSettings
+server cookieSettings jwtSettings =
+  protected :<|>
+  unprotected cookieSettings jwtSettings
 
 --TODO: Change this to production settings.
 cookieSettings :: CookieSettings
@@ -69,7 +72,7 @@ main = do
   let jwtCfg = defaultJWTSettings signingKey
       cfg = cookieSettings :. jwtCfg :. EmptyContext
       api = Proxy :: Proxy (C.API '[JWT,Cookie])
-  run 8888 $ serveWithContext api cfg (server cookieSettings jwtCfg)
+  run 8888 (RT.realTimeApp (serveWithContext api cfg (server cookieSettings jwtCfg)))
 
 --TODO: Hash password before lookup
 checkCreds :: CookieSettings

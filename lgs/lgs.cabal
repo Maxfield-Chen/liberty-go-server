@@ -38,5 +38,7 @@ executable lgs
                   , time
                   , transformers
                   , wai
+                  , wai-websockets
+                  , websockets
                   , warp
   default-language: Haskell2010

@@ -15,12 +15,16 @@ executable lgs
   build-depends:    base
                   , HUnit
                   , aeson
+                  , async
                   , attoparsec
                   , base-compat
                   , beam-core
                   , beam-sqlite
                   , bytestring
                   , common
+                  , containers
+                  , unordered-containers
+                  , jwt
                   , directory
                   , gdp                == 0.0.3.0
                   , http-media
@@ -33,6 +37,7 @@ executable lgs
                   , servant-server
                   , sort
                   , string-conversions
+                  , stm
                   , sqlite-simple
                   , text
                   , time

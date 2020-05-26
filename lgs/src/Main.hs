@@ -11,6 +11,7 @@ module Main where
 import           Prelude                             ()
 import           Prelude.Compat
 
+import           Config
 import           Control.Monad.Except                (liftIO)
 import           Data.Aeson                          (FromJSON, ToJSON)
 import           Data.Text                           (Text)
@@ -54,25 +55,18 @@ server cookieSettings jwtSettings =
   unprotected cookieSettings jwtSettings
 
 --TODO: Change this to production settings.
-cookieSettings :: CookieSettings
-cookieSettings = CookieSettings
-    { cookieIsSecure    = NotSecure
-    , cookieMaxAge      = Nothing
-    , cookieExpires     = Nothing
-    , cookiePath        = Just "/"
-    , cookieSameSite    = AnySite
-    , sessionCookieName = "JWT-Cookie"
-    , cookieXsrfSetting = Nothing
-    }
 
 main :: IO ()
 main = do
   --TODO: Persist this key somewhere (DB?)
   signingKey <- generateKey
   let jwtCfg = defaultJWTSettings signingKey
-      cfg = cookieSettings :. jwtCfg :. EmptyContext
+      cfg = defaultConfig {jwtSecret = signingKey}
+      serveCfg = (cookieSettings cfg) :. jwtCfg :. EmptyContext
       api = Proxy :: Proxy (C.API '[JWT,Cookie])
-  run 8888 (RT.realTimeApp (serveWithContext api cfg (server cookieSettings jwtCfg)))
+  run 8888 $
+    RT.realTimeApp cfg
+    (serveWithContext api serveCfg (server (cookieSettings cfg) jwtCfg))
 
 --TODO: Hash password before lookup
 checkCreds :: CookieSettings

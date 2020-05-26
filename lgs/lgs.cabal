@@ -24,7 +24,7 @@ executable lgs
                   , common
                   , containers
                   , unordered-containers
-                  , jwt
+                  , jose
                   , directory
                   , gdp                == 0.0.3.0
                   , http-media

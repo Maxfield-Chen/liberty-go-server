@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Config where
@@ -6,6 +7,7 @@ import           Control.Concurrent.STM
 import           Crypto.JOSE.JWK
 import           Data.Aeson
 import           Data.HashMap.Strict    as M
+import           GHC.Generics
 import           PubSubTypes            (GameMap)
 import           Servant.Auth.Server
 
@@ -17,7 +19,7 @@ data Config = Config
   , env            :: Environment
   , cookieSettings :: CookieSettings
   , port           :: Int
-  , gameMap        :: GameMap}
+  , gameMap        :: GameMap} deriving (Generic)
 
 defaultConfig :: Config
 defaultConfig = Config

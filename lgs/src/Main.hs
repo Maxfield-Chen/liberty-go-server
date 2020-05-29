@@ -28,13 +28,15 @@ import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
 import qualified UserInput
 
-unprotected :: CookieSettings -> JWTSettings -> ServerT  C.Unprotected (Reader Config)
+type AppM = ReaderT Config Handler
+
+unprotected :: CookieSettings -> JWTSettings -> ServerT C.Unprotected AppM
 unprotected cs jwts = GI.createNewUser
                  :<|> checkCreds cs jwts
                  :<|> GI.getGamesForPlayer
                  :<|> GI.getGameId
 
-protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI (Reader Config)
+protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI AppM
 protected (Servant.Auth.Server.Authenticated user) =
   GI.proposeGame user  :<|>
   gameOperations user
@@ -50,14 +52,20 @@ gameOperations user  =
   GI.acceptTerritoryProposal user  :<|>
   GI.placeStone user
 
-server :: CookieSettings -> JWTSettings -> ServerT (C.API auths) (Reader Config)
+server :: CookieSettings -> JWTSettings -> ServerT (C.API auths) AppM
 server cookieSettings jwtSettings =
   protected :<|>
   unprotected cookieSettings jwtSettings
 
 --TODO: Change this to production settings.
 
-runReaderAPI cfg m = pure (runReader m cfg)
+mkApp :: Context '[CookieSettings, JWTSettings] -> CookieSettings -> JWTSettings -> Config
+      -> Application
+mkApp ctx cs jwtCfg cfg =
+  let api = Proxy :: Proxy (C.API '[JWT,Cookie])
+  in serveWithContext api ctx $
+    hoistServerWithContext api (Proxy :: Proxy '[CookieSettings, JWTSettings])
+      (flip runReaderT cfg) (server cs jwtCfg)
 
 main :: IO ()
 main = do
@@ -65,10 +73,10 @@ main = do
   signingKey <- generateKey
   let jwtCfg = defaultJWTSettings signingKey
       cfg = defaultConfig {jwtSecret = signingKey}
-      serveCfg = (cookieSettings cfg) :. jwtCfg :. EmptyContext
+      cs = cookieSettings cfg
+      ctx = cs :. jwtCfg :. EmptyContext
       api = Proxy :: Proxy (C.API '[JWT,Cookie])
-  run 8888 $ RT.realTimeApp cfg
-    (hoistServerWithContext api serveCfg (runReaderAPI cfg) (server (cookieSettings cfg) jwtCfg))
+  run 8888 $ RT.realTimeApp cfg $ mkApp ctx cs jwtCfg cfg
 
 --TODO: Hash password before lookup
 checkCreds :: CookieSettings

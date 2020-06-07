@@ -9,8 +9,10 @@
 module GameApiImpl where
 
 import qualified AuthValidator
+import           Config
 import           Control.Lens
 import           Control.Monad.Except
+import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.Functor
 import           Data.List            (nub)
@@ -31,11 +33,13 @@ import           Servant
 import           Theory.Named
 import qualified UserInput
 
+type AppM = ReaderT Config Handler
+
 -- TODO: Clean this up using some monadic binds or other handling.
 -- Clear triangle of doom :(
-placeStone :: UserInput.User -> Int -> G.Position -> Handler ((Either G.MoveError G.Outcome),G.Game)
+placeStone :: UserInput.User -> Int -> G.Position -> AppM ((Either G.MoveError G.Outcome),G.Game)
 placeStone user gameId pos = do
-  AuthValidator.placeStone user gameId
+  lift $ AuthValidator.placeStone user gameId
   name pos $ \case
     Bound pos -> do
       mGameRecord <- liftIO $ GEX.getGameRecord gameId
@@ -55,22 +59,22 @@ placeStone user gameId pos = do
     Unbound -> pure (Left G.OutOfBounds, newGame)
 
 -- TODO: Perform validation on regex of inputs allowed
-createNewUser :: UserInput.User -> Handler ()
+createNewUser :: UserInput.User -> AppM ()
 createNewUser (UserInput.User email name password) = do
   mUser <- liftIO $ GEX.getUserViaName name
   when (isJust mUser) (throwError err409)
   liftIO $ GEX.insertUser email name password
   pure ()
 
-getGameId :: Int -> Handler (Maybe GDB.GameRecord)
+getGameId :: Int -> AppM (Maybe GDB.GameRecord)
 getGameId = liftIO . GEX.getGameRecord
 
-getGamesForPlayer :: Int -> Handler [GDB.GameRecord]
+getGamesForPlayer :: Int -> AppM [GDB.GameRecord]
 getGamesForPlayer = liftIO . GEX.getGameRecords
 
-proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler GDB.GameRecord
+proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM GDB.GameRecord
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
-  AuthValidator.proposeGame user proposedGame
+  lift $ AuthValidator.proposeGame user proposedGame
   let gameUsers = catMaybes
                   [Just bp
                   ,Just wp
@@ -84,9 +88,9 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) (catMaybes mUsers)
   pure gameRecord
 
-acceptGameProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe G.GameStatus)
+acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
-  AuthValidator.acceptGameProposal user gameId
+  lift $ AuthValidator.acceptGameProposal user gameId
 
   mUser <- liftIO $ GEX.getUserViaName name
   --fromJust on mUser checked by auth validator above
@@ -104,9 +108,9 @@ acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
       mGame <- liftIO $ GEX.updateGame (GL.updateGameProposal False) gameId
       pure (mGame <&> (^. G.status))
 
-proposePass :: UserInput.User -> Int -> Handler (Maybe G.GameStatus)
+proposePass :: UserInput.User -> Int -> AppM (Maybe G.GameStatus)
 proposePass user gameId = do
-  AuthValidator.proposePass user gameId
+  lift $ AuthValidator.proposePass user gameId
   mSpace <- liftIO $ GEX.getPlayerColor user gameId
   case mSpace of
     Nothing -> throwError err410
@@ -114,9 +118,9 @@ proposePass user gameId = do
       mGame <- liftIO $ GEX.updateGame (GL.proposePass space) gameId
       pure ( mGame <&> (^. G.status))
 
-proposeTerritory :: UserInput.User -> Int -> G.Territory -> Handler (Maybe G.GameStatus)
+proposeTerritory :: UserInput.User -> Int -> G.Territory -> AppM (Maybe G.GameStatus)
 proposeTerritory user gameId territory = do
-  AuthValidator.proposeTerritory user gameId
+  lift $ AuthValidator.proposeTerritory user gameId
   mPlayerColor <- liftIO $ GEX.getPlayerColor user gameId
   let mProposedColor = mPlayerColor
   case mProposedColor of
@@ -127,9 +131,9 @@ proposeTerritory user gameId territory = do
         gameId
       pure (mGame <&> (^. G.status))
 
-acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> Handler (Maybe G.GameStatus)
+acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptTerritoryProposal user gameId shouldAccept = do
-  AuthValidator.acceptTerritoryProposal user gameId
+  lift $ AuthValidator.acceptTerritoryProposal user gameId
   mPlayerColor <- liftIO $ GEX.getPlayerColor user gameId
   let mUpdateState = GL.acceptTerritoryProposal <$> mPlayerColor <*> Just shouldAccept
   case mUpdateState of

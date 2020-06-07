@@ -28,15 +28,13 @@ import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
 import qualified UserInput
 
-type AppM = ReaderT Config Handler
-
-unprotected :: CookieSettings -> JWTSettings -> ServerT C.Unprotected AppM
+unprotected :: CookieSettings -> JWTSettings -> ServerT C.Unprotected GI.AppM
 unprotected cs jwts = GI.createNewUser
                  :<|> checkCreds cs jwts
                  :<|> GI.getGamesForPlayer
                  :<|> GI.getGameId
 
-protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI AppM
+protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI GI.AppM
 protected (Servant.Auth.Server.Authenticated user) =
   GI.proposeGame user  :<|>
   gameOperations user
@@ -52,7 +50,7 @@ gameOperations user  =
   GI.acceptTerritoryProposal user  :<|>
   GI.placeStone user
 
-server :: CookieSettings -> JWTSettings -> ServerT (C.API auths) AppM
+server :: CookieSettings -> JWTSettings -> ServerT (C.API auths) GI.AppM
 server cookieSettings jwtSettings =
   protected :<|>
   unprotected cookieSettings jwtSettings
@@ -82,7 +80,7 @@ main = do
 checkCreds :: CookieSettings
            -> JWTSettings
            -> UserInput.Login
-           -> Handler (Headers '[ Header "Set-Cookie" SetCookie
+           -> GI.AppM (Headers '[ Header "Set-Cookie" SetCookie
                                 , Header "Set-Cookie" SetCookie]
                                 NoContent)
 checkCreds cookieSettings jwtSettings (UserInput.Login name pass) = do

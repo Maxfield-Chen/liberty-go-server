@@ -25,12 +25,12 @@ getGame gId gMap = do
 makeEmptyGame :: GameId -> STM Game
 makeEmptyGame gId = do
   chan <- newBroadcastTChan
-  clients <- newTVar (Set.empty)
+  clients <- newTVar Set.empty
   pure $ Game gId clients chan
 
 makeNewClient :: UserName -> STM Client
 makeNewClient uName = do
-  games <- newTVar (Set.empty)
+  games <- newTVar Set.empty
   gameChans <- newTVar []
   pure $ Client uName games gameChans
 

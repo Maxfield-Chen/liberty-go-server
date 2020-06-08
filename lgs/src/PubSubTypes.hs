@@ -11,7 +11,7 @@ import           Data.Function          (on)
 import           Data.HashMap.Strict    as M
 import qualified Data.Set               as Set
 import           Data.Text
-import           GameDB                 (GameRecord)
+import qualified Game                   as G
 import qualified Network.WebSockets     as WS
 
 type UserJWT = Text
@@ -63,15 +63,15 @@ instance ToJSON ErrorMessage where
                , "code" .= (3 :: Int)
                , "payload" .= t]
 
-data GameMessage = UpdateGame GameRecord
+data GameMessage = UpdateGame G.Game
 
 data IncomingMessage = JoinGame GameId
                      | LeaveGame GameId
 
 instance ToJSON GameMessage where
-  toJSON (UpdateGame gr) =
+  toJSON (UpdateGame g) =
     object ["type" .= ("update" :: Text)
-          , "gameRecord" .= gr]
+          , "game" .= g]
 
 instance WS.WebSocketsData GameMessage where
   fromLazyByteString = undefined

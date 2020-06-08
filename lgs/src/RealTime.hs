@@ -19,7 +19,7 @@ import           Network.HTTP.Types.Status
 import           Network.Wai
 import           Network.Wai.Handler.WebSockets (websocketsOr)
 import qualified Network.WebSockets             as WS
-import qualified PubSub                         as PB
+import qualified PubSub                         as PS
 import           PubSubTypes
 import           Servant
 
@@ -40,7 +40,7 @@ application cfg pending = do
     Nothing -> WS.sendTextData conn $
       InitialConnectionError "Authorization Denied"
     Just uName -> do
-      client <- liftIO . atomically $ PB.makeNewClient uName
+      client <- liftIO . atomically $ PS.makeNewClient uName
       racePubSub cfg
         (receiveLoop client conn)
         (sendLoop client conn)
@@ -77,22 +77,22 @@ receiveLoop client conn = do
       Left err -> send conn err
       Right (JoinGame g) ->
         liftIO . atomically $ do
-          game <- PB.getGame g gmap
-          subscribed <- PB.clientSubbed client game
+          game <- PS.getGame g gmap
+          subscribed <- PS.clientSubbed client game
           guard (not subscribed)
-          PB.subscribe client game
+          PS.subscribe client game
       Right (LeaveGame g) ->
         liftIO . atomically $ do
-          game <- PB.getGame g gmap
-          subscribed <- PB.clientSubbed client game
+          game <- PS.getGame g gmap
+          subscribed <- PS.clientSubbed client game
           guard subscribed
-          PB.leave client game
+          PS.leave client game
 
 sendLoop :: Client -> WS.Connection -> RealTimeApp ()
 sendLoop client conn = forever $ do
-  (liftIO . atomically $ PB.getAvailableMessage client) >>= send conn
+  (liftIO . atomically $ PS.getAvailableMessage client) >>= send conn
 
 disconnect :: Client -> IO ()
 disconnect client@Client{..} = atomically $ do
   gameSet <- readTVar clientGames
-  forM_ gameSet (PB.leave client)
+  forM_ gameSet (PS.leave client)

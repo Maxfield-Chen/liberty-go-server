@@ -10,52 +10,57 @@ module GameApiImpl where
 
 import qualified AuthValidator
 import           Config
+import           Control.Concurrent.STM
 import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.Functor
-import           Data.List            (nub)
+import qualified Data.HashMap.Strict    as M
+import           Data.List              (nub)
 import           Data.Maybe
-import           Data.Text            (Text)
-import           Game                 (newGame)
-import qualified Game                 as G
-import           GameDB               (awaiter_game_id, awaiter_id,
-                                       awaiter_user_id, blackFocus, blackPlayer,
-                                       blackTeacher, game, grId, timestamp,
-                                       userEmail, userId, userName,
-                                       userPasswordHash, whiteFocus)
-import qualified GameDB               as GDB
-import qualified GameExpressions      as GEX
-import qualified GameLogic            as GL
+import           Data.Text              (Text)
+import           Game                   (newGame)
+import qualified Game                   as G
+import           GameDB                 (awaiter_game_id, awaiter_id,
+                                         awaiter_user_id, blackFocus,
+                                         blackPlayer, blackTeacher, game, grId,
+                                         timestamp, userEmail, userId, userName,
+                                         userPasswordHash, whiteFocus)
+import qualified GameDB                 as GDB
+import qualified GameExpressions        as GEX
+import qualified GameLogic              as GL
 import           Proofs
+import qualified PubSub                 as PS
+import qualified PubSubTypes            as PST
 import           Servant
 import           Theory.Named
 import qualified UserInput
 
 type AppM = ReaderT Config Handler
 
--- TODO: Clean this up using some monadic binds or other handling.
--- Clear triangle of doom :(
 placeStone :: UserInput.User -> Int -> G.Position -> AppM ((Either G.MoveError G.Outcome),G.Game)
 placeStone user gameId pos = do
   lift $ AuthValidator.placeStone user gameId
+  rtGmap <- asks gameMap
   name pos $ \case
     Bound pos -> do
       mGameRecord <- liftIO $ GEX.getGameRecord gameId
       mPlayerColor <- liftIO $ GEX.getPlayerColor user gameId
       let mPlaceStone = GL.placeStone <$> mPlayerColor <*> Just pos
-      case mPlaceStone of
-        Just placeStone ->
-          case mGameRecord of
-            Just gameRecord ->
+      case (mPlaceStone, mGameRecord) of
+        (Just placeStone, Just gameRecord) ->
               let ret@(_, updatedGame) =
                     runState
                       (runExceptT placeStone)
                       (gameRecord ^. game)
-              in liftIO $ GEX.updateGame (const updatedGame) gameId $> ret
-            Nothing -> pure (Left G.NoBoard, newGame)
-        Nothing -> pure (Left G.IllegalPlayer, newGame)
+              in do
+                liftIO . atomically $ do
+                  rtGame <- PS.getGame gameId rtGmap
+                  writeTChan (PST.gameChan rtGame) (PST.UpdateGame updatedGame)
+                liftIO $ GEX.updateGame (const updatedGame) gameId $> ret
+        (Nothing, _) -> pure (Left G.NoBoard, newGame)
+        otherwise -> pure (Left G.IllegalPlayer, newGame)
     Unbound -> pure (Left G.OutOfBounds, newGame)
 
 -- TODO: Perform validation on regex of inputs allowed

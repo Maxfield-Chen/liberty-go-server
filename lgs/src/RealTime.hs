@@ -56,14 +56,10 @@ application cfg pending = do
         (sendLoop client conn)
         `finally` disconnect client
 
-hoistMaybeT :: (Monad m) => Maybe a -> MaybeT m a
-hoistMaybeT = MaybeT . pure
-
--- TODO: Implement validation + claim extraction
 extractClaims :: JWK -> Text -> IO (Either JWTError ClaimsSet)
 extractClaims jwkSecret rawJWT = runExceptT $ do
-  jwt <- decodeCompact (BL.fromStrict $ encodeUtf8 rawJWT)
-  verifyClaims (defaultJWTValidationSettings (const True)) jwkSecret jwt
+  decodeCompact (BL.fromStrict $ encodeUtf8 rawJWT) >>=
+    verifyClaims (defaultJWTValidationSettings (const True)) jwkSecret
 
 receive :: WS.Connection -> RealTimeApp (Either ErrorMessage IncomingMessage)
 receive = liftIO . WS.receiveData

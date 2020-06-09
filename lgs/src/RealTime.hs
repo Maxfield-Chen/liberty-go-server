@@ -8,18 +8,26 @@ import           Config
 import           Control.Concurrent.Async       (race_)
 import           Control.Concurrent.STM
 import           Control.Exception              (finally)
+import           Control.Lens
 import           Control.Monad                  (forM_, forever, guard)
+import           Control.Monad.Except
 import           Control.Monad.IO.Class         (liftIO)
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
+import           Crypto.JOSE.JWK
+import           Crypto.JWT
+import qualified Data.ByteString.Lazy           as BL
+import           Data.Either                    (fromRight)
+import           Data.Maybe                     (fromJust)
 import           Data.Monoid                    (mappend)
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
+import           Data.Text.Encoding
 import           Network.HTTP.Types.Status
 import           Network.Wai
 import           Network.Wai.Handler.WebSockets (websocketsOr)
 import qualified Network.WebSockets             as WS
-import qualified PubSub                         as PS
+import qualified PubSub                         as PB
 import           PubSubTypes
 import           Servant
 
@@ -35,12 +43,14 @@ application cfg pending = do
   conn <- WS.acceptRequest pending
   WS.forkPingThread conn 30
   msg <- WS.receiveData conn
-  authResult <- runMaybeT $ extractUserInfo msg
+  authResult <- extractClaims (jwtSecret cfg) msg
   case authResult of
-    Nothing -> WS.sendTextData conn $
+    Left _ -> WS.sendTextData conn $
       InitialConnectionError "Authorization Denied"
-    Just uName -> do
-      client <- liftIO . atomically $ PS.makeNewClient uName
+    Right claimsSet -> do
+      -- TODO: fromJust is only for testing here while I determine what part of JWT to use for UUID
+      let uName = fromJust $ claimsSet ^. claimJti
+      client <- liftIO . atomically $ PB.makeNewClient uName
       racePubSub cfg
         (receiveLoop client conn)
         (sendLoop client conn)
@@ -50,17 +60,10 @@ hoistMaybeT :: (Monad m) => Maybe a -> MaybeT m a
 hoistMaybeT = MaybeT . pure
 
 -- TODO: Implement validation + claim extraction
-extractUserInfo :: Text -> MaybeT IO Text
-extractUserInfo _ = hoistMaybeT Nothing
--- extractUserInfo d = do
---   let token = Token d
---   claim <- hoistMaybeT $ getClaimSetFromToken token
---   isValid <- liftIO $ checkExpValid claim
---   case isValid of
---     True -> do
---       uid <- hoistMaybeT $ iss claim
---       pure $ stringOrURIToText uid
---     False -> hoistMaybeT Nothing
+extractClaims :: JWK -> Text -> IO (Either JWTError ClaimsSet)
+extractClaims jwkSecret rawJWT = runExceptT $ do
+  jwt <- decodeCompact (BL.fromStrict $ encodeUtf8 rawJWT)
+  verifyClaims (defaultJWTValidationSettings (const True)) jwkSecret jwt
 
 receive :: WS.Connection -> RealTimeApp (Either ErrorMessage IncomingMessage)
 receive = liftIO . WS.receiveData
@@ -77,22 +80,22 @@ receiveLoop client conn = do
       Left err -> send conn err
       Right (JoinGame g) ->
         liftIO . atomically $ do
-          game <- PS.getGame g gmap
-          subscribed <- PS.clientSubbed client game
+          game <- PB.getGame g gmap
+          subscribed <- PB.clientSubbed client game
           guard (not subscribed)
-          PS.subscribe client game
+          PB.subscribe client game
       Right (LeaveGame g) ->
         liftIO . atomically $ do
-          game <- PS.getGame g gmap
-          subscribed <- PS.clientSubbed client game
+          game <- PB.getGame g gmap
+          subscribed <- PB.clientSubbed client game
           guard subscribed
-          PS.leave client game
+          PB.leave client game
 
 sendLoop :: Client -> WS.Connection -> RealTimeApp ()
 sendLoop client conn = forever $ do
-  (liftIO . atomically $ PS.getAvailableMessage client) >>= send conn
+  (liftIO . atomically $ PB.getAvailableMessage client) >>= send conn
 
 disconnect :: Client -> IO ()
 disconnect client@Client{..} = atomically $ do
   gameSet <- readTVar clientGames
-  forM_ gameSet (PS.leave client)
+  forM_ gameSet (PB.leave client)

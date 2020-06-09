@@ -16,13 +16,16 @@ import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 import           Crypto.JOSE.JWK
 import           Crypto.JWT
+import           Data.Aeson
 import qualified Data.ByteString.Lazy           as BL
 import           Data.Either                    (fromRight)
+import           Data.HashMap.Strict            as M
 import           Data.Maybe                     (fromJust)
 import           Data.Monoid                    (mappend)
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
-import           Data.Text.Encoding
+import           Data.Text.Encoding             as TES
+import           Data.Text.Lazy.Encoding        as TEL
 import           Network.HTTP.Types.Status
 import           Network.Wai
 import           Network.Wai.Handler.WebSockets (websocketsOr)
@@ -42,14 +45,14 @@ application :: Config -> WS.PendingConnection -> IO ()
 application cfg pending = do
   conn <- WS.acceptRequest pending
   WS.forkPingThread conn 30
-  msg <- WS.receiveData conn
-  authResult <- extractClaims (jwtSecret cfg) msg
+  authResult <- WS.receiveData conn >>= extractClaims (jwtSecret cfg)
   case authResult of
     Left _ -> WS.sendTextData conn $
       InitialConnectionError "Authorization Denied"
     Right claimsSet -> do
-      -- TODO: fromJust is only for testing here while I determine what part of JWT to use for UUID
-      let uName = fromJust $ claimsSet ^. claimJti
+      let uName =
+            claimsSet ^. unregisteredClaims &
+              TES.decodeUtf8 . BL.toStrict . encode . M.lookupDefault "invalidTokenUser" "dat"
       client <- liftIO . atomically $ PB.makeNewClient uName
       racePubSub cfg
         (receiveLoop client conn)
@@ -58,7 +61,7 @@ application cfg pending = do
 
 extractClaims :: JWK -> Text -> IO (Either JWTError ClaimsSet)
 extractClaims jwkSecret rawJWT = runExceptT $ do
-  decodeCompact (BL.fromStrict $ encodeUtf8 rawJWT) >>=
+  decodeCompact (BL.fromStrict $ TES.encodeUtf8 rawJWT) >>=
     verifyClaims (defaultJWTValidationSettings (const True)) jwkSecret
 
 receive :: WS.Connection -> RealTimeApp (Either ErrorMessage IncomingMessage)

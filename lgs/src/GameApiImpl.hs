@@ -36,6 +36,8 @@ import qualified PubSubTypes            as PST
 import           Servant
 import           Theory.Named
 import qualified UserInput
+--TODO: REMOVE
+import           Debug.Trace
 
 type AppM = ReaderT Config Handler
 
@@ -55,7 +57,7 @@ placeStone user gameId pos = do
                       (runExceptT placeStone)
                       (gameRecord ^. game)
               in do
-                liftIO . atomically $ do
+                trace (show "Sending place stone msg") $ liftIO . atomically $ do
                   rtGame <- PS.getGame gameId rtGmap
                   writeTChan (PST.gameChan rtGame) (PST.UpdateGame updatedGame)
                 liftIO $ GEX.updateGame (const updatedGame) gameId $> ret

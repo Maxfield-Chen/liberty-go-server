@@ -5,7 +5,7 @@
 module PubSubTypes where
 
 import           Control.Concurrent.STM
-import           Data.Aeson             (eitherDecode, encode)
+import           Data.Aeson             (decode, eitherDecode, encode)
 import           Data.Aeson.Types
 import           Data.Function          (on)
 import           Data.HashMap.Strict    as M
@@ -100,6 +100,9 @@ instance WS.WebSocketsData (Either ErrorMessage IncomingMessage) where
       Left m  -> Left . ParserError $ pack m
       Right i -> Right i
   toLazyByteString = encode
+  fromDataMessage (WS.Text s _) =
+    maybe (Left $ ParserError "Unable to decode UTF8 WS MSG.") Right (decode s)
+  fromDataMessage (WS.Binary bMsg) = WS.fromLazyByteString bMsg
 
 instance WS.WebSocketsData ErrorMessage where
   fromLazyByteString = undefined

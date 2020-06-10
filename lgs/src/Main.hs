@@ -22,6 +22,7 @@ import qualified GameDB                              as GDB
 import qualified GameExpressions                     as GEX
 import qualified LGSAPI                              as C
 import           Network.Wai.Handler.Warp            (run)
+import qualified PubSubTypes                         as PST
 import qualified RealTime                            as RT
 import           Servant
 import           Servant.Auth.Server
@@ -69,8 +70,10 @@ main :: IO ()
 main = do
   --TODO: Persist this key somewhere (DB?)
   signingKey <- generateKey
+  initialGameMap <- PST.emptyGameMap
   let jwtCfg = defaultJWTSettings signingKey
-      cfg = defaultConfig {jwtSecret = signingKey}
+      cfg = defaultConfig {jwtSecret = signingKey
+                         , gameMap = initialGameMap}
       cs = cookieSettings cfg
       ctx = cs :. jwtCfg :. EmptyContext
       api = Proxy :: Proxy (C.API '[JWT,Cookie])

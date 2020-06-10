@@ -9,23 +9,24 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 
-import           Control.Lens
 import           Data.FileEmbed
-import qualified Data.Map       as M
+import qualified Data.Map           as M
 import           Data.Maybe
-import           Data.Text      (Text)
-import qualified Data.Text      as T
+import           Data.Text          (Text)
+import qualified Data.Text          as T
+import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import           Debug.Trace
-import           Game           (Position, Space (..), boardPositions, newGame)
-import qualified Game           as G
+import           Game               (Position, Space (..), boardPositions,
+                                     newGame)
+import qualified Game               as G
 import           GameDB
-import qualified GameLogic      as GL
+import qualified GameLogic          as GL
 import           Proofs
 import           Reflex
 import           Reflex.Dom
 import           Servant.Reflex
-import qualified ServantClient  as SC
-import           Text.Read      (readMaybe)
+import qualified ServantClient      as SC
+import           Text.Read          (readMaybe)
 import           Theory.Named
 import qualified UserInput
 
@@ -50,10 +51,11 @@ bodyEl = elClass "div" "page-grid" $ do
       curPage       <- headerEl
       evMGameRecord <- getGameEl
       loginB        <- loginEl
-      dynGame       <- holdDyn newGame $ (maybe newGame _game) <$> evMGameRecord
+      dynGame       <- holdDyn newGame $ maybe newGame _game <$> evMGameRecord
       dynPage       <- holdDyn Main curPage
       boardEv       <- boardEl dynPage dynGame
       posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
+      -- TODO: Don't forget to replace this hardcoded gameId
       evOutcome     <- fmapMaybe reqSuccess <$>
         SC.placeStone (constDyn (Right 20)) posDyn (() <$ boardEv)
       pure ()
@@ -129,6 +131,15 @@ getGameEl = do
       gameId :: Dynamic t (Maybe Int) <-
         fmap (readMaybe . T.unpack) . value <$> textInput def
       b <- button "Retrieve Game"
+      wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") newMessage
+      let newMessage = fmap ((:[]) . encodeUtf8) $ tag (current $ value wsReq) $ keypress Enter wsReq
+      wsResp <- do
+        ws <- webSocket "ws://localhost:8888" $ def &
+          webSocketConfig_send .~ newMessage
+        foldDyn (\m ms -> ms ++ [m]) [] $ _webSocket_recv ws
       evFetchGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
       gameRecord <- foldDyn (mappend . T.pack . show) "" evFetchGR
+      _ <- el "ul"
+        $ simpleList wsResp
+        $ \msg -> el "li" $ dynText $ fmap decodeUtf8 msg
   pure evFetchGR

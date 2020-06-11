@@ -63,10 +63,10 @@ instance ToJSON ErrorMessage where
                , "code" .= (3 :: Int)
                , "payload" .= t]
 
-data GameMessage = UpdateGame G.Game
+data GameMessage = UpdateGame G.Game deriving Show
 
 data IncomingMessage = JoinGame GameId
-                     | LeaveGame GameId
+                     | LeaveGame GameId deriving Show
 
 instance ToJSON GameMessage where
   toJSON (UpdateGame g) =

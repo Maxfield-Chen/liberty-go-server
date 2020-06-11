@@ -17,7 +17,6 @@ import           Data.Maybe
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Data.Text.Encoding   (encodeUtf8)
-import           Debug.Trace
 import           Game                 (Position, Space (..), boardPositions,
                                        newGame)
 import qualified Game                 as G
@@ -134,19 +133,20 @@ getGameEl = do
       gameId :: Dynamic t (Maybe Int) <-
         fmap (readMaybe . T.unpack) . value <$> textInput def
       b <- button "Retrieve Game"
+      -- TODO: Move WS Parsing into separate function.
       wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") newMessage
       let newMessage = fmap ((:[]) . encodeUtf8) $ tag (current $ value wsReq) $ keypress Enter wsReq
       evMGameMessage :: Event t (Maybe GameMessage) <- do
         ws <- webSocket "ws://localhost:8888" $ def &
           webSocketConfig_send .~ newMessage
         pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
-      -- TODO: Consider moving this parsing into a separate func
       let evMWSGame :: Event t (Maybe G.Game)= (\mGameMessage -> do
                           gameMessage <- mGameMessage
                           case gameMessage of
                             UpdateGame g -> Just g
                             _            -> Nothing)
                       <$> evMGameMessage
+
 
       evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
       let evMFetchGame :: Event t (Maybe G.Game) = fmap _game <$> evFetchMGR

@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 
 module PubSubTypes where
@@ -31,6 +32,9 @@ data Client = Client { clientName      :: UserName
                      , clientGameChans :: TVar [TChan GameMessage]}
 
 getGameChan = gameChan
+
+instance Show Client where
+  show Client{..} = show clientName
 
 instance Eq Client where
   (==) = on (==) clientName

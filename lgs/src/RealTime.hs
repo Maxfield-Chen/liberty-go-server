@@ -26,6 +26,7 @@ import           Data.Text                      (Text)
 import qualified Data.Text                      as T
 import           Data.Text.Encoding             as TES
 import           Data.Text.Lazy.Encoding        as TEL
+import           Debug.Trace
 import           Network.HTTP.Types.Status
 import           Network.Wai
 import           Network.Wai.Handler.WebSockets (websocketsOr)
@@ -48,13 +49,13 @@ application cfg pending = do
   authResult <- WS.receiveData conn >>= extractClaims (jwtSecret cfg)
   case authResult of
     Left _ -> WS.sendTextData conn $
-      InitialConnectionError "Authorization Denied"
+      trace "Auth Denied" $ InitialConnectionError "Authorization Denied"
     Right claimsSet -> do
       let uName =
             claimsSet ^. unregisteredClaims &
               TES.decodeUtf8 . BL.toStrict . encode . M.lookupDefault "invalidTokenUser" "dat"
       client <- liftIO . atomically $ PB.makeNewClient uName
-      racePubSub cfg
+      trace ("New Client" ++ show client) $ racePubSub cfg
         (receiveLoop client conn)
         (sendLoop client conn)
         `finally` disconnect client
@@ -76,9 +77,9 @@ receiveLoop client conn = do
   forever $ do
     recMessage <- receive conn
     case recMessage of
-      Left err -> send conn err
+      Left err -> trace (show err) $ send conn err
       Right (JoinGame g) ->
-        liftIO . atomically $ do
+        trace ("Joining: " ++ show client) $ liftIO . atomically $ do
           game <- PB.getGame g gmap
           subscribed <- PB.clientSubbed client game
           guard (not subscribed)

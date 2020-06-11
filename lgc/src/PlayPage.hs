@@ -70,16 +70,22 @@ getGameEl gameId = do
   b <- button "Retrieve Game"
   evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
   let evMFetchGame :: Event t (Maybe G.Game) = fmap _game <$> evFetchMGR
-  evMWSGame <- realTimeEl
+  evMWSGame <- realTimeEl gameId b
   pure $ mergeWith (\mws mhttp -> case mws of
                        Just ws -> Just ws
                        Nothing -> mhttp) [evMWSGame, evMFetchGame]
 
 
-realTimeEl :: forall t m. MonadWidget t m => m (Event t (Maybe G.Game))
-realTimeEl = do
-  rec wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") newMessage
-      let newMessage = fmap ((:[]) . encodeUtf8) $ tag (current $ value wsReq) $ keypress Enter wsReq
+realTimeEl :: forall t m. MonadWidget t m =>
+              Dynamic t (Maybe Int)
+           -> Event t ()
+           -> m (Event t (Maybe G.Game))
+realTimeEl gameId b = do
+  rec wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") arbMessage
+      let arbMessage = fmap encodeUtf8 $ tag (current $ value wsReq) $ keypress Enter wsReq
+          joinMessage = (encodeUtf8 . (<> "}") . ("{\"type\": \"join\",\"gameId\": " <>) . T.pack . show . fromMaybe (-1))
+            <$> tagPromptlyDyn gameId b
+          newMessage = (:[]) <$> leftmost [joinMessage, arbMessage]
       evMGameMessage :: Event t (Maybe GameMessage) <- do
         ws <- webSocket "ws://localhost:8888" $ def &
           webSocketConfig_send .~ newMessage

@@ -73,6 +73,14 @@ instance ToJSON GameMessage where
     object ["type" .= ("update" :: Text)
           , "game" .= g]
 
+instance FromJSON GameMessage where
+  parseJSON o@(Object v) = do
+    typ <- v.: "type" :: Parser Text
+    case typ of
+      "update" -> UpdateGame <$> v.: "game"
+      _        -> typeMismatch "Invalid Message Type" o
+  parseJSON invalid = typeMismatch "Invalid JSON" invalid
+
 instance WS.WebSocketsData GameMessage where
   fromLazyByteString = undefined
   toLazyByteString = encode

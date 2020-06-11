@@ -20,6 +20,7 @@ executable frontend
   -- other-extensions:
   build-depends:       base >=4.9 && <4.13
                      , aeson
+                     , bytestring
                      , cookie
                      , common
                      , containers

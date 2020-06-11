@@ -9,24 +9,27 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 
+import           Data.Aeson
+import qualified Data.ByteString.Lazy as BL
 import           Data.FileEmbed
-import qualified Data.Map           as M
+import qualified Data.Map             as M
 import           Data.Maybe
-import           Data.Text          (Text)
-import qualified Data.Text          as T
-import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import           Data.Text            (Text)
+import qualified Data.Text            as T
+import           Data.Text.Encoding   (encodeUtf8)
 import           Debug.Trace
-import           Game               (Position, Space (..), boardPositions,
-                                     newGame)
-import qualified Game               as G
+import           Game                 (Position, Space (..), boardPositions,
+                                       newGame)
+import qualified Game                 as G
 import           GameDB
-import qualified GameLogic          as GL
+import qualified GameLogic            as GL
 import           Proofs
+import           PubSubTypes
 import           Reflex
 import           Reflex.Dom
 import           Servant.Reflex
-import qualified ServantClient      as SC
-import           Text.Read          (readMaybe)
+import qualified ServantClient        as SC
+import           Text.Read            (readMaybe)
 import           Theory.Named
 import qualified UserInput
 
@@ -51,7 +54,7 @@ bodyEl = elClass "div" "page-grid" $ do
       curPage       <- headerEl
       evMGameRecord <- getGameEl
       loginB        <- loginEl
-      dynGame       <- holdDyn newGame $ maybe newGame _game <$> evMGameRecord
+      dynGame       <- holdDyn newGame $ fromMaybe newGame <$> evMGameRecord
       dynPage       <- holdDyn Main curPage
       boardEv       <- boardEl dynPage dynGame
       posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
@@ -125,7 +128,7 @@ loginEl = do
   loginEv <- fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b
   pure b
 
-getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe GameRecord))
+getGameEl :: forall t m. MonadWidget t m => m (Event t (Maybe G.Game))
 getGameEl = do
   rec el "br" blank
       gameId :: Dynamic t (Maybe Int) <-
@@ -133,13 +136,20 @@ getGameEl = do
       b <- button "Retrieve Game"
       wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") newMessage
       let newMessage = fmap ((:[]) . encodeUtf8) $ tag (current $ value wsReq) $ keypress Enter wsReq
-      wsResp <- do
+      evMGameMessage :: Event t (Maybe GameMessage) <- do
         ws <- webSocket "ws://localhost:8888" $ def &
           webSocketConfig_send .~ newMessage
-        foldDyn (\m ms -> ms ++ [m]) [] $ _webSocket_recv ws
-      evFetchGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
-      gameRecord <- foldDyn (mappend . T.pack . show) "" evFetchGR
-      _ <- el "ul"
-        $ simpleList wsResp
-        $ \msg -> el "li" $ dynText $ fmap decodeUtf8 msg
-  pure evFetchGR
+        pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
+      -- TODO: Consider moving this parsing into a separate func
+      let evMWSGame :: Event t (Maybe G.Game)= (\mGameMessage -> do
+                          gameMessage <- mGameMessage
+                          case gameMessage of
+                            UpdateGame g -> Just g
+                            _            -> Nothing)
+                      <$> evMGameMessage
+
+      evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
+      let evMFetchGame :: Event t (Maybe G.Game) = fmap _game <$> evFetchMGR
+  pure $ mergeWith (\mws mhttp -> case mws of
+                       Just ws -> Just ws
+                       Nothing -> mhttp) [evMWSGame, evMFetchGame]

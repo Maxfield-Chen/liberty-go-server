@@ -17,9 +17,12 @@ import           Control.Monad.Trans.Reader
 import           Crypto.JOSE.JWK
 import           Crypto.JWT
 import           Data.Aeson
+import qualified Data.ByteString                as BS
 import qualified Data.ByteString.Lazy           as BL
+import qualified Data.CaseInsensitive           as CI
 import           Data.Either                    (fromRight)
-import           Data.HashMap.Strict            as M
+import           Data.HashMap.Strict            as M hiding (foldr)
+import           Data.List
 import           Data.Maybe                     (fromJust)
 import           Data.Monoid                    (mappend)
 import           Data.Text                      (Text)
@@ -34,6 +37,7 @@ import qualified Network.WebSockets             as WS
 import qualified PubSub                         as PB
 import           PubSubTypes
 import           Servant
+import           Web.Cookie
 
 type RealTimeApp = ReaderT Config IO
 
@@ -44,9 +48,10 @@ realTimeApp cfg = websocketsOr WS.defaultConnectionOptions $ application cfg
 
 application :: Config -> WS.PendingConnection -> IO ()
 application cfg pending = do
+  let reqHead = WS.pendingRequest pending
+  authResult <- extractClaims (jwtSecret cfg) (getJWTFromHeader $ WS.requestHeaders reqHead)
   conn <- WS.acceptRequest pending
   WS.forkPingThread conn 30
-  authResult <- WS.receiveData conn >>= extractClaims (jwtSecret cfg)
   case authResult of
     Left _ -> WS.sendTextData conn $
       trace "Auth Denied" $ InitialConnectionError "Authorization Denied"
@@ -60,9 +65,17 @@ application cfg pending = do
         (sendLoop client conn)
         `finally` disconnect client
 
-extractClaims :: JWK -> Text -> IO (Either JWTError ClaimsSet)
-extractClaims jwkSecret rawJWT = runExceptT $ do
-  decodeCompact (BL.fromStrict $ TES.encodeUtf8 rawJWT) >>=
+-- Search for 'JWT-Cookie' value in cookie header
+getJWTFromHeader :: WS.Headers -> Maybe BL.ByteString
+getJWTFromHeader headers =
+  let mCookies = (parseCookies . snd) <$>
+        find (\(k,_) -> (TES.decodeUtf8 (CI.original k)) == "Cookie") headers
+  in BL.fromStrict . snd <$> (mCookies >>= find (\(k,v) -> k == "JWT-Cookie"))
+
+extractClaims :: JWK -> Maybe BL.ByteString -> IO (Either JWTError ClaimsSet)
+extractClaims _ Nothing = pure $ Left (JWSError (JSONDecodeError "Cookie Header Not Found"))
+extractClaims jwkSecret (Just rawJWT) = runExceptT $
+  decodeCompact rawJWT >>=
     verifyClaims (defaultJWTValidationSettings (const True)) jwkSecret
 
 receive :: WS.Connection -> RealTimeApp (Either ErrorMessage IncomingMessage)
@@ -92,7 +105,7 @@ receiveLoop client conn = do
           PB.leave client game
 
 sendLoop :: Client -> WS.Connection -> RealTimeApp ()
-sendLoop client conn = forever $ do
+sendLoop client conn = forever $
   (liftIO . atomically $ PB.getAvailableMessage client) >>= send conn
 
 disconnect :: Client -> IO ()

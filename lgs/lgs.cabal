@@ -21,6 +21,8 @@ executable lgs
                   , beam-core
                   , beam-sqlite
                   , bytestring
+                  , cookie
+                  , case-insensitive
                   , common
                   , containers
                   , unordered-containers

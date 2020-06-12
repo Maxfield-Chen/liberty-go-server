@@ -16,6 +16,7 @@ import           PageUtil
 import           PlayPage
 import           Reflex
 import           Reflex.Dom
+import           RegisterPage
 
 
 devMain :: IO ()
@@ -34,9 +35,10 @@ headEl = do
 
 bodyEl :: forall t m . MonadWidget t m => m ()
 bodyEl = elClass "div" "page-grid" $ do
-      curPage       <- headerEl
-      dynPage       <- holdDyn Main curPage
-      loginB        <- loginPage dynPage
+      curPage   <- headerEl
+      dynPage   <- holdDyn Main curPage
+      loginB    <- loginPage dynPage
+      registerB <- registerPage dynPage
       playPage dynPage
       pure ()
 

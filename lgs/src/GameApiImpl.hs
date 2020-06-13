@@ -88,7 +88,7 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   when (nub gameUsers /= gameUsers) (throwError $
                                      err406 {errBody = "All proposed users must be unique."})
   when (Nothing `elem` mPlayers) (throwError $ err400 {errBody = "All proposed users must exist."})
-  when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed users must exist."})
+  when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed teachers must exist."})
   gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
   mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) $ catMaybes gameUsers
   pure gameRecord

@@ -10,10 +10,11 @@
 {-# LANGUAGE TemplateHaskell     #-}
 
 import           Data.FileEmbed
-import qualified Data.Map       as M
+import qualified Data.Map        as M
 import           LoginPage
 import           PageUtil
 import           PlayPage
+import           ProposeGamePage
 import           Reflex
 import           Reflex.Dom
 import           RegisterPage
@@ -39,6 +40,7 @@ bodyEl = elClass "div" "page-grid" $ do
       dynPage   <- holdDyn Main curPage
       loginB    <- loginPage dynPage
       registerB <- registerPage dynPage
+      proposeGameB <- proposeGamePage dynPage
       playPage dynPage
       pure ()
 
@@ -48,4 +50,5 @@ headerEl = elClass "div" "header-el" $ do
   registerBtn <- elClass "div" "register-button" $ pageButton Register "Register"
   loginBtn    <- elClass "div" "login-button" $ pageButton Login "Login"
   playBtn     <- elClass "div" "play-button" $ pageButton Play "Play"
-  pure $ leftmost [homeBtn, registerBtn, loginBtn, playBtn]
+  proposeGameBtn     <- elClass "div" "propose-game-button" $ pageButton ProposeGame "Propose Game"
+  pure $ leftmost [homeBtn, registerBtn, loginBtn, playBtn, proposeGameBtn]

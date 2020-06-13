@@ -36,6 +36,7 @@ playPage :: forall t m . MonadWidget t m =>
          -> m ()
 playPage dynPage =
   elDynAttr "div" (shouldShow Play "play-page" <$> dynPage) $ do
+    text "GameId"
     gameId :: Dynamic t (Maybe Int) <-
       fmap (readMaybe . T.unpack) . value <$> textInput def
     evMGameRecord <- getGameEl gameId
@@ -81,6 +82,7 @@ realTimeEl :: forall t m. MonadWidget t m =>
            -> Event t ()
            -> m (Event t (Maybe G.Game))
 realTimeEl gameId b = do
+  text "Arb WS Message"
   rec wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") arbMessage
       let arbMessage = fmap encodeUtf8 $ tag (current $ value wsReq) $ keypress Enter wsReq
           joinMessage = (encodeUtf8 . (<> "}") . ("{\"type\": \"join\",\"gameId\": " <>)

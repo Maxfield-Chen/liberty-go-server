@@ -82,17 +82,15 @@ getGamesForPlayer = liftIO . GEX.getGameRecords
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM GDB.GameRecord
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   lift $ AuthValidator.proposeGame user proposedGame
-  let gameUsers = catMaybes
-                  [Just bp
-                  ,Just wp
-                  ,mbt
-                  ,mwt]
-  mUsers <- mapM (liftIO . GEX.getUser) gameUsers
+  mPlayers <- mapM (liftIO . GEX.getUser) $ [bp, wp]
+  mTeachers <- mapM (liftIO . GEX.getUser) $ catMaybes [mbt, mwt]
+  let gameUsers = mPlayers ++ mTeachers
   when (nub gameUsers /= gameUsers) (throwError $
                                      err406 {errBody = "All proposed users must be unique."})
-  when (Nothing `elem` mUsers) (throwError $ err400 {errBody = "All proposed users must exist."})
+  when (Nothing `elem` mPlayers) (throwError $ err400 {errBody = "All proposed users must exist."})
+  when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed users must exist."})
   gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
-  mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) (catMaybes mUsers)
+  mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) $ catMaybes gameUsers
   pure gameRecord
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)

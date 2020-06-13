@@ -54,7 +54,7 @@ application cfg pending = do
   WS.forkPingThread conn 30
   case authResult of
     Left _ -> WS.sendTextData conn $
-      trace "Auth Denied" $ InitialConnectionError "Authorization Denied"
+      InitialConnectionError ""
     Right claimsSet -> do
       let uName =
             claimsSet ^. unregisteredClaims &

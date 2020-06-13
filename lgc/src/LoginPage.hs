@@ -23,8 +23,10 @@ loginPage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Event t ())
 loginPage dynPage = elDynAttr "div" (shouldShow Login "login-page" <$> dynPage) $ do
+  text "Username"
   userName :: Dynamic t Text <-
     value <$> inputElement def
+  text "Password"
   userPassword :: Dynamic t Text <-
     value <$> inputElement def
   b <- button "Login"

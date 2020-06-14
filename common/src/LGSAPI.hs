@@ -27,7 +27,7 @@ type Unprotected = "users" :> "register"
                                                     NoContent)
 
               :<|> "users" :> Capture "userId" Int :> "games"
-                :> Get '[JSON] [GDB.GameRecord]
+                :> Get '[JSON] GDB.AllGames
 
               :<|> "play" :> Capture "gameId" Int :> Get '[JSON] (Maybe GDB.GameRecord)
 

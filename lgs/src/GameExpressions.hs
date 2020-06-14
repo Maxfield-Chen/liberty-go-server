@@ -118,8 +118,8 @@ referenceSingleUser f gameId = do
            &&. f gameRecord `references_` user)
     pure user
 
-getGameRecords :: Int -> IO [GDB.GameRecord]
-getGameRecords playerId = do
+getPlayersGameRecords :: Int -> IO [GDB.GameRecord]
+getPlayersGameRecords playerId = do
   conn <- open dbFilename
   relatedGames <-
     runBeamSqlite conn $

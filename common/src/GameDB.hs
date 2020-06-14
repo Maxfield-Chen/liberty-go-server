@@ -15,6 +15,7 @@
 module GameDB where
 
 import           Data.Aeson.Types
+import qualified Data.HashMap.Strict       as M
 import           Data.Text                 (Text, unpack)
 import qualified Data.Time                 as Time
 import           Database.Beam
@@ -41,6 +42,7 @@ deriving instance FromJSON User
 deriving instance Eq (PrimaryKey UserT Identity)
 deriving instance Show (PrimaryKey UserT Identity)
 deriving instance Show (PrimaryKey UserT (Nullable Identity))
+deriving instance Eq (PrimaryKey UserT (Nullable Identity))
 deriving instance ToJSON (PrimaryKey UserT Identity)
 deriving instance ToJSON (PrimaryKey UserT (Nullable Identity))
 deriving instance FromJSON (PrimaryKey UserT Identity)
@@ -95,6 +97,7 @@ data GameRecordT f
 
 type GameRecord = GameRecordT Identity
 deriving instance Show GameRecord
+deriving instance Eq GameRecord
 deriving instance ToJSON GameRecord
 deriving instance FromJSON GameRecord
 deriving instance Eq (PrimaryKey GameRecordT Identity)
@@ -133,3 +136,6 @@ data LGSDb f =
 
 lgsDb :: DatabaseSettings be LGSDb
 lgsDb = defaultDbSettings
+
+
+type AllGames = ([GameRecord], M.HashMap Int [Awaiter])

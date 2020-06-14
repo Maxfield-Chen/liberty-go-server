@@ -76,8 +76,13 @@ createNewUser (UserInput.RegisterUser email name password) = do
 getGameId :: Int -> AppM (Maybe GDB.GameRecord)
 getGameId = liftIO . GEX.getGameRecord
 
-getGamesForPlayer :: Int -> AppM [GDB.GameRecord]
-getGamesForPlayer = liftIO . GEX.getGameRecords
+getGamesForPlayer :: Int -> AppM GDB.AllGames
+getGamesForPlayer playerId = do
+  mgrs <- liftIO $ GEX.getPlayersGameRecords playerId
+  mawts <-  liftIO $ foldM (\m k -> do
+                     awaiters <- GEX.getAwaiters (GDB._gameId k)
+                     pure $ M.insert (GDB._gameId k) awaiters m) mempty mgrs
+  pure (mgrs,mawts)
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM GDB.GameRecord
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do

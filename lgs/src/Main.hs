@@ -90,8 +90,8 @@ checkCreds cookieSettings jwtSettings (UserInput.Login name pass) = do
   mUser <- liftIO $ GEX.getUserViaCreds name pass
   case mUser of
     Nothing -> throwError err401
-    Just (GDB.User _ email name _) -> do
-      mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings (UserInput.User email name "")
+    Just (GDB.User id email name _) -> do
+      mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings (UserInput.User email name id)
       case mApplyCookies of
         Nothing           -> throwError err401
         Just applyCookies -> pure $ applyCookies NoContent

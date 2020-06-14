@@ -66,8 +66,8 @@ placeStone user gameId pos = do
     Unbound -> pure (Left G.OutOfBounds, newGame)
 
 -- TODO: Perform validation on regex of inputs allowed
-createNewUser :: UserInput.User -> AppM ()
-createNewUser (UserInput.User email name password) = do
+createNewUser :: UserInput.RegisterUser -> AppM ()
+createNewUser (UserInput.RegisterUser email name password) = do
   mUser <- liftIO $ GEX.getUserViaName name
   when (isJust mUser) (throwError err409)
   liftIO $ GEX.insertUser email name password

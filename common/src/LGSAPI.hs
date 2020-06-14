@@ -17,7 +17,7 @@ import           Servant.Auth.Server.SetCookieOrphan ()
 import qualified UserInput
 
 type Unprotected = "users" :> "register"
-                :> ReqBody '[JSON] UserInput.User
+                :> ReqBody '[JSON] UserInput.RegisterUser
                 :> Post '[JSON] ()
 
               :<|> "users" :> "login"

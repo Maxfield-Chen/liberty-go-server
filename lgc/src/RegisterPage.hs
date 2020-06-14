@@ -34,6 +34,6 @@ registerPage dynPage = elDynAttr "div" (shouldShow Register "register-page" <$> 
     value <$> inputElement def
   b <- button "Register"
   let userDyn =
-        UserInput.User <$> userEmail <*> userName <*> userPassword
+        UserInput.RegisterUser <$> userEmail <*> userName <*> userPassword
   loginEv <- fmapMaybe reqSuccess <$> SC.register (Right <$> userDyn) b
   pure b

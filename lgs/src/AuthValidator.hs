@@ -31,9 +31,9 @@ placeStone :: UserInput.User -> Int -> Handler ()
 placeStone = errPlayerExcluded
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
-proposeGame (UserInput.User _ name _) (UserInput.ProposedGame bp wp bt wt _ _) =
+proposeGame (UserInput.User _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
   do
-    mUser <- liftIO $ GEX.getUserViaName name
+    mUser <- liftIO $ GEX.getUser id
     case mUser of
       Nothing -> throwError err410
       Just user -> do
@@ -45,9 +45,9 @@ proposeGame (UserInput.User _ name _) (UserInput.ProposedGame bp wp bt wt _ _) =
         when (not callingUserIncluded) $ throwError err401
 
 acceptGameProposal :: UserInput.User -> Int -> Handler ()
-acceptGameProposal (UserInput.User _ name _) gameId =
+acceptGameProposal (UserInput.User _ _ id) gameId =
   do
-    mUser <- liftIO $ GEX.getUserViaName name
+    mUser <- liftIO $ GEX.getUser id
     case mUser of
       Nothing -> throwError err410
       Just user ->
@@ -65,9 +65,9 @@ acceptTerritoryProposal :: UserInput.User -> Int -> Handler ()
 acceptTerritoryProposal = errPlayerExcluded
 
 errPlayerExcluded :: UserInput.User -> Int -> Handler ()
-errPlayerExcluded (UserInput.User _ name _) gameId =
+errPlayerExcluded (UserInput.User _ _ id) gameId =
   do
-    mUser <- liftIO $ GEX.getUserViaName name
+    mUser <- liftIO $ GEX.getUser id
     players <- liftIO $ GEX.getGamePlayers gameId
     case elem <$> mUser <*> Just players of
       Nothing    -> throwError err410

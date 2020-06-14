@@ -71,7 +71,7 @@ placeStone :: MonadWidget t m =>
                     -> m (Event t (ReqResult () (Either MoveError Outcome, Game)))
 
 register :: MonadWidget t m =>
-                  Dynamic t (Either Text UserInput.User)
+                  Dynamic t (Either Text UserInput.RegisterUser)
                   -> Event t ()
                   -> m (Event t (ReqResult () ()))
 

@@ -16,11 +16,20 @@ import           Data.Text           (Text)
 import           GHC.Generics
 import           Servant.Auth.Server
 
+data RegisterUser =
+  RegisterUser
+  {
+    rUserEmail    :: Text,
+    rUserName     :: Text,
+    rUserPassword :: Text
+ } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
+
+
 data User =
   User
-    { userEmail    :: Text
-    , userName     :: Text
-    , userPassword :: Text
+    { userEmail :: Text
+    , userName  :: Text
+    , userId    :: Int
     } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 data Login =

@@ -19,7 +19,7 @@ import           Reflex
 import           Reflex.Dom
 
 
-data Page = Main | Register | Login | Play | ProposeGame deriving (Show, Eq)
+data Page = Main | Register | Login | Play | Profile | ProposeGame deriving (Show, Eq)
 
 shouldShow :: Page -> Text -> Page -> M.Map Text Text
 shouldShow componentPage componentClass curPage

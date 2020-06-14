@@ -14,6 +14,7 @@ import qualified Data.Map        as M
 import           LoginPage
 import           PageUtil
 import           PlayPage
+import           ProfilePage
 import           ProposeGamePage
 import           Reflex
 import           Reflex.Dom

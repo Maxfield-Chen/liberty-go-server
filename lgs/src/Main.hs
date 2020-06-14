@@ -38,6 +38,7 @@ unprotected cs jwts = GI.createNewUser
 protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI GI.AppM
 protected (Servant.Auth.Server.Authenticated user) =
   GI.proposeGame user  :<|>
+  GI.getGamesForProfile user :<|>
   gameOperations user
 
 protected Servant.Auth.Server.BadPassword = throwAll err401

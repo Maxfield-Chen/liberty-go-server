@@ -3,8 +3,11 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeFamilies          #-}
+
 
 module GameApiImpl where
 
@@ -75,6 +78,9 @@ createNewUser (UserInput.RegisterUser email name password) = do
 
 getGameId :: Int -> AppM (Maybe GDB.GameRecord)
 getGameId = liftIO . GEX.getGameRecord
+
+getGamesForProfile :: UserInput.User -> AppM GDB.AllGames
+getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
 
 getGamesForPlayer :: Int -> AppM GDB.AllGames
 getGamesForPlayer playerId = do

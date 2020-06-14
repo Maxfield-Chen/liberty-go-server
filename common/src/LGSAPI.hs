@@ -36,6 +36,9 @@ type GameAPI = "play" :> "proposeGame"
                 :> ReqBody '[JSON] UserInput.ProposedGame
                 :> Post '[JSON] GDB.GameRecord
 
+                :<|> "profile" :> "games"
+                :> Get '[JSON] GDB.AllGames
+
                 :<|> "play" :> Capture "gameId" Int
                 :> "acceptGameProposal" :> ReqBody '[JSON] Bool
                                      :> Post '[JSON] (Maybe G.GameStatus)

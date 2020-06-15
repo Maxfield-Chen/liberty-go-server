@@ -125,7 +125,6 @@ instance HasSqlValueSyntax be String => HasSqlValueSyntax be Game where
 instance FromBackendRow Sqlite Game where
   fromBackendRow = read . unpack <$> fromBackendRow
 
-
 data LGSDb f =
   LGSDb
     { users        :: f (TableEntity UserT)

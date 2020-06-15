@@ -15,6 +15,7 @@ import qualified Data.Time              as Time
 import           Database.Beam
 import           Database.Beam.Sqlite
 import           Database.SQLite.Simple
+import           Debug.Trace
 import qualified Game                   as G
 import           GameDB                 (awaiter_game_id, awaiter_id,
                                          awaiter_user_id, blackFocus,
@@ -118,6 +119,7 @@ referenceSingleUser f gameId = do
            &&. f gameRecord `references_` user)
     pure user
 
+-- TODO : Return if teacher matches as well
 getPlayersGameRecords :: Int -> IO [GDB.GameRecord]
 getPlayersGameRecords playerId = do
   conn <- open dbFilename

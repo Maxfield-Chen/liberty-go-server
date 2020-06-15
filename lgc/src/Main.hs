@@ -49,8 +49,9 @@ bodyEl = elClass "div" "page-grid" $ do
 headerEl :: forall t m. MonadWidget t m => m (Event t Page)
 headerEl = elClass "div" "header-el" $ do
   homeBtn     <- elClass "div" "home-button" $ pageButton Main "Go Sensei"
+  profileBtn     <- elClass "div" "profile-button" $ pageButton Profile "Profile"
   registerBtn <- elClass "div" "register-button" $ pageButton Register "Register"
   loginBtn    <- elClass "div" "login-button" $ pageButton Login "Login"
   playBtn     <- elClass "div" "play-button" $ pageButton Play "Play"
   proposeGameBtn     <- elClass "div" "propose-game-button" $ pageButton ProposeGame "Propose Game"
-  pure $ leftmost [homeBtn, registerBtn, loginBtn, playBtn, proposeGameBtn]
+  pure $ leftmost [homeBtn, registerBtn, loginBtn, playBtn, proposeGameBtn, profileBtn]

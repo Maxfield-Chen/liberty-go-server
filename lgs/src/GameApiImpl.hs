@@ -23,6 +23,7 @@ import qualified Data.HashMap.Strict    as M
 import           Data.List              (nub)
 import           Data.Maybe
 import           Data.Text              (Text)
+import           Debug.Trace
 import           Game                   (newGame)
 import qualified Game                   as G
 import           GameDB                 (awaiter_game_id, awaiter_id,

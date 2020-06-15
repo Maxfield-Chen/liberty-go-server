@@ -41,18 +41,18 @@ playPage dynPage =
       fmap (readMaybe . T.unpack) . value <$> textInput def
     evMGameRecord <- getGameEl gameId
     dynGame       <- holdDyn newGame $ fromMaybe newGame <$> evMGameRecord
-    boardEv       <- boardEl dynPage dynGame
+    boardEv       <- boardEl dynGame
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right . fromMaybe (-1) <$> gameId) posDyn (() <$ boardEv)
     pure ()
 
+
 boardEl :: forall t m . MonadWidget t m =>
-           Dynamic t Page
-        -> Dynamic t G.Game
+        Dynamic t G.Game
         -> m (Event t Position)
-boardEl dynPage dynGame =
-    elDynAttr "div" (shouldShow Play "board-grid" <$> dynPage) $ do
+boardEl dynGame =
+    el "div" $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                     \case
                                         Bound boundPos -> do

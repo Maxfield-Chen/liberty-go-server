@@ -85,7 +85,11 @@ login :: MonadWidget t m =>
 gamesForUser :: MonadWidget t m =>
                       Dynamic t (Either Text Int)
                       -> Event t ()
-                      -> m (Event t (ReqResult () [GameDB.GameRecord]))
+                      -> m (Event t (ReqResult () GameDB.AllGames))
+
+gamesForProfile :: MonadWidget t m =>
+                      Event t ()
+                      -> m (Event t (ReqResult () GameDB.AllGames))
 
 getGame :: MonadWidget t m =>
                  Dynamic t (Either Text Int)
@@ -93,4 +97,4 @@ getGame :: MonadWidget t m =>
                  -> m (Event t (ReqResult () (Maybe GameDB.GameRecord)))
 
 
-((proposeGame :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> register :<|> login :<|> gamesForUser :<|> getGame) = apiClients
+((proposeGame :<|> gamesForProfile :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> register :<|> login :<|> gamesForUser :<|> getGame) = apiClients

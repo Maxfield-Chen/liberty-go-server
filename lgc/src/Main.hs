@@ -42,6 +42,7 @@ bodyEl = elClass "div" "page-grid" $ do
       loginB    <- loginPage dynPage
       registerB <- registerPage dynPage
       proposeGameB <- proposeGamePage dynPage
+      selectedGame <- profilePage dynPage
       playPage dynPage
       pure ()
 

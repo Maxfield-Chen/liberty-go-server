@@ -34,6 +34,7 @@ import           GameDB                 (awaiter_game_id, awaiter_id,
 import qualified GameDB                 as GDB
 import qualified GameExpressions        as GEX
 import qualified GameLogic              as GL
+import qualified OutputTypes            as OT
 import           Proofs
 import qualified PubSub                 as PS
 import qualified PubSubTypes            as PST
@@ -77,8 +78,11 @@ createNewUser (UserInput.RegisterUser email name password) = do
   liftIO $ GEX.insertUser email name password
   pure ()
 
-getGameId :: Int -> AppM (Maybe GDB.GameRecord)
-getGameId = liftIO . GEX.getGameRecord
+getGameId :: Int -> AppM (Maybe OT.GameRecord)
+getGameId gameId = do
+  mGR <- liftIO $ GEX.getGameRecord gameId
+  pure $ OT.convertGR <$> mGR
+
 
 getGamesForProfile :: UserInput.User -> AppM GDB.AllGames
 getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
@@ -91,7 +95,7 @@ getGamesForPlayer playerId = do
                      pure $ M.insert (GDB._gameId k) awaiters m) mempty mgrs
   pure (mgrs,mawts)
 
-proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM GDB.GameRecord
+proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM OT.GameRecord
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   lift $ AuthValidator.proposeGame user proposedGame
   mPlayers <- mapM (liftIO . GEX.getUser) $ [bp, wp]
@@ -103,7 +107,7 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed teachers must exist."})
   gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
   mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) $ catMaybes gameUsers
-  pure gameRecord
+  pure $ OT.convertGR gameRecord
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do

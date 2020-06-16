@@ -11,6 +11,7 @@ module LGSAPI where
 import           Data.Proxy
 import qualified Game                                as G
 import qualified GameDB                              as GDB
+import qualified OutputTypes                         as OT
 import           Servant.API
 import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
@@ -29,12 +30,12 @@ type Unprotected = "users" :> "register"
               :<|> "users" :> Capture "userId" Int :> "games"
                 :> Get '[JSON] GDB.AllGames
 
-              :<|> "play" :> Capture "gameId" Int :> Get '[JSON] (Maybe GDB.GameRecord)
+              :<|> "play" :> Capture "gameId" Int :> Get '[JSON] (Maybe OT.GameRecord)
 
 
 type GameAPI = "play" :> "proposeGame"
                 :> ReqBody '[JSON] UserInput.ProposedGame
-                :> Post '[JSON] GDB.GameRecord
+                :> Post '[JSON] OT.GameRecord
 
                 :<|> "profile" :> "games"
                 :> Get '[JSON] GDB.AllGames

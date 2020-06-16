@@ -37,13 +37,13 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
 profileBoards :: forall t m. MonadWidget t m =>
                  Dynamic t [G.Game]
               -> m (Dynamic t [Event t ()])
-profileBoards dynGames = simpleList dynGames readOnlyBoard
+profileBoards dynGames = divClass "profile-boards" $ simpleList dynGames readOnlyBoard
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
         Dynamic t G.Game
       -> m (Event t ())
 readOnlyBoard dynGame = do
-  _ <- mapM (\pos -> name pos $
+  _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
                                 \case
                                     Bound boundPos -> boardButton pos $
                                       GL.getPosition boundPos <$> dynGame

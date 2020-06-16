@@ -52,7 +52,7 @@ boardEl :: forall t m . MonadWidget t m =>
         Dynamic t G.Game
         -> m (Event t Position)
 boardEl dynGame =
-    el "div" $ do
+    divClass "board-grid" $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                     \case
                                         Bound boundPos -> do

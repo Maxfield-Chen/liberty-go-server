@@ -14,8 +14,8 @@ module ProfilePage where
 import           Data.Text      (Text)
 import           Game           (boardPositions)
 import qualified Game           as G
-import qualified GameDB
 import qualified GameLogic      as GL
+import qualified OutputTypes    as OT
 import           PageUtil
 import           Proofs
 import           Reflex
@@ -33,7 +33,7 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
       evProfilePage = () <$ gate bvIsProfile evPage
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
   let evGameRecords = fst <$> evAllGames
-  dynGames <- foldDyn (\gr _ -> fmap GameDB._game gr) [] evGameRecords
+  dynGames <- foldDyn (\gr _ -> fmap OT.grGame gr) [] evGameRecords
   profileBoards dynGames
 
 profileBoards :: forall t m. MonadWidget t m =>

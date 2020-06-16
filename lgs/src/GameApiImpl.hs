@@ -84,16 +84,16 @@ getGameId gameId = do
   pure $ OT.convertGR <$> mGR
 
 
-getGamesForProfile :: UserInput.User -> AppM GDB.AllGames
+getGamesForProfile :: UserInput.User -> AppM OT.AllGames
 getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
 
-getGamesForPlayer :: Int -> AppM GDB.AllGames
+getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
-  mgrs <- liftIO $ GEX.getPlayersGameRecords playerId
-  mawts <-  liftIO $ foldM (\m k -> do
-                     awaiters <- GEX.getAwaiters (GDB._gameId k)
-                     pure $ M.insert (GDB._gameId k) awaiters m) mempty mgrs
-  pure (mgrs,mawts)
+  mgrs <- liftIO $ fmap OT.convertGR <$> GEX.getPlayersGameRecords playerId
+  mawts <- liftIO $ foldM (\m k -> do
+                     awaiters <- fmap OT.convertAwaiter <$> GEX.getAwaiters (OT.grId k)
+                     pure $ M.insert (OT.grId k) awaiters m) mempty mgrs
+  pure (mgrs, mawts)
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM OT.GameRecord
 proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do

@@ -22,6 +22,7 @@ import           Game           (Game, GameStatus, MoveError, Outcome, Position,
                                  Space)
 import qualified GameDB
 import           LGSAPI
+import qualified OutputTypes    as OT
 import           Reflex
 import           Reflex.Dom
 import           Servant.API
@@ -39,7 +40,7 @@ apiClients = client lgsAPI (Proxy :: Proxy m) (Proxy :: Proxy ()) (constDyn url 
 proposeGame :: MonadWidget t m  =>
                Dynamic t (Either Text UserInput.ProposedGame)
                -> Event t ()
-               -> m (Event t (ReqResult () GameDB.GameRecord))
+               -> m (Event t (ReqResult () OT.GameRecord))
 
 acceptGameProposal :: MonadWidget t m =>
                       Dynamic t (Either Text Int)
@@ -85,16 +86,16 @@ login :: MonadWidget t m =>
 gamesForUser :: MonadWidget t m =>
                       Dynamic t (Either Text Int)
                       -> Event t ()
-                      -> m (Event t (ReqResult () GameDB.AllGames))
+                      -> m (Event t (ReqResult () OT.AllGames))
 
 gamesForProfile :: MonadWidget t m =>
                       Event t ()
-                      -> m (Event t (ReqResult () GameDB.AllGames))
+                      -> m (Event t (ReqResult () OT.AllGames))
 
 getGame :: MonadWidget t m =>
                  Dynamic t (Either Text Int)
                  -> Event t ()
-                 -> m (Event t (ReqResult () (Maybe GameDB.GameRecord)))
+                 -> m (Event t (ReqResult () (Maybe OT.GameRecord)))
 
 
 ((proposeGame :<|> gamesForProfile :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> register :<|> login :<|> gamesForUser :<|> getGame) = apiClients

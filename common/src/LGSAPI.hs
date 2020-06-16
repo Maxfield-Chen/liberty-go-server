@@ -28,7 +28,7 @@ type Unprotected = "users" :> "register"
                                                     NoContent)
 
               :<|> "users" :> Capture "userId" Int :> "games"
-                :> Get '[JSON] GDB.AllGames
+                :> Get '[JSON] OT.AllGames
 
               :<|> "play" :> Capture "gameId" Int :> Get '[JSON] (Maybe OT.GameRecord)
 
@@ -38,7 +38,7 @@ type GameAPI = "play" :> "proposeGame"
                 :> Post '[JSON] OT.GameRecord
 
                 :<|> "profile" :> "games"
-                :> Get '[JSON] GDB.AllGames
+                :> Get '[JSON] OT.AllGames
 
                 :<|> "play" :> Capture "gameId" Int
                 :> "acceptGameProposal" :> ReqBody '[JSON] Bool

@@ -135,6 +135,3 @@ data LGSDb f =
 
 lgsDb :: DatabaseSettings be LGSDb
 lgsDb = defaultDbSettings
-
-
-type AllGames = ([GameRecord], M.HashMap Int [Awaiter])

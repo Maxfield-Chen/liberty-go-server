@@ -18,8 +18,8 @@ import qualified Data.Text            as T
 import           Data.Text.Encoding   (encodeUtf8)
 import           Game                 (Position, boardPositions, newGame)
 import qualified Game                 as G
-import           GameDB
 import qualified GameLogic            as GL
+import           OutputTypes
 import           PageUtil
 import           Proofs
 import           PubSubTypes          hiding (gameId)
@@ -70,7 +70,7 @@ getGameEl :: forall t m. MonadWidget t m =>
 getGameEl gameId = do
   b <- button "Retrieve Game"
   evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right . fromMaybe (-1) <$> gameId ) b
-  let evMFetchGame :: Event t (Maybe G.Game) = fmap _game <$> evFetchMGR
+  let evMFetchGame :: Event t (Maybe G.Game) = fmap grGame <$> evFetchMGR
   evMWSGame <- realTimeEl gameId b
   pure $ mergeWith (\mws mhttp -> case mws of
                        Just ws -> Just ws

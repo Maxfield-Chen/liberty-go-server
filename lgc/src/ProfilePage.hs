@@ -28,8 +28,10 @@ profilePage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Dynamic t [Event t ()])
 profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dynPage) $ do
-  b <- button "getGamesForProfile"
-  evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile b
+  let evPage = updated dynPage
+      bvIsProfile = (== Profile) <$> current dynPage
+      evProfilePage = () <$ gate bvIsProfile evPage
+  evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
   let evGameRecords = fst <$> evAllGames
   dynGames <- foldDyn (\gr _ -> fmap GameDB._game gr) [] evGameRecords
   profileBoards dynGames
@@ -40,8 +42,8 @@ profileBoards :: forall t m. MonadWidget t m =>
 profileBoards dynGames = divClass "profile-boards" $ simpleList dynGames readOnlyBoard
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
-        Dynamic t G.Game
-      -> m (Event t ())
+                 Dynamic t G.Game
+              -> m (Event t ())
 readOnlyBoard dynGame = do
   _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
                                 \case

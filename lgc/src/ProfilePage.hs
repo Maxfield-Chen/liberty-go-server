@@ -11,17 +11,19 @@
 
 module ProfilePage where
 
-import           Data.Text      (Text)
-import           Game           (boardPositions)
-import qualified Game           as G
-import qualified GameLogic      as GL
-import qualified OutputTypes    as OT
+import qualified Data.HashMap.Strict as M
+import           Data.Text           (Text)
+import qualified Data.Text           as T
+import           Game                (boardPositions)
+import qualified Game                as G
+import qualified GameLogic           as GL
+import qualified OutputTypes         as OT
 import           PageUtil
 import           Proofs
 import           Reflex
 import           Reflex.Dom
 import           Servant.Reflex
-import qualified ServantClient  as SC
+import qualified ServantClient       as SC
 import           Theory.Named
 
 profilePage :: forall t m. MonadWidget t m =>
@@ -32,19 +34,26 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
       bvIsProfile = (== Profile) <$> current dynPage
       evProfilePage = () <$ gate bvIsProfile evPage
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
-  let evGameRecords = fst <$> evAllGames
-  dynGames <- foldDyn (\gr _ -> fmap OT.grGame gr) [] evGameRecords
-  profileBoards dynGames
+  dynAllGames <- holdDyn ([],mempty) evAllGames
+  profileBoards dynAllGames
 
 profileBoards :: forall t m. MonadWidget t m =>
-                 Dynamic t [G.Game]
+                 Dynamic t OT.AllGames
               -> m (Dynamic t [Event t ()])
-profileBoards dynGames = divClass "profile-boards" $ simpleList dynGames readOnlyBoard
+profileBoards dynAllGames =
+  let dynGames = (\(grs, awaiters) ->
+                    (\gr -> (OT.grGame gr, M.lookupDefault [] (OT.grId gr) awaiters)) <$>
+                    grs)
+                 <$> dynAllGames
+  in divClass "profile-boards" $ simpleList dynGames readOnlyBoard
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
-                 Dynamic t G.Game
+                 Dynamic t (G.Game, [OT.Awaiter])
               -> m (Event t ())
-readOnlyBoard dynGame = do
+readOnlyBoard dynAllGame = do
+  let dynGame = fst <$> dynAllGame
+      dynNumAwaiters = T.pack . show . length . snd <$> dynAllGame
+  dynText dynNumAwaiters
   _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
                                 \case
                                     Bound boundPos -> boardButton pos $

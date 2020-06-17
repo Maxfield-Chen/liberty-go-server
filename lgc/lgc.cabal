@@ -24,6 +24,7 @@ executable frontend
                      , cookie
                      , common
                      , containers
+                     , unordered-containers
                      , text
                      , reflex
                      , reflex-dom

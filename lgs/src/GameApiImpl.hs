@@ -20,7 +20,7 @@ import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.Functor
 import qualified Data.HashMap.Strict    as M
-import           Data.List              (nub)
+import           Data.List              (delete, nub)
 import           Data.Maybe
 import           Data.Text              (Text)
 import           Debug.Trace
@@ -96,8 +96,8 @@ getGamesForPlayer playerId = do
   pure (mgrs, mawts)
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM OT.GameRecord
-proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
-  lift $ AuthValidator.proposeGame user proposedGame
+proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
+  lift $ AuthValidator.proposeGame proposingUser proposedGame
   mPlayers <- mapM (liftIO . GEX.getUser) $ [bp, wp]
   mTeachers <- mapM (liftIO . GEX.getUser) $ catMaybes [mbt, mwt]
   let gameUsers = mPlayers ++ mTeachers
@@ -106,7 +106,8 @@ proposeGame user proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   when (Nothing `elem` mPlayers) (throwError $ err400 {errBody = "All proposed users must exist."})
   when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed teachers must exist."})
   gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
-  mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId) . GDB._userId) $ catMaybes gameUsers
+  mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId)) $
+    delete (UserInput.userId proposingUser) $ GDB._userId <$> catMaybes gameUsers
   pure $ OT.convertGR gameRecord
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)

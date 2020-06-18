@@ -11,12 +11,13 @@
 
 module PageUtil where
 
-import qualified Data.Map   as M
-import           Data.Text  (Text)
-import qualified Data.Text  as T
-import           Game       (Position, Space (..))
-import qualified Game       as G
+import qualified Data.Map    as M
+import           Data.Text   (Text)
+import qualified Data.Text   as T
+import           Game        (Position, Space (..))
+import qualified Game        as G
 import qualified GameDB
+import qualified OutputTypes as OT
 import           Reflex
 import           Reflex.Dom
 
@@ -38,12 +39,12 @@ pageButton page btnText = do
 
 -- TODO: Expand this function to account for awaiters per game
 readOnlyBoardButton :: forall t m. MonadWidget t m =>
-                         Dynamic t G.Game
-                      -> m (Event t ())
+                         Dynamic t OT.GameRecord
+                      -> m (Event t Int)
 readOnlyBoardButton dynGR = do
   (btn,_) <- elDynAttr' "button" (constDyn $ "class" =: "read-only-board-button")
     $ dynText ""
-  pure $ domEvent Click btn
+  pure $ tagPromptlyDyn (OT.grId <$> dynGR) (domEvent Click btn)
 
 
 boardButton :: forall t m. MonadWidget t m =>

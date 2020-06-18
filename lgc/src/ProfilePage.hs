@@ -28,7 +28,7 @@ import           Theory.Named
 
 profilePage :: forall t m. MonadWidget t m =>
              Dynamic t Page
-          -> m (Dynamic t [Event t ()])
+          -> m (Dynamic t [Event t Int])
 profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dynPage) $ do
   let evPage = updated dynPage
       bvIsProfile = (== Profile) <$> current dynPage
@@ -39,20 +39,21 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
 
 profileBoards :: forall t m. MonadWidget t m =>
                  Dynamic t OT.AllGames
-              -> m (Dynamic t [Event t ()])
+              -> m (Dynamic t [Event t Int])
 profileBoards dynAllGames =
   let dynGames = (\(grs, awaiters) ->
-                    (\gr -> (OT.grGame gr, M.lookupDefault [] (OT.grId gr) awaiters)) <$>
+                    (\gr -> (gr, M.lookupDefault [] (OT.grId gr) awaiters)) <$>
                     grs)
                  <$> dynAllGames
   in divClass "profile-boards" $ simpleList dynGames readOnlyBoard
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
-                 Dynamic t (G.Game, [OT.Awaiter])
-              -> m (Event t ())
+                 Dynamic t (OT.GameRecord, [OT.Awaiter])
+              -> m (Event t Int)
 readOnlyBoard dynAllGame = do
-  let dynGame = fst <$> dynAllGame
+  let dynGameRecord = fst <$> dynAllGame
       dynNumAwaiters = T.pack . show . length . snd <$> dynAllGame
+      dynGame = OT.grGame <$> dynGameRecord
   dynText dynNumAwaiters
   _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
                                 \case
@@ -60,4 +61,4 @@ readOnlyBoard dynAllGame = do
                                       GL.getPosition boundPos <$> dynGame
                                     _ -> error "unbound position when creating readonly-boardEl")
                               (concat boardPositions)
-  readOnlyBoardButton dynGame
+  readOnlyBoardButton dynGameRecord

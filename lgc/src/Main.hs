@@ -40,14 +40,15 @@ headEl = do
 
 bodyEl :: forall t m . MonadWidget t m => m ()
 bodyEl = do
-  curPage   <- headerEl
-  dynPage   <- holdDyn Main curPage
-  elClass "div" "page-grid" $ do
+  evHeaderPS   <- headerEl
+  elClass "div" "page-grid" $ mdo
+    dynPage   <- holdDyn Main $ leftmost [evHeaderPS, Play <$ updated dynGameId]
     loginB    <- loginPage dynPage
     registerB <- registerPage dynPage
     proposeGameB <- proposeGamePage dynPage
     selectedGame <- profilePage dynPage
-    playPage dynPage
+    dynGameId <- holdDyn (-1) selectedGame
+    playPage dynPage dynGameId
     pure ()
 
 headerEl :: forall t m. MonadWidget t m => m (Event t Page)

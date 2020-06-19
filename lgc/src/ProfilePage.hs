@@ -32,7 +32,7 @@ type UserId = Int
 --TODO: Investigate evProfilePage, still doesn't seem to be submitting the 1st time.
 profilePage :: forall t m. MonadWidget t m =>
              Dynamic t Page
-          -> m (Dynamic t [Event t Int])
+          -> m (Event t Int)
 profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dynPage) $ do
   bvPage <- hold Profile $ updated dynPage
   let evProfilePage = () <$ gate ((== Profile) <$> bvPage) (updated dynPage)
@@ -42,16 +42,19 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
   dynUserId <- holdDyn (-1) evUserId
   profileBoards dynAllGames dynUserId
 
+
 profileBoards :: forall t m. MonadWidget t m =>
                  Dynamic t OT.AllGames
               -> Dynamic t UserId
-              -> m (Dynamic t [Event t Int])
+              -> m (Event t Int)
 profileBoards dynAllGames dynUserId =
   let dynGames = (\(grs, awaiters) ->
                     (\gr -> (gr, HashMap.lookupDefault [] (OT.grId gr) awaiters)) <$>
                     grs)
                  <$> dynAllGames
-  in divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
+  in do
+    dynEvents <- divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
+    pure $ switchDyn $ leftmost <$> dynEvents
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
                  Dynamic t UserId
@@ -61,9 +64,9 @@ readOnlyBoard dynUserId dynAllGame = do
   let dynGameRecord = fst <$> dynAllGame
       dynNumAwaiters = T.pack . show . length . snd <$> dynAllGame
       dynGame = OT.grGame <$> dynGameRecord
-  divClass "readonly-game" $ do
+  divClass "read-only-container" $ divClass "read-only-game" $ do
     dynText dynNumAwaiters
-    _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
+    _ <- divClass "read-only-board" $ mapM (\pos -> name pos $
          \case
              Bound boundPos -> boardButton pos $
                GL.getPosition boundPos <$> dynGame

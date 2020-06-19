@@ -39,7 +39,7 @@ protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI 
 protected (Servant.Auth.Server.Authenticated user) =
   GI.proposeGame user  :<|>
   GI.getGamesForProfile user :<|>
-  GI.getUserId user :<|>
+  GI.getUser user :<|>
   gameOperations user
 
 protected Servant.Auth.Server.BadPassword = throwAll err401

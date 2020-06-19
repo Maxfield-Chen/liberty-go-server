@@ -46,6 +46,15 @@ readOnlyBoardButton dynGR = do
     $ dynText ""
   pure $ tagPromptlyDyn (OT.grId <$> dynGR) (domEvent Click btn)
 
+genButton :: forall t m a. MonadWidget t m =>
+             Text
+          -> Text
+          -> a
+          -> m (Event t a)
+genButton className btnText ret = do
+  (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: className) $ dynText (constDyn btnText)
+  pure $ ret <$ domEvent Click btn
+
 
 boardButton :: forall t m. MonadWidget t m =>
                 Position

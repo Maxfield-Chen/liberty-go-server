@@ -57,6 +57,5 @@ headerEl = elClass "div" "header-el" $ do
   profileBtn     <- elClass "div" "profile-button" $ pageButton Profile "Profile"
   registerBtn <- elClass "div" "register-button" $ pageButton Register "Register"
   loginBtn    <- elClass "div" "login-button" $ pageButton Login "Login"
-  playBtn     <- elClass "div" "play-button" $ pageButton Play "Play"
   proposeGameBtn     <- elClass "div" "propose-game-button" $ pageButton ProposeGame "Propose Game"
-  pure $ leftmost [homeBtn, registerBtn, loginBtn, playBtn, proposeGameBtn, profileBtn]
+  pure $ leftmost [homeBtn, registerBtn, loginBtn, proposeGameBtn, profileBtn]

@@ -37,9 +37,9 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
   bvPage <- hold Profile $ updated dynPage
   let evProfilePage = () <$ gate ((== Profile) <$> bvPage) (updated dynPage)
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
-  evUserId <- fmapMaybe reqSuccess <$> SC.userIdForProfile evProfilePage
+  evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evProfilePage
   dynAllGames <- holdDyn ([],mempty) evAllGames
-  dynUserId <- holdDyn (-1) evUserId
+  dynUserId <- holdDyn (-1) $ OT.userId <$> evUser
   profileBoards dynAllGames dynUserId
 
 

@@ -39,8 +39,8 @@ type GameAPI = "play" :> "proposeGame"
                 :<|> "profile" :> "games"
                 :> Get '[JSON] OT.AllGames
 
-                :<|> "profile" :> "userId"
-                :> Get '[JSON] Int
+                :<|> "profile" :> "user"
+                :> Get '[JSON] OT.User
 
                 :<|> "play" :> Capture "gameId" Int
                 :> "acceptGameProposal" :> ReqBody '[JSON] Bool

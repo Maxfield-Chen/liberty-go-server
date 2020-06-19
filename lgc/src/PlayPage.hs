@@ -19,7 +19,7 @@ import           Data.Text.Encoding   (encodeUtf8)
 import           Game                 (Position, boardPositions, newGame)
 import qualified Game                 as G
 import qualified GameLogic            as GL
-import           OutputTypes
+import qualified OutputTypes          as OT
 import           PageUtil
 import           Proofs
 import           PubSubTypes          hiding (GameId, gameId)
@@ -41,18 +41,34 @@ playPage dynPage dynGameId =
   elDynAttr "div" (shouldShow Play "play-page" <$> dynPage) $ do
     dynText $ T.pack . show <$> dynGameId
     let evGetGame = updated dynGameId
-    evMGameRecord <- getGameEl dynGameId (() <$ evGetGame)
-    dynGame       <- holdDyn newGame $ fromMaybe newGame <$> evMGameRecord
+        evEmptyGetGame = () <$ evGetGame
+    evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right  <$> dynGameId) evEmptyGetGame
+    evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evEmptyGetGame
+    dynUser <- holdDyn OT.newUser evUser
+    evMGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
+    dynGame <- holdDyn newGame $ fromMaybe newGame <$> evMGame
+    dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
+    -- _ <- playerSidebar dynGR dynUser
     boardEv       <- boardEl dynGame
+    -- _ <- opponentSidebar
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right <$> dynGameId) posDyn (() <$ boardEv)
     pure ()
 
+-- playerSidebar :: forall t m . MonadWidget t m =>
+--                  Dynamic t OT.GameRecord
+--               -> Dynamic t OT.User
+--               -> m (Event t ())
+-- playerSidebar dynGameRecord dynUser =
+--   divClass "play-player-sidebar" $ do
+--     divClass "sidebar-info" $ do
+--       dynText $ T.pack . show . OT.userName <$> dynUser
+--     divClass "sidebar-chat" $ inputElement def
 
 boardEl :: forall t m . MonadWidget t m =>
-        Dynamic t G.Game
-        -> m (Event t Position)
+           Dynamic t G.Game
+           -> m (Event t Position)
 boardEl dynGame =
     divClass "board-grid" $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
@@ -66,13 +82,12 @@ boardEl dynGame =
                                   (concat boardPositions)
       pure $ leftmost buttonEvs
 
-getGameEl :: forall t m. MonadWidget t m =>
+getGame :: forall t m. MonadWidget t m =>
              Dynamic t GameId
+          -> Event t (Maybe G.Game)
           -> Event t ()
           -> m (Event t (Maybe G.Game))
-getGameEl dynGameId evGetGame = do
-  evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right  <$> dynGameId) evGetGame
-  let evMFetchGame :: Event t (Maybe G.Game) = fmap grGame <$> evFetchMGR
+getGame dynGameId evMFetchGame evGetGame = do
   evMWSGame <- realTimeEl dynGameId evGetGame
   pure $ mergeWith (\mws mhttp -> case mws of
                        Just ws -> Just ws

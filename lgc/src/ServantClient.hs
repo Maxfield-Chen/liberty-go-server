@@ -92,9 +92,9 @@ gamesForProfile :: MonadWidget t m =>
                       Event t ()
                       -> m (Event t (ReqResult () OT.AllGames))
 
-userIdForProfile :: MonadWidget t m =>
+userForProfile :: MonadWidget t m =>
                       Event t ()
-                      -> m (Event t (ReqResult () Int))
+                      -> m (Event t (ReqResult () OT.User))
 
 getGame :: MonadWidget t m =>
                  Dynamic t (Either Text Int)
@@ -102,4 +102,4 @@ getGame :: MonadWidget t m =>
                  -> m (Event t (ReqResult () (Maybe OT.GameRecord)))
 
 
-((proposeGame :<|> gamesForProfile  :<|> userIdForProfile :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> register :<|> login :<|> gamesForUser :<|> getGame) = apiClients
+((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> register :<|> login :<|> gamesForUser :<|> getGame) = apiClients

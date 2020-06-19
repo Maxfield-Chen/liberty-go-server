@@ -25,24 +25,33 @@ data GameRecord =
   {
     grId           :: Int,
     grGame         :: G.Game,
-    grBlackPlayer  :: Int,
-    grWhitePlayer  :: Int,
-    grBlackTeacher :: Maybe Int,
-    grWhiteTeacher :: Maybe Int,
+    grBlackPlayer  :: User,
+    grWhitePlayer  :: User,
+    grBlackTeacher :: Maybe User,
+    grWhiteTeacher :: Maybe User,
     grBlackFocus   :: Text,
     grWhiteFocus   :: Text
  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 
-newGameRecord = GameRecord (-1) G.newGame (-1) (-1) Nothing Nothing "" ""
+newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" ""
 
-convertGR :: GDB.GameRecord -> GameRecord
-convertGR GDB.GameRecord{..} =
-  let (GDB.UserId bp) = _black_player
-      (GDB.UserId wp) = _white_player
-      (GDB.UserId bt) = _black_teacher
-      (GDB.UserId wt) = _white_teacher
-  in GameRecord _gameId _game bp wp bt wt _black_focus _white_focus
+convertGR :: GDB.GameRecord ->
+             GDB.User ->
+             GDB.User ->
+             Maybe GDB.User ->
+             Maybe GDB.User ->
+             GameRecord
+convertGR GDB.GameRecord{..} bp wp mbt mwt =
+  GameRecord
+    _gameId
+    _game
+    (convertUser bp)
+    (convertUser wp)
+    (convertUser <$> mbt)
+    (convertUser <$> mwt)
+    _black_focus
+    _white_focus
 
 data Awaiter =
   Awaiter
@@ -56,5 +65,17 @@ convertAwaiter GDB.Awaiter{..} =
   let (GDB.UserId p) = _awaiter_user_id
       (GDB.GameRecordId g) = _awaiter_game_id
   in Awaiter p g
+
+data User =
+  User
+  {
+    userId    :: Int,
+    userName  :: Text,
+    userEmail :: Text
+  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
+
+newUser = User (-1) "" ""
+convertUser :: GDB.User -> User
+convertUser GDB.User{..} = User _userId _userName _userEmail
 
 type AllGames = ([GameRecord], M.HashMap Int [Awaiter])

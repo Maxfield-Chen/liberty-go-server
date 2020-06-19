@@ -81,22 +81,43 @@ createNewUser (UserInput.RegisterUser email name password) = do
 getGameId :: Int -> AppM (Maybe OT.GameRecord)
 getGameId gameId = do
   mGR <- liftIO $ GEX.getGameRecord gameId
-  pure $ OT.convertGR <$> mGR
+  case mGR of
+    Nothing -> pure Nothing
+    Just gr -> liftIO $ convertGR gr
+
+--TODO: Validate that this doesn't return Nothing when teachers are null
+convertGR :: GDB.GameRecord -> IO (Maybe OT.GameRecord)
+convertGR gr = do
+    let GDB.UserId bpId = GDB._black_player gr
+        GDB.UserId wpId = GDB._white_player gr
+        GDB.UserId mbtId = GDB._black_teacher gr
+        GDB.UserId mwtId = GDB._white_teacher gr
+    mbp <- GEX.getUser bpId
+    mwp <- GEX.getUser wpId
+    mbt <- case mbtId of
+      Nothing   -> pure Nothing
+      Just btId -> GEX.getUser btId
+    mwt <- case mwtId of
+      Nothing   -> pure Nothing
+      Just wtId -> GEX.getUser wtId
+    pure $ ((OT.convertGR gr) <$> mbp <*> mwp) <*> Just mbt <*> Just mwt
 
 
 getGamesForProfile :: UserInput.User -> AppM OT.AllGames
 getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
 
-getUserId :: UserInput.User -> AppM Int
-getUserId UserInput.User{..} = pure userId
+getUser :: UserInput.User -> AppM OT.User
+getUser UserInput.User{..} = pure $ OT.User userId userName userEmail
 
 getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
-  mgrs <- liftIO $ fmap OT.convertGR <$> GEX.getPlayersGameRecords playerId
+  mGDBgrs <- liftIO $ GEX.getPlayersGameRecords playerId
+  mgrs <- liftIO $ mapM convertGR mGDBgrs
+  let grs = catMaybes mgrs
   mawts <- liftIO $ foldM (\m k -> do
                      awaiters <- fmap OT.convertAwaiter <$> GEX.getAwaiters (OT.grId k)
-                     pure $ M.insert (OT.grId k) awaiters m) mempty mgrs
-  pure (mgrs, mawts)
+                     pure $ M.insert (OT.grId k) awaiters m) mempty grs
+  pure (grs, mawts)
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM OT.GameRecord
 proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
@@ -111,7 +132,8 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
   gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
   mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId)) $
     delete (UserInput.userId proposingUser) $ GDB._userId <$> catMaybes gameUsers
-  pure $ OT.convertGR gameRecord
+  mGR <- liftIO $ convertGR gameRecord
+  pure $ fromJust mGR
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do

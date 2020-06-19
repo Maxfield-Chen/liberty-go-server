@@ -33,9 +33,7 @@ pageButton :: forall t m. MonadWidget t m =>
               Page
            -> Text
            -> m (Event t Page)
-pageButton page btnText = do
-  (btn,_) <- elDynAttr' "button" mempty $ text btnText
-  pure $ page <$ domEvent Click btn
+pageButton page btnText = genButton "page-button" btnText page
 
 -- TODO: Expand this function to account for awaiters per game
 readOnlyBoardButton :: forall t m. MonadWidget t m =>

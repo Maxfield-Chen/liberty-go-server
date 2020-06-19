@@ -33,18 +33,22 @@ headEl :: MonadWidget t m => m ()
 headEl = do
   el "title" $ text "LGS"
   styleSheet "./css/lgs.css"
-    where styleSheet srcLink = elAttr "link" (M.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $ pure ()
+    where styleSheet srcLink =
+            elAttr "link"
+              (M.fromList [("rel", "stylesheet"), ("type","text/css"), ("href", srcLink)]) $
+              pure ()
 
 bodyEl :: forall t m . MonadWidget t m => m ()
-bodyEl = elClass "div" "page-grid" $ do
-      curPage   <- headerEl
-      dynPage   <- holdDyn Main curPage
-      loginB    <- loginPage dynPage
-      registerB <- registerPage dynPage
-      proposeGameB <- proposeGamePage dynPage
-      selectedGame <- profilePage dynPage
-      playPage dynPage
-      pure ()
+bodyEl = do
+  curPage   <- headerEl
+  dynPage   <- holdDyn Main curPage
+  elClass "div" "page-grid" $ do
+    loginB    <- loginPage dynPage
+    registerB <- registerPage dynPage
+    proposeGameB <- proposeGamePage dynPage
+    selectedGame <- profilePage dynPage
+    playPage dynPage
+    pure ()
 
 headerEl :: forall t m. MonadWidget t m => m (Event t Page)
 headerEl = elClass "div" "header-el" $ do

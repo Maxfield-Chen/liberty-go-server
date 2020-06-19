@@ -4,6 +4,19 @@
     grid-template-rows: repeat(19,minmax(50px,1fr));
 }
 
+.readonly-board {
+    display: grid;
+    grid-template-columns: repeat(19, minmax(10px,1fr));
+    grid-template-rows: repeat(19,minmax(10px,1fr));
+}
+
+.profile-boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-rows: repeat(auto-fill, minmax(200px, 1fr));
+    grid-gap: 1rem;
+}
+
 .space-empty {
     background-color: #aaaaaa;
 }
@@ -18,4 +31,8 @@
 
 .page-hidden {
     display: none;
+}
+
+.header-el div {
+    display: inline-block;
 }

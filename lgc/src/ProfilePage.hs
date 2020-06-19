@@ -53,16 +53,17 @@ readOnlyBoard dynAllGame = do
   let dynGameRecord = fst <$> dynAllGame
       dynNumAwaiters = T.pack . show . length . snd <$> dynAllGame
       dynGame = OT.grGame <$> dynGameRecord
-  dynText dynNumAwaiters
-  _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
-                                \case
-                                    Bound boundPos -> boardButton pos $
-                                      GL.getPosition boundPos <$> dynGame
-                                    _ -> error "unbound position when creating readonly-boardEl")
-                              (concat boardPositions)
-  _ <- acceptGameProposalButton dynAllGame
-  _ <- rejectGameProposalButton dynAllGame
-  readOnlyBoardButton dynGameRecord
+  divClass "readonly-game" $ do
+    dynText dynNumAwaiters
+    _ <- divClass "readonly-board" $ mapM (\pos -> name pos $
+         \case
+             Bound boundPos -> boardButton pos $
+               GL.getPosition boundPos <$> dynGame
+             _ -> error "unbound position when creating readonly-boardEl")
+       (concat boardPositions)
+    _ <- acceptGameProposalButton dynAllGame
+    _ <- rejectGameProposalButton dynAllGame
+    readOnlyBoardButton dynGameRecord
 
 
 acceptGameProposalButton :: forall t m. MonadWidget t m =>

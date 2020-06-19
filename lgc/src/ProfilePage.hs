@@ -30,9 +30,8 @@ profilePage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Dynamic t [Event t Int])
 profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dynPage) $ do
-  let evPage = updated dynPage
-      bvIsProfile = (== Profile) <$> current dynPage
-      evProfilePage = () <$ gate bvIsProfile evPage
+  bvPage <- hold Profile $ updated dynPage
+  let evProfilePage = () <$ gate ((== Profile) <$> bvPage) (updated dynPage)
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
   dynAllGames <- holdDyn ([],mempty) evAllGames
   profileBoards dynAllGames
@@ -61,4 +60,27 @@ readOnlyBoard dynAllGame = do
                                       GL.getPosition boundPos <$> dynGame
                                     _ -> error "unbound position when creating readonly-boardEl")
                               (concat boardPositions)
+  _ <- acceptGameProposalButton dynAllGame
+  _ <- rejectGameProposalButton dynAllGame
   readOnlyBoardButton dynGameRecord
+
+
+acceptGameProposalButton :: forall t m. MonadWidget t m =>
+                            Dynamic t (OT.GameRecord, [OT.Awaiter])
+                         -> m (Event t (Maybe G.GameStatus))
+acceptGameProposalButton dynAllGame = do
+  let dynGameId = Right . OT.grId . fst <$> dynAllGame
+  (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: "accept-game-proposal-button")
+    $ dynText "Accept Game Proposal"
+  fmapMaybe reqSuccess <$>
+    SC.acceptGameProposal dynGameId (constDyn $ Right True) (domEvent Click btn)
+
+rejectGameProposalButton :: forall t m. MonadWidget t m =>
+                            Dynamic t (OT.GameRecord, [OT.Awaiter])
+                         -> m (Event t (Maybe G.GameStatus))
+rejectGameProposalButton dynAllGame = do
+  let dynGameId = Right . OT.grId . fst <$> dynAllGame
+  (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: "reject-game-proposal-button")
+    $ dynText "Reject Game Proposal"
+  fmapMaybe reqSuccess <$>
+    SC.acceptGameProposal dynGameId (constDyn $ Right False) (domEvent Click btn)

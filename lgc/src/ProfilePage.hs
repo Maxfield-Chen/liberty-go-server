@@ -11,7 +11,8 @@
 
 module ProfilePage where
 
-import qualified Data.HashMap.Strict as M
+import qualified Data.HashMap.Strict as HashMap
+import qualified Data.Map            as Map
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import           Game                (boardPositions)
@@ -26,6 +27,9 @@ import           Servant.Reflex
 import qualified ServantClient       as SC
 import           Theory.Named
 
+type UserId = Int
+
+--TODO: Investigate evProfilePage, still doesn't seem to be submitting the 1st time.
 profilePage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Dynamic t [Event t Int])
@@ -33,23 +37,27 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
   bvPage <- hold Profile $ updated dynPage
   let evProfilePage = () <$ gate ((== Profile) <$> bvPage) (updated dynPage)
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
+  evUserId <- fmapMaybe reqSuccess <$> SC.userIdForProfile evProfilePage
   dynAllGames <- holdDyn ([],mempty) evAllGames
-  profileBoards dynAllGames
+  dynUserId <- holdDyn (-1) evUserId
+  profileBoards dynAllGames dynUserId
 
 profileBoards :: forall t m. MonadWidget t m =>
                  Dynamic t OT.AllGames
+              -> Dynamic t UserId
               -> m (Dynamic t [Event t Int])
-profileBoards dynAllGames =
+profileBoards dynAllGames dynUserId =
   let dynGames = (\(grs, awaiters) ->
-                    (\gr -> (gr, M.lookupDefault [] (OT.grId gr) awaiters)) <$>
+                    (\gr -> (gr, HashMap.lookupDefault [] (OT.grId gr) awaiters)) <$>
                     grs)
                  <$> dynAllGames
-  in divClass "profile-boards" $ simpleList dynGames readOnlyBoard
+  in divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
-                 Dynamic t (OT.GameRecord, [OT.Awaiter])
+                 Dynamic t UserId
+              -> Dynamic t (OT.GameRecord, [OT.Awaiter])
               -> m (Event t Int)
-readOnlyBoard dynAllGame = do
+readOnlyBoard dynUserId dynAllGame = do
   let dynGameRecord = fst <$> dynAllGame
       dynNumAwaiters = T.pack . show . length . snd <$> dynAllGame
       dynGame = OT.grGame <$> dynGameRecord
@@ -61,27 +69,40 @@ readOnlyBoard dynAllGame = do
                GL.getPosition boundPos <$> dynGame
              _ -> error "unbound position when creating readonly-boardEl")
        (concat boardPositions)
-    _ <- acceptGameProposalButton dynAllGame
-    _ <- rejectGameProposalButton dynAllGame
+    _ <- acceptGameProposalButton dynAllGame dynUserId
+    _ <- rejectGameProposalButton dynAllGame dynUserId
     readOnlyBoardButton dynGameRecord
-
 
 acceptGameProposalButton :: forall t m. MonadWidget t m =>
                             Dynamic t (OT.GameRecord, [OT.Awaiter])
+                         -> Dynamic t UserId
                          -> m (Event t (Maybe G.GameStatus))
-acceptGameProposalButton dynAllGame = do
+acceptGameProposalButton dynAllGame dynUserId = do
   let dynGameId = Right . OT.grId . fst <$> dynAllGame
-  (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: "accept-game-proposal-button")
+  (btn, _) <- elDynAttr' "button"
+    (ffor2 dynAllGame dynUserId (styleProposal "accept-reject-game-proposal-button"))
     $ dynText "Accept Game Proposal"
   fmapMaybe reqSuccess <$>
     SC.acceptGameProposal dynGameId (constDyn $ Right True) (domEvent Click btn)
 
 rejectGameProposalButton :: forall t m. MonadWidget t m =>
                             Dynamic t (OT.GameRecord, [OT.Awaiter])
+                         -> Dynamic t UserId
                          -> m (Event t (Maybe G.GameStatus))
-rejectGameProposalButton dynAllGame = do
+rejectGameProposalButton dynAllGame dynUserId = do
   let dynGameId = Right . OT.grId . fst <$> dynAllGame
-  (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: "reject-game-proposal-button")
+  (btn, _) <- elDynAttr' "button"
+    (ffor2 dynAllGame dynUserId (styleProposal "reject-game-proposal-button"))
     $ dynText "Reject Game Proposal"
   fmapMaybe reqSuccess <$>
     SC.acceptGameProposal dynGameId (constDyn $ Right False) (domEvent Click btn)
+
+styleProposal :: Text
+              -> (OT.GameRecord, [OT.Awaiter])
+              -> UserId
+              -> Map.Map Text Text
+styleProposal _ (_, []) _ = "class" =: "page-hidden"
+styleProposal className (_, awaiters) userId =
+  case userId `elem` (OT.awaiterUser <$> awaiters) of
+    False -> "class" =: "page-hidden"
+    True  -> "class" =: className

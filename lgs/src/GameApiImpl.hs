@@ -87,6 +87,9 @@ getGameId gameId = do
 getGamesForProfile :: UserInput.User -> AppM OT.AllGames
 getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
 
+getUserId :: UserInput.User -> AppM Int
+getUserId UserInput.User{..} = pure userId
+
 getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
   mgrs <- liftIO $ fmap OT.convertGR <$> GEX.getPlayersGameRecords playerId

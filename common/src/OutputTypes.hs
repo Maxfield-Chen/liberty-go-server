@@ -39,6 +39,11 @@ newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" ""
 isBlack :: User -> GameRecord -> Bool
 isBlack u GameRecord{..} = grBlackPlayer == u
 
+getOpponent :: User -> GameRecord -> User
+getOpponent u g@GameRecord{..} = case isBlack u g of
+  True  -> grWhitePlayer
+  False -> grBlackPlayer
+
 getTeacher :: User -> GameRecord -> Maybe User
 getTeacher u g@GameRecord{..} = case isBlack u g of
   True  -> grBlackTeacher

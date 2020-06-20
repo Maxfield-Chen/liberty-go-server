@@ -48,30 +48,49 @@ playPage dynPage dynGameId =
     evMGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
     dynGame <- holdDyn newGame $ fromMaybe newGame <$> evMGame
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
-    evSideBarPage <- playerSidebar dynGR dynUser
+    evPlayerPage <- playerSidebar dynGR dynUser
     boardEv       <- boardEl dynGame
-    -- _ <- opponentSidebar
+    evOpponentPage <- opponentSidebar dynGR dynUser
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right <$> dynGameId) posDyn (() <$ boardEv)
-    pure evSideBarPage
+    pure $ leftmost [evPlayerPage, evOpponentPage]
+
+opponentSidebar :: forall t m . MonadWidget t m =>
+                 Dynamic t OT.GameRecord
+              -> Dynamic t OT.User
+              -> m (Event t Page)
+opponentSidebar dynGameRecord dynProfileUser =
+  divClass "sidebar-opponent" $ do
+    evPage <- divClass "sidebar-opponent-info" $ do
+      let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
+          dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
+      evPlayer <- genDynButton "sidebar-opponent-user"
+        (T.pack . show . OT.userName <$> dynOpponent)
+        Profile
+      evTeacher <- genDynButton "sidebar-opponent-teacher"
+        (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
+        Profile
+      pure $ leftmost [evPlayer, evTeacher]
+    divClass "sidebar-opponent-chat" $ inputElement def
+    pure evPage
 
 playerSidebar :: forall t m . MonadWidget t m =>
                  Dynamic t OT.GameRecord
               -> Dynamic t OT.User
               -> m (Event t Page)
 playerSidebar dynGameRecord dynProfileUser =
-  divClass "player-sidebar" $ do
-    evPage <- divClass "sidebar-info" $ do
+  divClass "sidebar-player" $ do
+    evPage <- divClass "sidebar-player-info" $ do
       let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
-      evPlayer <- genDynButton "sidebar-profile-user"
+      evPlayer <- genDynButton "sidebar-player-user"
         (T.pack . show . OT.userName <$> dynProfileUser)
         Profile
-      evTeacher <- genDynButton "sidebar-profile-user-teacher"
+      evTeacher <- genDynButton "sidebar-player-teacher"
         (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    divClass "sidebar-chat" $ inputElement def
+    divClass "sidebar-player-chat" $ inputElement def
     pure evPage
 
 boardEl :: forall t m . MonadWidget t m =>

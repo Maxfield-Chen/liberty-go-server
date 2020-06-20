@@ -39,7 +39,6 @@ playPage :: forall t m . MonadWidget t m =>
          -> m (Event t Page)
 playPage dynPage dynGameId =
   elDynAttr "div" (shouldShow Play "play-page" <$> dynPage) $ do
-    dynText $ T.pack . show <$> dynGameId
     let evGetGame = updated dynGameId
         evEmptyGetGame = () <$ evGetGame
     evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right  <$> dynGameId) evEmptyGetGame
@@ -96,7 +95,8 @@ playerSidebar dynGameRecord dynProfileUser =
 boardEl :: forall t m . MonadWidget t m =>
            Dynamic t G.Game
            -> m (Event t Position)
-boardEl dynGame =
+boardEl dynGame = divClass "board-container" $
+  divClass "board-aspect-ratio" $
     divClass "board-grid" $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                     \case
@@ -126,18 +126,15 @@ realTimeEl :: forall t m. MonadWidget t m =>
            -> Event t ()
            -> m (Event t (Maybe G.Game))
 realTimeEl dynGameId b = do
-  text "Arb WS Message"
-  rec wsReq <- inputElement $ def & inputElementConfig_setValue .~ fmap (const "") arbMessage
-      let arbMessage = fmap encodeUtf8 $ tag (current $ value wsReq) $ keypress Enter wsReq
-          joinMessage = (encodeUtf8 . (<> "}") . ("{\"type\": \"join\",\"gameId\": " <>)
-                         . T.pack . show )
-                         <$> tagPromptlyDyn dynGameId b
-          newMessage = (:[]) <$> leftmost [joinMessage, arbMessage]
-      evMGameMessage :: Event t (Maybe GameMessage) <- do
-        ws <- webSocket "ws://localhost:8888" $ def &
-          webSocketConfig_send .~ newMessage
-        pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
-      dynMGameMessage <- holdDyn (Just $ UpdateGame OT.newGameUpdate) evMGameMessage
+  let joinMessage = (encodeUtf8 . (<> "}") . ("{\"type\": \"join\",\"gameId\": " <>)
+                      . T.pack . show )
+                      <$> tagPromptlyDyn dynGameId b
+      newMessage = (:[]) <$> joinMessage
+  evMGameMessage :: Event t (Maybe GameMessage) <- do
+    ws <- webSocket "ws://localhost:8888" $ def &
+      webSocketConfig_send .~ newMessage
+    pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
+  dynMGameMessage <- holdDyn (Just $ UpdateGame OT.newGameUpdate) evMGameMessage
   pure $ updated (getGameFromUpdate <$> dynGameId <*> dynMGameMessage)
 
 getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game

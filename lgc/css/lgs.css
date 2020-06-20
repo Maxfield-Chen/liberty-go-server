@@ -1,8 +1,18 @@
-.board-grid {
-    display: grid;
-    grid-template-columns: repeat(19, 1fr);
-    grid-template-rows: repeat(19,minmax(50px,1fr));
+@viewport {
+    width: device-width ;
+    zoom: 1.0 ;
 }
+
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+}
+
 
 .read-only-board {
     display: grid;
@@ -54,4 +64,76 @@
     width: 100%;
     position: relative;
     margin: 0 auto;
+}
+
+.aspect-ratio {
+    padding-top: 75%;
+}
+
+.absolute-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.board-container {
+    grid-area: rgb-start / cgb-start / rend / gb-end;
+    height: 75%;
+    width: 75%;
+}
+
+.board-aspect-ratio {
+    overflow: hidden;
+    height: 0;
+    padding-top: 100%;
+    position: relative;
+}
+
+.board-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+    grid-template-columns: repeat(19,minmax(5px,1fr));
+    grid-template-rows: repeat(19,minmax(5px,1fr));
+}
+
+.play-page {
+    display: grid;
+    grid-template-columns: [left] 10px [cstart] 0.1fr [player-sb-end] 0.2fr [cgb-start] 0.4fr [gb-end] 0.2fr [gb-pad-end] 0.1fr [opponent-sb-end] 10px [right];
+    grid-template-rows: [top] 10px [rgb-start] 1fr [rend] 10px [bottom];
+    gap: 0rem;
+    width: 100%;
+    height: 100%;
+}
+
+.sidebar-player {
+    grid-area: top / cstart / rend / player-sb-end;
+}
+
+
+.sidebar-opponent {
+    grid-area: top / gb-pad-end / rend / opponent-sb-end;
+}
+
+.body-grid {
+    gap: 0rem;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: [left] 10px [body-start] 1fr [rbody-end] 10px [right];
+    grid-template-rows: [top] minmax(20px,0.03fr) [header-end] 0.97fr [cbody-end] 10px [bottom];
+}
+
+.header-el {
+    grid-area: top / left / header-end / right;
+}
+
+.page-grid {
+    grid-area: header-end / body-start / cbody-end / rbody-end;
 }

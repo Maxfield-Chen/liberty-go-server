@@ -39,7 +39,7 @@ headEl = do
               pure ()
 
 bodyEl :: forall t m . MonadWidget t m => m ()
-bodyEl = do
+bodyEl = divClass "body-grid" $ do
   evHeaderPS   <- headerEl
   elClass "div" "page-grid" $ mdo
     dynPage   <- holdDyn Main $ leftmost [evHeaderPS, Play <$ updated dynGameId, selectedUser]

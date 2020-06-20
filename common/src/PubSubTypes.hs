@@ -14,6 +14,7 @@ import qualified Data.Set               as Set
 import           Data.Text
 import qualified Game                   as G
 import qualified Network.WebSockets     as WS
+import qualified OutputTypes            as OT
 
 type UserJWT = Text
 type GameId = Int
@@ -67,7 +68,7 @@ instance ToJSON ErrorMessage where
                , "code" .= (3 :: Int)
                , "payload" .= t]
 
-data GameMessage = UpdateGame G.Game deriving Show
+data GameMessage = UpdateGame OT.GameUpdate deriving Show
 
 data IncomingMessage = JoinGame GameId
                      | LeaveGame GameId deriving Show

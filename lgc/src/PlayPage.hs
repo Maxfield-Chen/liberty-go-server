@@ -137,9 +137,10 @@ realTimeEl dynGameId b = do
         ws <- webSocket "ws://localhost:8888" $ def &
           webSocketConfig_send .~ newMessage
         pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
-  pure $ getGameFromUpdate <$> evMGameMessage
+      dynMGameMessage <- holdDyn (Just $ UpdateGame OT.newGameUpdate) evMGameMessage
+  pure $ updated (getGameFromUpdate <$> dynGameId <*> dynMGameMessage)
 
-getGameFromUpdate :: Maybe GameMessage -> Maybe G.Game
-getGameFromUpdate = (=<<) (\case
-                              UpdateGame g -> Just g
+getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game
+getGameFromUpdate gameId = (=<<) (\case
+                              UpdateGame (OT.GameUpdate gameId g) -> Just g
                               _            -> Nothing)

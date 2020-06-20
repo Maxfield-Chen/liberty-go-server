@@ -33,6 +33,14 @@ data GameRecord =
     grWhiteFocus   :: Text
  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
+data GameUpdate =
+  GameUpdate
+  {
+    guId   :: Int,
+    guGame :: G.Game
+  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
+
+newGameUpdate = GameUpdate (-1) G.newGame
 
 newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" ""
 

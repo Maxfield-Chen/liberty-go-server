@@ -64,7 +64,7 @@ placeStone user gameId pos = do
               in do
                 trace (show "Sending place stone msg") $ liftIO . atomically $ do
                   rtGame <- PS.getGame gameId rtGmap
-                  writeTChan (PST.gameChan rtGame) (PST.UpdateGame updatedGame)
+                  writeTChan (PST.gameChan rtGame) (PST.UpdateGame $ OT.GameUpdate gameId updatedGame)
                 liftIO $ GEX.updateGame (const updatedGame) gameId $> ret
         (Nothing, _) -> pure (Left G.NoBoard, newGame)
         otherwise -> pure (Left G.IllegalPlayer, newGame)

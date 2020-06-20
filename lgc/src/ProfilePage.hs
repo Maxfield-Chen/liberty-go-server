@@ -49,7 +49,12 @@ profileBoards :: forall t m. MonadWidget t m =>
               -> m (Event t Int)
 profileBoards dynAllGames dynUserId =
   let dynGames = (\(grs, awaiters) ->
-                    (\gr -> (gr, HashMap.lookupDefault [] (OT.grId gr) awaiters)) <$>
+                    filter ((\gs -> case gs of
+                                 G.TerritoryAccepted -> False
+                                 G.GameRejected      -> False
+                                 _                   -> True)
+                             . G._status . OT.grGame . fst) $
+                      (\gr -> (gr, HashMap.lookupDefault [] (OT.grId gr) awaiters)) <$>
                     grs)
                  <$> dynAllGames
   in do

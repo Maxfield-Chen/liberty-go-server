@@ -78,26 +78,8 @@ body {
     height: 100%;
 }
 
-.board-container {
-    grid-area: rgb-start / cgb-start / rend / gb-end;
-    height: 75%;
-    width: 75%;
-}
-
-.board-aspect-ratio {
-    overflow: hidden;
-    height: 0;
-    padding-top: 100%;
-    position: relative;
-}
-
 .board-grid {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
+    grid-area: rgb-start / cgb-start / rgb-end / gb-end;
     display: grid;
     grid-template-columns: repeat(19,minmax(5px,1fr));
     grid-template-rows: repeat(19,minmax(5px,1fr));
@@ -106,7 +88,7 @@ body {
 .play-page {
     display: grid;
     grid-template-columns: [left] 10px [cstart] 0.1fr [player-sb-end] 0.2fr [cgb-start] 0.4fr [gb-end] 0.2fr [gb-pad-end] 0.1fr [opponent-sb-end] 10px [right];
-    grid-template-rows: [top] 10px [rgb-start] 1fr [rend] 10px [bottom];
+    grid-template-rows: [top] 10px [rgb-start] 0.8fr [rgb-end] 0.2fr [rend] 10px [bottom];
     gap: 0rem;
     width: 100%;
     height: 100%;

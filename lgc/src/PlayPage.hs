@@ -95,19 +95,18 @@ playerSidebar dynGameRecord dynProfileUser =
 boardEl :: forall t m . MonadWidget t m =>
            Dynamic t G.Game
            -> m (Event t Position)
-boardEl dynGame = divClass "board-container" $
-  divClass "board-aspect-ratio" $
-    divClass "board-grid" $ do
-      buttonEvs <- foldr (\pos mButtonEvs -> name pos $
-                                    \case
-                                        Bound boundPos -> do
-                                          let dynSpace = (GL.getPosition boundPos) <$> dynGame
-                                          buttonEv <- boardButton pos dynSpace
-                                          (:) buttonEv <$> mButtonEvs
-                                        _ -> error "unbound position when creating boardEl")
-                                  (pure [] :: m [Event t Position])
-                                  (concat boardPositions)
-      pure $ leftmost buttonEvs
+boardEl dynGame =
+  divClass "board-grid" $ do
+    buttonEvs <- foldr (\pos mButtonEvs -> name pos $
+                                  \case
+                                      Bound boundPos -> do
+                                        let dynSpace = (GL.getPosition boundPos) <$> dynGame
+                                        buttonEv <- boardButton pos dynSpace
+                                        (:) buttonEv <$> mButtonEvs
+                                      _ -> error "unbound position when creating boardEl")
+                                (pure [] :: m [Event t Position])
+                                (concat boardPositions)
+    pure $ leftmost buttonEvs
 
 getGame :: forall t m. MonadWidget t m =>
              Dynamic t GameId

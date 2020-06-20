@@ -142,5 +142,7 @@ realTimeEl dynGameId b = do
 
 getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game
 getGameFromUpdate gameId = (=<<) (\case
-                              UpdateGame (OT.GameUpdate gameId g) -> Just g
+                              UpdateGame (OT.GameUpdate gid g) -> case gid == gameId of
+                                True  -> Just g
+                                False -> Nothing
                               _            -> Nothing)

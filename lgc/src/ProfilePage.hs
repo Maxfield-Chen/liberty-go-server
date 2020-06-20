@@ -29,13 +29,13 @@ import           Theory.Named
 
 type UserId = Int
 
---TODO: Investigate evProfilePage, still doesn't seem to be submitting the 1st time.
+--TODO: Investigate evProfilePage - currently submitting on every page change.
+-- Gate was not submitting until profile was clicked twice. Investigate other behavior
 profilePage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Event t Int)
 profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dynPage) $ do
-  bvPage <- hold Profile $ updated dynPage
-  let evProfilePage = () <$ gate ((== Profile) <$> bvPage) (updated dynPage)
+  let evProfilePage = () <$ updated dynPage
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
   evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evProfilePage
   dynAllGames <- holdDyn ([],mempty) evAllGames

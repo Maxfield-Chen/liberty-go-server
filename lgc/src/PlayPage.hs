@@ -120,6 +120,8 @@ getGame dynGameId evMFetchGame evGetGame = do
                        Nothing -> mhttp) [evMWSGame, evMFetchGame]
 
 
+--TODO: Determine when to close WS connections, since they are getting overwhelming.
+-- Alternatively, see if one connection can be shared throughout the program.
 realTimeEl :: forall t m. MonadWidget t m =>
               Dynamic t GameId
            -> Event t ()

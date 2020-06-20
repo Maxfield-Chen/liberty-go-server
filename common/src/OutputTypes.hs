@@ -36,6 +36,14 @@ data GameRecord =
 
 newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" ""
 
+isBlack :: User -> GameRecord -> Bool
+isBlack u GameRecord{..} = grBlackPlayer == u
+
+getTeacher :: User -> GameRecord -> Maybe User
+getTeacher u g@GameRecord{..} = case isBlack u g of
+  True  -> grBlackTeacher
+  False -> grWhiteTeacher
+
 convertGR :: GDB.GameRecord ->
              GDB.User ->
              GDB.User ->

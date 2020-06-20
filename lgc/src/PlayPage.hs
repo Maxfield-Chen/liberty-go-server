@@ -36,7 +36,7 @@ type GameId = Int
 playPage :: forall t m . MonadWidget t m =>
             Dynamic t Page
          -> Dynamic t GameId
-         -> m ()
+         -> m (Event t Page)
 playPage dynPage dynGameId =
   elDynAttr "div" (shouldShow Play "play-page" <$> dynPage) $ do
     dynText $ T.pack . show <$> dynGameId
@@ -48,23 +48,31 @@ playPage dynPage dynGameId =
     evMGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
     dynGame <- holdDyn newGame $ fromMaybe newGame <$> evMGame
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
-    -- _ <- playerSidebar dynGR dynUser
+    evSideBarPage <- playerSidebar dynGR dynUser
     boardEv       <- boardEl dynGame
     -- _ <- opponentSidebar
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right <$> dynGameId) posDyn (() <$ boardEv)
-    pure ()
+    pure evSideBarPage
 
--- playerSidebar :: forall t m . MonadWidget t m =>
---                  Dynamic t OT.GameRecord
---               -> Dynamic t OT.User
---               -> m (Event t ())
--- playerSidebar dynGameRecord dynUser =
---   divClass "play-player-sidebar" $ do
---     divClass "sidebar-info" $ do
---       dynText $ T.pack . show . OT.userName <$> dynUser
---     divClass "sidebar-chat" $ inputElement def
+playerSidebar :: forall t m . MonadWidget t m =>
+                 Dynamic t OT.GameRecord
+              -> Dynamic t OT.User
+              -> m (Event t Page)
+playerSidebar dynGameRecord dynProfileUser =
+  divClass "player-sidebar" $ do
+    evPage <- divClass "sidebar-info" $ do
+      let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
+      evPlayer <- genDynButton "sidebar-profile-user"
+        (T.pack . show . OT.userName <$> dynProfileUser)
+        Profile
+      evTeacher <- genDynButton "sidebar-profile-user-teacher"
+        (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
+        Profile
+      pure $ leftmost [evPlayer, evTeacher]
+    divClass "sidebar-chat" $ inputElement def
+    pure evPage
 
 boardEl :: forall t m . MonadWidget t m =>
            Dynamic t G.Game

@@ -56,7 +56,8 @@ gameOperations user  =
 server :: CookieSettings -> JWTSettings -> ServerT (C.API auths) GI.AppM
 server cookieSettings jwtSettings =
   protected :<|>
-  unprotected cookieSettings jwtSettings
+  unprotected cookieSettings jwtSettings :<|>
+  serveDirectoryWebApp "/home/nihliphobe/projects/haskell/liberty-go-server/lgs/raw"
 
 --TODO: Change this to production settings.
 

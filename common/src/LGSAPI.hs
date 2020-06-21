@@ -61,7 +61,7 @@ type GameAPI = "play" :> "proposeGame"
                   :> ReqBody '[JSON] G.Position
                   :> Put '[JSON] (Either G.MoveError G.Outcome,G.Game)
 
-type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|> Unprotected
+type API auths = (Servant.Auth.Server.Auth auths UserInput.User :> GameAPI) :<|> Unprotected :<|> ("raw" :> Raw)
 
 unprotectedAPI :: Proxy Unprotected
 unprotectedAPI = Proxy

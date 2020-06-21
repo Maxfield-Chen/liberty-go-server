@@ -61,13 +61,19 @@ profileBoards dynAllGames dynUserId =
     dynEvents <- divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
     pure $ switchDyn $ leftmost <$> dynEvents
 
+
 readOnlyBoard :: forall t m . MonadWidget t m =>
                  Dynamic t UserId
               -> Dynamic t (OT.GameRecord, [OT.Awaiter])
               -> m (Event t Int)
 readOnlyBoard dynUserId dynAllGame = do
   let dynGameRecord = fst <$> dynAllGame
-      dynNumAwaiters = T.pack . show . length . snd <$> dynAllGame
+      dynAwaiters = snd <$> dynAllGame
+      dynNumAwaiters = T.pack . show . length <$> dynAwaiters
+      dynBlackPlayerAwaiter = OT.userAwaiting OT.grBlackPlayer <$> dynGameRecord <*> dynAwaiters
+      dynWhitePlayerAwaiter = OT.userAwaiting OT.grWhitePlayer <$> dynGameRecord <*> dynAwaiters
+      dynMBlackTeacherAwaiter = OT.teacherAwaiting OT.grBlackTeacher <$> dynGameRecord <*> dynAwaiters
+      dynMWhiteTeacherAwaiter = OT.teacherAwaiting OT.grWhiteTeacher <$> dynGameRecord <*> dynAwaiters
       dynGame = OT.grGame <$> dynGameRecord
   divClass "read-only-container" $ divClass "read-only-game" $ do
     dynText dynNumAwaiters
@@ -79,7 +85,12 @@ readOnlyBoard dynUserId dynAllGame = do
        (concat boardPositions)
     _ <- acceptGameProposalButton dynAllGame dynUserId
     _ <- rejectGameProposalButton dynAllGame dynUserId
-    readOnlyBoardButton dynGameRecord
+    selBoard <- readOnlyBoardButton dynGameRecord
+    bpAwaiter <- awaiterButton (Just <$> dynBlackPlayerAwaiter) "awaiter-student" Profile
+    btAwaiter <- awaiterButton dynMBlackTeacherAwaiter "awaiter-teacher" Profile
+    wpAwaiter <- awaiterButton (Just <$> dynWhitePlayerAwaiter) "awaiter-student" Profile
+    wtAwaiter <- awaiterButton dynMWhiteTeacherAwaiter "awaiter-teacher" Profile
+    pure selBoard
 
 acceptGameProposalButton :: forall t m. MonadWidget t m =>
                             Dynamic t (OT.GameRecord, [OT.Awaiter])

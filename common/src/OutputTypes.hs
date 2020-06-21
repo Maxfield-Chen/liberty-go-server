@@ -13,6 +13,7 @@
 module OutputTypes where
 
 import           Data.Aeson.Types
+import           Data.Functor
 import qualified Data.HashMap.Strict as M
 import           Data.Text           (Text)
 import qualified Game                as G
@@ -43,6 +44,22 @@ data GameUpdate =
 newGameUpdate = GameUpdate (-1) G.newGame
 
 newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" ""
+
+userAwaiting :: (GameRecord -> User)
+             -> GameRecord
+             -> [Awaiter]
+             -> Bool
+userAwaiting f gr awaiters =
+  (((==) G.GameProposed) . G._status . grGame) gr &&
+    ((userId $ f gr) `elem` (fmap awaiterUser awaiters))
+
+teacherAwaiting :: (GameRecord -> Maybe User)
+             -> GameRecord
+             -> [Awaiter]
+             -> Maybe Bool
+teacherAwaiting f gr awaiters =
+  let gameProposed = (((==) G.GameProposed) . G._status . grGame) gr
+  in ((&&) gameProposed) <$> (elem <$> (userId <$> f gr) <*> (Just $ fmap awaiterUser awaiters))
 
 isBlack :: User -> GameRecord -> Bool
 isBlack u GameRecord{..} = grBlackPlayer == u

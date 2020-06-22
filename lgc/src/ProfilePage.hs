@@ -59,6 +59,7 @@ profileBoards dynAllGames dynUserId =
                  <$> dynAllGames
   in do
     divClass "profile-lpad" $ text ""
+  --TODO: Add Pagination / truncation at 14 boards (CSS restriction)
     dynEvents <- divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
     divClass "profile-rpad" $ text ""
     pure $ switchDyn $ leftmost <$> dynEvents
@@ -76,8 +77,10 @@ readOnlyBoard dynUserId dynAllGame = do
       dynMBlackTeacherAwaiter = OT.teacherAwaiting OT.grBlackTeacher <$> dynGameRecord <*> dynAwaiters
       dynMWhiteTeacherAwaiter = OT.teacherAwaiting OT.grWhiteTeacher <$> dynGameRecord <*> dynAwaiters
       dynGame = OT.grGame <$> dynGameRecord
-  divClass "read-only-container" $ divClass "read-only-game" $ do
-    selBoard <- divClass "read-only-board" $ do
+  divClass "read-only-container" $ do
+    divClass "board-top" $ text ""
+    divClass "board-left" $ text ""
+    selBoard <- divClass "board-canvas" $ divClass "board-overlay" $ divClass "ro-board-grid" $ do
       _ <- mapM (\pos -> name pos $
          \case
              Bound boundPos -> boardButton pos $
@@ -85,14 +88,17 @@ readOnlyBoard dynUserId dynAllGame = do
              _ -> error "unbound position when creating readonly-boardEl")
        (concat boardPositions)
       readOnlyBoardButton dynGameRecord
-    _ <- acceptGameProposalButton dynAllGame dynUserId
-    _ <- rejectGameProposalButton dynAllGame dynUserId
-    awaiterProfile <-divClass "awaiters" $ do
-      bpAwaiter <- awaiterButton (Just <$> dynBlackPlayerAwaiter) "b-awaiter-student" Profile
-      btAwaiter <- awaiterButton dynMBlackTeacherAwaiter "b-awaiter-teacher" Profile
-      wpAwaiter <- awaiterButton (Just <$> dynWhitePlayerAwaiter) "w-awaiter-student" Profile
-      wtAwaiter <- awaiterButton dynMWhiteTeacherAwaiter "w-awaiter-teacher" Profile
-      pure $ leftmost [bpAwaiter, btAwaiter, wpAwaiter, wtAwaiter]
+    divClass "board-right" $ text ""
+    divClass "board-bottom" $ text ""
+    _ <- divClass "board-footer" $ do
+      apb <- acceptGameProposalButton dynAllGame dynUserId
+      rpb <- rejectGameProposalButton dynAllGame dynUserId
+      divClass "awaiters" $ do
+        bpAwaiter <- awaiterButton (Just <$> dynBlackPlayerAwaiter) "b-awaiter-student" Profile
+        btAwaiter <- awaiterButton dynMBlackTeacherAwaiter "b-awaiter-teacher" Profile
+        wpAwaiter <- awaiterButton (Just <$> dynWhitePlayerAwaiter) "w-awaiter-student" Profile
+        wtAwaiter <- awaiterButton dynMWhiteTeacherAwaiter "w-awaiter-teacher" Profile
+        pure $ leftmost [bpAwaiter, btAwaiter, wpAwaiter, wtAwaiter]
     pure selBoard
 
 acceptGameProposalButton :: forall t m. MonadWidget t m =>

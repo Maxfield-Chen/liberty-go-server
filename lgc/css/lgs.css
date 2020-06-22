@@ -1,5 +1,5 @@
 :root {
-    --awaiter-size: 7.5em;
+    --awaiter-size: 5.5em;
 }
 
 @viewport {
@@ -19,6 +19,7 @@ body {
 
 
 .read-only-board {
+    background-image: url("http://localhost:8888/raw/canvas.png");
     display: grid;
     grid-template-columns: repeat(19, minmax(10px,1fr));
     grid-template-rows: repeat(19,minmax(10px,1fr));
@@ -32,9 +33,9 @@ body {
 
 .profile-boards {
     display: grid;
-    grid-template-columns: repeat(2, minmax(200px, 0.3fr));
-    grid-template-rows: repeat(auto-fill, minmax(200px, 1fr));
-    grid-gap: 1rem;
+    grid-template-columns: repeat(2, minmax(300px, 0.2fr));
+    grid-template-rows: repeat(7, minmax(333px, 0.2fr));
+    grid-gap: 2rem;
 }
 
 .profile-lpad {
@@ -47,15 +48,40 @@ body {
 }
 
 .space-empty {
-    background-color: #aaaaaa;
+    background-color: Transparent;
+    background-repeat:no-repeat;
+    border: none;
+    cursor:pointer;
+    overflow: hidden;
+    outline:none;
+    margin: 0;
+    padding: 0;
+    background-position: center center;
+    outline: none;
 }
 
 .space-black {
-    background-color: #000000;
+    margin: 0;
+    padding: 0;
+    background-color: Transparent;
+    background-image: url("http://localhost:8888/raw/black.png");
+    background-repeat:no-repeat;
+    background-size: contain;
+    border: none;
+    background-position: center center;
+    outline: none;
 }
 
 .space-white {
-    background-color: #ffffff;
+    background-position: center center;
+    border: none;
+    margin: 0;
+    padding: 0;
+    background-image: url("http://localhost:8888/raw/white.png");
+    background-color: Transparent;
+    background-repeat:no-repeat;
+    background-size: contain;
+    outline: none;
 }
 
 .page-hidden {
@@ -69,18 +95,15 @@ body {
 .read-only-board-button {
     position: absolute;
     width: 100%;
-    height: 61%;
+    height: 100%;
+    left: 0.4rem;
+    top: 1.3rem;
     background-color: Transparent;
     background-repeat: no-repeat;
     border: none;
+    cursor:pointer;
     outline: none;
     overflow: hidden;
-}
-
-.read-only-container {
-    width: 100%;
-    position: relative;
-    margin: 0 auto;
 }
 
 .aspect-ratio {
@@ -95,8 +118,111 @@ body {
     height: 100%;
 }
 
-.board-grid {
+.read-only-container {
+    width: 100%;
+    position: relative;
+    display: grid;
+    grid-template-areas:
+        "top top top top top top top top top top"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "bottom bottom bottom bottom bottom bottom bottom bottom bottom bottom"
+    "footer footer footer footer footer footer footer footer footer footer"
+    "footer footer footer footer footer footer footer footer footer footer";
+}
+
+.board-container {
     grid-area: rgb-start / cgb-start / rgb-end / gb-end;
+    display: grid;
+    grid-template-areas:
+        "top top top top top top top top top top"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "left board board board board board board board board right"
+        "bottom bottom bottom bottom bottom bottom bottom bottom bottom bottom";
+}
+
+.board-footer {
+    grid-area: footer;
+}
+
+.board-top {
+    grid-area: top;
+}
+
+.board-left {
+    grid-area: left;
+}
+
+.board-bottom {
+    grid-area: bottom;
+}
+.board-right {
+    grid-area: right;
+}
+
+.board-canvas {
+    grid-area: board;
+    background-image: url("http://localhost:8888/raw/canvas.png");
+}
+
+.board-overlay {
+    width: 100%;
+    height: 100%;
+    background-image: repeating-linear-gradient(#000 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 100%);
+    background-size: 5.263% 5.263%;
+}
+
+.ro-board-grid {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    right: 0.38em;
+    bottom: 1.15em;
+    display: grid;
+    grid-template-columns: repeat(19,minmax(5px,1fr));
+    grid-template-rows: repeat(19,minmax(5px,1fr));
+}
+
+.board-grid {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    right: 1.2em;
+    bottom: 1.4em;
     display: grid;
     grid-template-columns: repeat(19,minmax(5px,1fr));
     grid-template-rows: repeat(19,minmax(5px,1fr));
@@ -105,19 +231,19 @@ body {
 .play-page {
     display: grid;
     grid-template-columns: [left] 10px [cstart] 0.1fr [player-sb-end] 0.2fr [cgb-start] 0.4fr [gb-end] 0.2fr [gb-pad-end] 0.1fr [opponent-sb-end] 10px [right];
-    grid-template-rows: [top] 10px [rgb-start] 0.8fr [rgb-end] 0.2fr [rend] 10px [bottom];
+    grid-template-rows: [top] 10px [rgb-start] 0.8fr [rgb-end] 10px [bottom];
     gap: 0rem;
     width: 100%;
     height: 100%;
 }
 
 .sidebar-player {
-    grid-area: top / cstart / rend / player-sb-end;
+    grid-area: top / cstart / rgb-end / player-sb-end;
 }
 
 
 .sidebar-opponent {
-    grid-area: top / gb-pad-end / rend / opponent-sb-end;
+    grid-area: top / gb-pad-end / rgb-end / opponent-sb-end;
 }
 
 .body-grid {

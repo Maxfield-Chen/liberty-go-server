@@ -96,17 +96,25 @@ boardEl :: forall t m . MonadWidget t m =>
            Dynamic t G.Game
            -> m (Event t Position)
 boardEl dynGame =
-  divClass "board-grid" $ do
-    buttonEvs <- foldr (\pos mButtonEvs -> name pos $
-                                  \case
-                                      Bound boundPos -> do
-                                        let dynSpace = (GL.getPosition boundPos) <$> dynGame
-                                        buttonEv <- boardButton pos dynSpace
-                                        (:) buttonEv <$> mButtonEvs
-                                      _ -> error "unbound position when creating boardEl")
-                                (pure [] :: m [Event t Position])
-                                (concat boardPositions)
-    pure $ leftmost buttonEvs
+  divClass "board-container" $ do
+    divClass "board-top" $ text ""
+    divClass "board-left" $ text ""
+    evPos <- divClass "board-canvas" $ do
+      divClass "board-overlay" $
+        divClass "board-grid" $ do
+          buttonEvs <- foldr (\pos mButtonEvs -> name pos $
+                                        \case
+                                            Bound boundPos -> do
+                                              let dynSpace = (GL.getPosition boundPos) <$> dynGame
+                                              buttonEv <- boardButton pos dynSpace
+                                              (:) buttonEv <$> mButtonEvs
+                                            _ -> error "unbound position when creating boardEl")
+                                      (pure [] :: m [Event t Position])
+                                      (concat boardPositions)
+          pure $ leftmost buttonEvs
+    divClass "board-right" $ text ""
+    divClass "board-bottom" $ text ""
+    pure evPos
 
 getGame :: forall t m. MonadWidget t m =>
              Dynamic t GameId

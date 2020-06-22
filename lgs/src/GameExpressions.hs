@@ -132,7 +132,9 @@ getPlayersGameRecords playerId = do
       guard_
         (GDB._userId user ==. val_ playerId
          &&. (GDB._black_player gameRecord `references_` user
-         ||.  GDB._white_player gameRecord `references_` user))
+         ||.  GDB._white_player gameRecord `references_` user
+         ||.  (maybe_ (val_ False) (\bt -> bt `references_` user) (GDB._black_teacher gameRecord))
+         ||.  (maybe_ (val_ False) (\wt -> wt `references_` user) (GDB._white_teacher gameRecord))))
       pure gameRecord
   pure relatedGames
 

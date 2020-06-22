@@ -1,3 +1,7 @@
+:root {
+    --awaiter-size: 7.5em;
+}
+
 @viewport {
     width: device-width ;
     zoom: 1.0 ;
@@ -20,11 +24,26 @@ body {
     grid-template-rows: repeat(19,minmax(10px,1fr));
 }
 
+.profile-page {
+    display: grid;
+    grid-template-columns: 2fr 6fr 2fr;
+    grid-template-rows: 1fr 8fr 1fr;
+}
+
 .profile-boards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, minmax(200px, 0.3fr));
     grid-template-rows: repeat(auto-fill, minmax(200px, 1fr));
     grid-gap: 1rem;
+}
+
+.profile-lpad {
+    width: 100%;
+    height: 100%;
+}
+.profile-rpad {
+    width: 100%;
+    height: 100%;
 }
 
 .space-empty {
@@ -49,10 +68,8 @@ body {
 
 .read-only-board-button {
     position: absolute;
-    left: 0;
-    top: 0;
     width: 100%;
-    height: 83%;
+    height: 61%;
     background-color: Transparent;
     background-repeat: no-repeat;
     border: none;
@@ -118,4 +135,109 @@ body {
 
 .page-grid {
     grid-area: header-end / body-start / cbody-end / rbody-end;
+}
+
+.awaiters {
+    width: 100%;
+    height: 25%;
+}
+
+.approved-b-awaiter-student {
+    background:url("http://localhost:8888/raw/student-present.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    transform: scaleX(-1);
+    float:left;
+}
+
+.approved-w-awaiter-student {
+    background:url("http://localhost:8888/raw/student-present.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    float:right;
+}
+
+.waiting-b-awaiter-student {
+    background:url("http://localhost:8888/raw/student-waiting.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    transform: scaleX(-1);
+    float: left;
+}
+.waiting-w-awaiter-student {
+    background:url("http://localhost:8888/raw/student-waiting.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    float: right;
+}
+
+.hide-w-awaiter-student {
+    display: none;
+}
+.hide-b-awaiter-student {
+    display:none;
+}
+
+.approved-b-awaiter-teacher {
+    background:url("http://localhost:8888/raw/teacher-present.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    float:left;
+    margin-left: -2rem;
+}
+.approved-w-awaiter-teacher {
+    background:url("http://localhost:8888/raw/teacher-present.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    float:right;
+    transform: scaleX(-1);
+    margin-right: -2rem;
+}
+
+.waiting-b-awaiter-teacher {
+    background:url("http://localhost:8888/raw/teacher-waiting.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    float: left;
+    margin-left: -2rem;
+}
+.waiting-w-awaiter-teacher {
+    background:url("http://localhost:8888/raw/teacher-waiting.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    transform: scaleX(-1);
+    width: var(--awaiter-size);
+    height: var(--awaiter-size);
+    background-size: cover;
+    float:right;
+    margin-right: -2rem;
+}
+
+.hide-w-awaiter-teacher {
+    display:none;
+}
+
+.hide-b-awaiter-teacher {
+    display:none;
 }

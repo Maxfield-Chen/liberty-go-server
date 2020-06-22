@@ -277,9 +277,11 @@ body {
     background-size: cover;
     transform: scaleX(-1);
     float:left;
+    outline: none;
 }
 
 .approved-w-awaiter-student {
+    outline: none;
     background:url("http://localhost:8888/raw/student-present.png") no-repeat;
     cursor:pointer;
     border:none;
@@ -291,6 +293,7 @@ body {
 
 .waiting-b-awaiter-student {
     background:url("http://localhost:8888/raw/student-waiting.png") no-repeat;
+    outline: none;
     cursor:pointer;
     border:none;
     width: var(--awaiter-size);
@@ -304,6 +307,7 @@ body {
     cursor:pointer;
     border:none;
     width: var(--awaiter-size);
+    outline: none;
     height: var(--awaiter-size);
     background-size: cover;
     float: right;
@@ -319,6 +323,7 @@ body {
 .approved-b-awaiter-teacher {
     background:url("http://localhost:8888/raw/teacher-present.png") no-repeat;
     cursor:pointer;
+    outline: none;
     border:none;
     width: var(--awaiter-size);
     height: var(--awaiter-size);
@@ -328,6 +333,7 @@ body {
 }
 .approved-w-awaiter-teacher {
     background:url("http://localhost:8888/raw/teacher-present.png") no-repeat;
+    outline: none;
     cursor:pointer;
     border:none;
     width: var(--awaiter-size);
@@ -343,6 +349,7 @@ body {
     cursor:pointer;
     border:none;
     width: var(--awaiter-size);
+    outline: none;
     height: var(--awaiter-size);
     background-size: cover;
     float: left;
@@ -352,6 +359,7 @@ body {
     background:url("http://localhost:8888/raw/teacher-waiting.png") no-repeat;
     cursor:pointer;
     border:none;
+    outline: none;
     transform: scaleX(-1);
     width: var(--awaiter-size);
     height: var(--awaiter-size);

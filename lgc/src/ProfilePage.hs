@@ -80,7 +80,7 @@ readOnlyBoard dynUserId dynAllGame = do
   divClass "read-only-container" $ do
     divClass "board-top" $ text ""
     divClass "board-left" $ text ""
-    selBoard <- divClass "board-canvas" $ divClass "board-overlay" $ divClass "ro-board-grid" $ do
+    selBoard <- divClass "ro-board-canvas" $ divClass "board-overlay" $ divClass "ro-board-grid" $ do
       _ <- mapM (\pos -> name pos $
          \case
              Bound boundPos -> boardButton pos $

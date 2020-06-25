@@ -99,8 +99,7 @@ boardEl dynGame =
   divClass "board-container" $ do
     divClass "board-top" $ text ""
     divClass "board-left" $ text ""
-    evPos <- divClass "board-canvas" $ do
-      divClass "board-overlay" $
+    evPos <- divClass "board-overlay" $
         divClass "board-grid" $ do
           buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                         \case

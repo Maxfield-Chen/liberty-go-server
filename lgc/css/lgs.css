@@ -173,6 +173,7 @@ body {
         "left board board board board board board board board right"
         "left board board board board board board board board right"
         "bottom bottom bottom bottom bottom bottom bottom bottom bottom bottom";
+    background-image: url("http://localhost:8888/raw/canvas.png");
 }
 
 .board-footer {
@@ -194,16 +195,12 @@ body {
     grid-area: right;
 }
 
-.board-canvas {
-    grid-area: board;
-    background-image: url("http://localhost:8888/raw/canvas.png");
-}
-
 .board-overlay {
+    grid-area: board;
     width: 100%;
     height: 100%;
     background-image: repeating-linear-gradient(#000 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 100%);
-    background-size: 5.263% 5.263%;
+    background-size: 5.26% 5.25%;
 }
 
 .ro-board-grid {
@@ -230,20 +227,22 @@ body {
 
 .play-page {
     display: grid;
-    grid-template-columns: [left] 10px [cstart] 0.1fr [player-sb-end] 0.2fr [cgb-start] 0.4fr [gb-end] 0.2fr [gb-pad-end] 0.1fr [opponent-sb-end] 10px [right];
+    grid-template-columns: [left] 10px [cstart] 0.15fr [cgb-start] 1fr [gb-end] 0.15fr [opponent-sb-end] 10px [right];
     grid-template-rows: [top] 10px [rgb-start] 0.8fr [rgb-end] 10px [bottom];
-    gap: 0rem;
+    gap:1vw ;
     width: 100%;
     height: 100%;
 }
 
 .sidebar-player {
-    grid-area: top / cstart / rgb-end / player-sb-end;
+    grid-area: top / cstart / rgb-end / cgb-start;
+    width:100% ;
+    height:100% ;
 }
 
 
 .sidebar-opponent {
-    grid-area: top / gb-pad-end / rgb-end / opponent-sb-end;
+    grid-area: top / gb-end / rgb-end / opponent-sb-end;
 }
 
 .body-grid {
@@ -374,4 +373,56 @@ body {
 
 .hide-b-awaiter-teacher {
     display:none;
+}
+
+.sidebar-player-info {
+    display:inline-block;
+}
+
+.sidebar-player-user {
+    width:6vw ;
+    height:6vw ;
+    margin-right: .1vw ;
+    margin-bottom: 1vw ;
+}
+
+.sidebar-player-teacher {
+    width:4vw ;
+    height:4vw ;
+}
+
+.sidebar-player-chat {
+    width:100% ;
+    height:60% ;
+}
+
+.sidebar-player-chat input {
+    width:100% ;
+    height:100% ;
+}
+
+.sidebar-opponent-info {
+    display:inline-block;
+}
+
+.sidebar-opponent-user {
+    width:6vw ;
+    height:6vw ;
+    margin-right: .1vw ;
+    margin-bottom: 1vw ;
+}
+
+.sidebar-opponent-teacher {
+    width:4vw ;
+    height:4vw ;
+}
+
+.sidebar-opponent-chat {
+    width:100% ;
+    height:60% ;
+}
+
+.sidebar-opponent-chat input {
+    width:100% ;
+    height:100% ;
 }

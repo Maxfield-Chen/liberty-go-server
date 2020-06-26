@@ -66,7 +66,6 @@ body {
     background-color: Transparent;
     background-image: url("http://localhost:8888/raw/black.png");
     background-repeat:no-repeat;
-    background-size: contain;
     border: none;
     background-position: center center;
     outline: none;
@@ -80,7 +79,6 @@ body {
     background-image: url("http://localhost:8888/raw/white.png");
     background-color: Transparent;
     background-repeat:no-repeat;
-    background-size: contain;
     outline: none;
 }
 
@@ -119,6 +117,7 @@ body {
 }
 
 .read-only-container {
+    background-image: url("http://localhost:8888/raw/canvas.png");
     width: 100%;
     position: relative;
     display: grid;
@@ -149,7 +148,7 @@ body {
 }
 
 .board-container {
-    grid-area: rgb-start / cgb-start / rgb-end / gb-end;
+    grid-area: rgb-start / pad / rgb-end / gb-end;
     display: grid;
     grid-template-areas:
         "top top top top top top top top top top"
@@ -197,29 +196,39 @@ body {
 
 .board-overlay {
     grid-area: board;
-    width: 100%;
-    height: 100%;
+    height: 0;
+    overflow: hidden;
+    padding-top:100%;
+    position: relative;
     background-image: repeating-linear-gradient(#000 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 100%);
     background-size: 5.26% 5.25%;
 }
 
+.ro-board-canvas{
+    grid-area: board;
+}
 .ro-board-grid {
-    width: 100%;
-    height: 100%;
+    grid-area: board;
+    height: 0;
+    overflow: hidden;
+    padding-top: 100%;
     position: relative;
-    right: 0.38em;
-    bottom: 1.15em;
     display: grid;
     grid-template-columns: repeat(19,minmax(5px,1fr));
     grid-template-rows: repeat(19,minmax(5px,1fr));
 }
 
+.board-grid button {
+    border-radius: 50%;
+}
+
 .board-grid {
-    width: 100%;
     height: 100%;
-    position: relative;
-    right: 1.2em;
-    bottom: 1.4em;
+    width: 100%;
+    bottom: 2.5%;
+    left: 2.8%;
+    position: absolute;
+    grid-area: board;
     display: grid;
     grid-template-columns: repeat(19,minmax(5px,1fr));
     grid-template-rows: repeat(19,minmax(5px,1fr));
@@ -227,7 +236,7 @@ body {
 
 .play-page {
     display: grid;
-    grid-template-columns: [left] 10px [cstart] 0.15fr [cgb-start] 1fr [gb-end] 0.15fr [opponent-sb-end] 10px [right];
+    grid-template-columns: [left] 10px [cstart] 0.15fr [cgb-start] 0.4fr [pad] 1fr [gb-end] 0.4fr [rpad] 0.15fr [opponent-sb-end] 10px [right];
     grid-template-rows: [top] 10px [rgb-start] 0.8fr [rgb-end] 10px [bottom];
     gap:1vw ;
     width: 100%;
@@ -242,7 +251,7 @@ body {
 
 
 .sidebar-opponent {
-    grid-area: top / gb-end / rgb-end / opponent-sb-end;
+    grid-area: top / rpad / rgb-end / opponent-sb-end;
 }
 
 .body-grid {

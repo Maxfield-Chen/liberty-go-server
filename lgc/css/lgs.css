@@ -63,8 +63,7 @@ body {
 .space-black {
     margin: 0;
     padding: 0;
-    background-color: Transparent;
-    background-image: url("http://localhost:8888/raw/black.png");
+    background-color: black;
     background-repeat:no-repeat;
     border: none;
     background-position: center center;
@@ -76,8 +75,7 @@ body {
     border: none;
     margin: 0;
     padding: 0;
-    background-image: url("http://localhost:8888/raw/white.png");
-    background-color: Transparent;
+    background-color: white;
     background-repeat:no-repeat;
     outline: none;
 }
@@ -197,7 +195,6 @@ body {
 .board-overlay {
     grid-area: board;
     height: 0;
-    overflow: hidden;
     padding-top:100%;
     position: relative;
     background-image: repeating-linear-gradient(#000 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 100%);
@@ -226,7 +223,7 @@ body {
     height: 100%;
     width: 100%;
     bottom: 2.5%;
-    left: 2.8%;
+    right: 2.5%;
     position: absolute;
     grid-area: board;
     display: grid;

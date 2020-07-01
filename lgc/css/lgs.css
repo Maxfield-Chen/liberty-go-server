@@ -1,6 +1,16 @@
 :root {
     --awaiter-size: 5.5em;
 }
+/* nunito-regular - latin */
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Nunito Regular'), local('Nunito-Regular'),
+         url('http://localhost:8888/raw/fonts/nunito-v12-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+         url('http://localhost:8888/raw/fonts/nunito-v12-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
 
 @viewport {
     width: device-width ;
@@ -10,6 +20,7 @@
 html {
     width: 100%;
     height: 100%;
+    font-family: Nunito;
 }
 
 body {
@@ -38,7 +49,7 @@ body {
 .profile-boards {
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(2, minmax(300px, 0.2fr));
+    grid-template-columns: repeat(3, minmax(300px, 0.2fr));
     grid-template-rows: repeat(7, minmax(333px, 0.2fr));
     grid-gap: 2rem;
 }
@@ -91,6 +102,13 @@ body {
 
 .header-el div {
     display: inline-block;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    float: right;
+}
+.body-grid .header-el .home-button {
+    float: left;
 }
 
 .read-only-board-button {
@@ -207,20 +225,33 @@ body {
 }
 
 .body-grid {
-    gap: 0rem;
+    gap: 1rem;
     width: 100%;
     height: 100%;
     display: grid;
     grid-template-columns: [left] 10px [body-start] 1fr [rbody-end] 10px [right];
-    grid-template-rows: [top] minmax(20px,0.03fr) [header-end] 0.97fr [cbody-end] 10px [bottom];
+    grid-template-rows: [top] 0.05fr [header-end] 0.1fr [cbody-start] 0.97fr [cbody-end] 10px [bottom];
 }
 
+.page-button{
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #030303;
+    text-transform: uppercase;
+
+
+}
 .header-el {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    position: relative;
     grid-area: top / left / header-end / right;
+    background-color:#d3d4d6;
 }
 
 .page-grid {
-    grid-area: header-end / body-start / cbody-end / rbody-end;
+    grid-area: cbody-start / body-start / cbody-end / rbody-end;
 }
 
 .awaiters {

@@ -60,7 +60,7 @@ profileBoards dynAllGames dynUserId =
   in do
     divClass "profile-lpad" $ text ""
   --TODO: Add Pagination / truncation at 14 boards (CSS restriction)
-    dynEvents <- divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
+    dynEvents <- divClass "profile-boards-container" $ divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
     divClass "profile-rpad" $ text ""
     pure $ switchDyn $ leftmost <$> dynEvents
 
@@ -79,7 +79,7 @@ readOnlyBoard dynUserId dynAllGame = do
       dynGame = OT.grGame <$> dynGameRecord
   divClass "read-only-container" $ do
     selBoard <-divClass "ro-board-container" $ do
-      _ <- divClass "ro-board-overlay" $ divClass "ro-board-grid" $ do
+      _ <- divClass "ro-board-overlay" $ divClass "board-grid" $ do
         mapM (\pos -> name pos $
           \case
               Bound boundPos -> boardButton pos $

@@ -78,19 +78,15 @@ readOnlyBoard dynUserId dynAllGame = do
       dynMWhiteTeacherAwaiter = OT.teacherAwaiting OT.grWhiteTeacher <$> dynGameRecord <*> dynAwaiters
       dynGame = OT.grGame <$> dynGameRecord
   divClass "read-only-container" $ do
-    divClass "board-top" $ text ""
-    divClass "board-left" $ text ""
-    divClass "board-overlay" $ text " "
-    selBoard <- divClass "ro-board-grid" $ do
-      _ <- mapM (\pos -> name pos $
-         \case
-             Bound boundPos -> boardButton pos $
-               GL.getPosition boundPos <$> dynGame
-             _ -> error "unbound position when creating readonly-boardEl")
-       (concat boardPositions)
+    selBoard <-divClass "ro-board-container" $ do
+      _ <- divClass "ro-board-overlay" $ divClass "ro-board-grid" $ do
+        mapM (\pos -> name pos $
+          \case
+              Bound boundPos -> boardButton pos $
+                GL.getPosition boundPos <$> dynGame
+              _ -> error "unbound position when creating readonly-boardEl")
+          (concat boardPositions)
       readOnlyBoardButton dynGameRecord
-    divClass "board-right" $ text ""
-    divClass "board-bottom" $ text ""
     _ <- divClass "board-footer" $ do
       apb <- acceptGameProposalButton dynAllGame dynUserId
       rpb <- rejectGameProposalButton dynAllGame dynUserId

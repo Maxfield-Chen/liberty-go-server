@@ -28,6 +28,7 @@ import           Servant
 import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
 import qualified UserInput
+import Database.SQLite.Simple (open)
 
 unprotected :: CookieSettings -> JWTSettings -> ServerT C.Unprotected GI.AppM
 unprotected cs jwts = GI.createNewUser
@@ -74,9 +75,11 @@ main = do
   --TODO: Persist this key somewhere (DB?)
   signingKey <- generateKey
   initialGameMap <- PST.emptyGameMap
+  conn <- open dbFilename
   let jwtCfg = defaultJWTSettings signingKey
       cfg = defaultConfig {jwtSecret = signingKey
-                         , gameMap = initialGameMap}
+                         , gameMap = initialGameMap
+                         , dbConnection = conn}
       cs = cookieSettings cfg
       ctx = cs :. jwtCfg :. EmptyContext
       api = Proxy :: Proxy (C.API '[JWT,Cookie])
@@ -90,7 +93,7 @@ checkCreds :: CookieSettings
                                 , Header "Set-Cookie" SetCookie]
                                 NoContent)
 checkCreds cookieSettings jwtSettings (UserInput.Login name pass) = do
-  mUser <- liftIO $ GEX.getUserViaCreds name pass
+  mUser <- GEX.getUserViaCreds name pass
   case mUser of
     Nothing -> throwError err401
     Just (GDB.User id email name _) -> do

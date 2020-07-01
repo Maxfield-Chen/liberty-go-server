@@ -25,15 +25,18 @@ import           Servant.Auth.Server
 import           Servant.Server
 import           Theory.Named
 import qualified UserInput
+import  Control.Monad.Reader
+import Config
 
+type AppM = ReaderT Config Handler
 
-placeStone :: UserInput.User -> Int -> Handler ()
+placeStone :: UserInput.User -> Int -> AppM ()
 placeStone = errPlayerExcluded
 
-proposeGame :: UserInput.User -> UserInput.ProposedGame -> Handler ()
+proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM ()
 proposeGame (UserInput.User _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
   do
-    mUser <- liftIO $ GEX.getUser id
+    mUser <- GEX.getUser id
     case mUser of
       Nothing -> throwError err410
       Just user -> do
@@ -44,31 +47,31 @@ proposeGame (UserInput.User _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
                     [bp, wp, fromMaybe (-1) bt,  fromMaybe (-1) wt]
         when (not callingUserIncluded) $ throwError err401
 
-acceptGameProposal :: UserInput.User -> Int -> Handler ()
+acceptGameProposal :: UserInput.User -> Int -> AppM ()
 acceptGameProposal (UserInput.User _ _ id) gameId =
   do
-    mUser <- liftIO $ GEX.getUser id
+    mUser <- GEX.getUser id
     case mUser of
       Nothing -> throwError err410
       Just user ->
         do
-          invalidUser <- not <$> liftIO  (GEX.isPlayerAwaiter (GDB._userId user) gameId)
+          invalidUser <- not <$> (GEX.isPlayerAwaiter (GDB._userId user) gameId)
           when invalidUser $ throwError err401
 
-proposePass :: UserInput.User -> Int -> Handler ()
+proposePass :: UserInput.User -> Int -> AppM ()
 proposePass = errPlayerExcluded
 
-proposeTerritory :: UserInput.User -> Int -> Handler ()
+proposeTerritory :: UserInput.User -> Int -> AppM ()
 proposeTerritory = errPlayerExcluded
 
-acceptTerritoryProposal :: UserInput.User -> Int -> Handler ()
+acceptTerritoryProposal :: UserInput.User -> Int -> AppM ()
 acceptTerritoryProposal = errPlayerExcluded
 
-errPlayerExcluded :: UserInput.User -> Int -> Handler ()
+errPlayerExcluded :: UserInput.User -> Int -> AppM ()
 errPlayerExcluded (UserInput.User _ _ id) gameId =
   do
-    mUser <- liftIO $ GEX.getUser id
-    players <- liftIO $ GEX.getGamePlayers gameId
+    mUser <-  GEX.getUser id
+    players <- GEX.getGamePlayers gameId
     case elem <$> mUser <*> Just players of
       Nothing    -> throwError err410
       Just False -> throwError err401

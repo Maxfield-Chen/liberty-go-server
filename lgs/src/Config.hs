@@ -10,7 +10,9 @@ import           Data.HashMap.Strict    as M
 import           GHC.Generics
 import           PubSubTypes            (GameMap)
 import           Servant.Auth.Server
+import Database.SQLite.Simple
 
+dbFilename = "LGS.db"
 data Environment = Development | Test | Production
     deriving (Eq, Show, Read)
 
@@ -19,7 +21,8 @@ data Config = Config
   , env            :: Environment
   , cookieSettings :: CookieSettings
   , port           :: Int
-  , gameMap        :: GameMap} deriving (Generic)
+  , gameMap        :: GameMap
+  , dbConnection ::  Connection} deriving (Generic)
 
 defaultConfig :: Config
 defaultConfig = Config
@@ -27,7 +30,8 @@ defaultConfig = Config
   , env = Development
   , cookieSettings = devCookieSettings
   , port = 8888
-  , gameMap = undefined}
+  , gameMap = undefined
+  , dbConnection = undefined}
 
 devCookieSettings :: CookieSettings
 devCookieSettings = CookieSettings

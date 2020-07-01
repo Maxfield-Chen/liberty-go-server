@@ -48,12 +48,12 @@ type AppM = ReaderT Config Handler
 
 placeStone :: UserInput.User -> Int -> G.Position -> AppM ((Either G.MoveError G.Outcome),G.Game)
 placeStone user gameId pos = do
-  lift $ AuthValidator.placeStone user gameId
+  AuthValidator.placeStone user gameId
   rtGmap <- asks gameMap
   name pos $ \case
     Bound pos -> do
-      mGameRecord <- liftIO $ GEX.getGameRecord gameId
-      mPlayerColor <- liftIO $ GEX.getPlayerColor user gameId
+      mGameRecord <-  GEX.getGameRecord gameId
+      mPlayerColor <- GEX.getPlayerColor user gameId
       let mPlaceStone = GL.placeStone <$> mPlayerColor <*> Just pos
       case (mPlaceStone, mGameRecord) of
         (Just placeStone, Just gameRecord) ->
@@ -65,7 +65,7 @@ placeStone user gameId pos = do
                 trace (show "Sending place stone msg") $ liftIO . atomically $ do
                   rtGame <- PS.getGame gameId rtGmap
                   writeTChan (PST.gameChan rtGame) (PST.UpdateGame $ OT.GameUpdate gameId updatedGame)
-                liftIO $ GEX.updateGame (const updatedGame) gameId $> ret
+                GEX.updateGame (const updatedGame) gameId $> ret
         (Nothing, _) -> pure (Left G.NoBoard, newGame)
         otherwise -> pure (Left G.IllegalPlayer, newGame)
     Unbound -> pure (Left G.OutOfBounds, newGame)
@@ -73,20 +73,20 @@ placeStone user gameId pos = do
 -- TODO: Perform validation on regex of inputs allowed
 createNewUser :: UserInput.RegisterUser -> AppM ()
 createNewUser (UserInput.RegisterUser email name password) = do
-  mUser <- liftIO $ GEX.getUserViaName name
+  mUser <-  GEX.getUserViaName name
   when (isJust mUser) (throwError err409)
-  liftIO $ GEX.insertUser email name password
+  GEX.insertUser email name password
   pure ()
 
 getGameId :: Int -> AppM (Maybe OT.GameRecord)
 getGameId gameId = do
-  mGR <- liftIO $ GEX.getGameRecord gameId
+  mGR <-  GEX.getGameRecord gameId
   case mGR of
     Nothing -> pure Nothing
-    Just gr -> liftIO $ convertGR gr
+    Just gr -> convertGR gr
 
 --TODO: Validate that this doesn't return Nothing when teachers are null
-convertGR :: GDB.GameRecord -> IO (Maybe OT.GameRecord)
+convertGR :: GDB.GameRecord ->  AppM (Maybe OT.GameRecord)
 convertGR gr = do
     let GDB.UserId bpId = GDB._black_player gr
         GDB.UserId wpId = GDB._white_player gr
@@ -111,80 +111,80 @@ getUser UserInput.User{..} = pure $ OT.User userId userName userEmail
 
 getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
-  mGDBgrs <- liftIO $ GEX.getPlayersGameRecords playerId
-  mgrs <- liftIO $ mapM convertGR mGDBgrs
+  mGDBgrs <-  GEX.getPlayersGameRecords playerId
+  mgrs <-  mapM convertGR mGDBgrs
   let grs = catMaybes mgrs
-  mawts <- liftIO $ foldM (\m k -> do
+  mawts <- foldM (\m k -> do
                      awaiters <- fmap OT.convertAwaiter <$> GEX.getAwaiters (OT.grId k)
                      pure $ M.insert (OT.grId k) awaiters m) mempty grs
   pure (grs, mawts)
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM OT.GameRecord
 proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
-  lift $ AuthValidator.proposeGame proposingUser proposedGame
-  mPlayers <- mapM (liftIO . GEX.getUser) $ [bp, wp]
-  mTeachers <- mapM (liftIO . GEX.getUser) $ catMaybes [mbt, mwt]
+  AuthValidator.proposeGame proposingUser proposedGame
+  mPlayers <- mapM (GEX.getUser) $ [bp, wp]
+  mTeachers <- mapM (GEX.getUser) $ catMaybes [mbt, mwt]
   let gameUsers = mPlayers ++ mTeachers
   when (nub gameUsers /= gameUsers) (throwError $
                                      err406 {errBody = "All proposed users must be unique."})
   when (Nothing `elem` mPlayers) (throwError $ err400 {errBody = "All proposed users must exist."})
   when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed teachers must exist."})
-  gameRecord:_ <- liftIO $ GEX.insertGame proposedGame newGame
-  mapM_ (liftIO . GEX.insertAwaiter (gameRecord ^. grId)) $
+  gameRecord:_ <- GEX.insertGame proposedGame newGame
+  mapM_ (GEX.insertAwaiter (gameRecord ^. grId)) $
     delete (UserInput.userId proposingUser) $ GDB._userId <$> catMaybes gameUsers
-  mGR <- liftIO $ convertGR gameRecord
+  mGR <-  convertGR gameRecord
   pure $ fromJust mGR
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
-  lift $ AuthValidator.acceptGameProposal user gameId
+  AuthValidator.acceptGameProposal user gameId
 
-  mUser <- liftIO $ GEX.getUserViaName name
+  mUser <- GEX.getUserViaName name
   --fromJust on mUser checked by auth validator above
-  (liftIO . GEX.deleteAwaiter gameId . GDB._userId . fromJust) mUser
-  awaiters <- liftIO $ GEX.getAwaiters gameId
+  (GEX.deleteAwaiter gameId . GDB._userId . fromJust) mUser
+  awaiters <- GEX.getAwaiters gameId
 
   --Only update proposal once all players have accepted
   case (null awaiters, shouldAccept) of
     (True, True) -> do
-      mGame <- liftIO $ GEX.updateGame (GL.updateGameProposal True) gameId
+      mGame <-GEX.updateGame (GL.updateGameProposal True) gameId
       pure (mGame <&> (^. G.status))
     (False, True) -> pure (Just G.GameProposed)
     (_, False)   -> do
       --TODO: Clean up remaining awaiters here.
-      mGame <- liftIO $ GEX.updateGame (GL.updateGameProposal False) gameId
+      mGame <- GEX.updateGame (GL.updateGameProposal False) gameId
       pure (mGame <&> (^. G.status))
 
 proposePass :: UserInput.User -> Int -> AppM (Maybe G.GameStatus)
 proposePass user gameId = do
-  lift $ AuthValidator.proposePass user gameId
-  mSpace <- liftIO $ GEX.getPlayerColor user gameId
+  AuthValidator.proposePass user gameId
+  mSpace <- GEX.getPlayerColor user gameId
   case mSpace of
     Nothing -> throwError err410
     Just space -> do
-      mGame <- liftIO $ GEX.updateGame (GL.proposePass space) gameId
+      mGame <-GEX.updateGame (GL.proposePass space) gameId
       pure ( mGame <&> (^. G.status))
 
 proposeTerritory :: UserInput.User -> Int -> G.Territory -> AppM (Maybe G.GameStatus)
 proposeTerritory user gameId territory = do
-  lift $ AuthValidator.proposeTerritory user gameId
-  mPlayerColor <- liftIO $ GEX.getPlayerColor user gameId
+  AuthValidator.proposeTerritory user gameId
+  mPlayerColor <- GEX.getPlayerColor user gameId
   let mProposedColor = mPlayerColor
   case mProposedColor of
     Nothing -> throwError err410
     Just proposedColor -> do
-      mGame <- liftIO $ GEX.updateGame
+      mGame <- GEX.updateGame
         (GL.proposeTerritory territory proposedColor)
         gameId
       pure (mGame <&> (^. G.status))
 
 acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptTerritoryProposal user gameId shouldAccept = do
-  lift $ AuthValidator.acceptTerritoryProposal user gameId
-  mPlayerColor <- liftIO $ GEX.getPlayerColor user gameId
+  AuthValidator.acceptTerritoryProposal user gameId
+  mPlayerColor <- GEX.getPlayerColor user gameId
   let mUpdateState = GL.acceptTerritoryProposal <$> mPlayerColor <*> Just shouldAccept
   case mUpdateState of
     Nothing -> pure Nothing
     Just updateState -> do
-      mGame <- liftIO $ GEX.updateGame updateState gameId
+      mGame <- GEX.updateGame updateState gameId
       pure (mGame <&> (^. G.status))

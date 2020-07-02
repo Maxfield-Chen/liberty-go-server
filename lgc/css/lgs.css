@@ -23,6 +23,13 @@ html {
     font-family: Nunito;
 }
 
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
 body {
     width: 100%;
     height: 100%;
@@ -225,18 +232,17 @@ body {
 }
 
 .body-grid {
-    gap: 1rem;
     width: 100%;
     height: 100%;
-    display: grid;
-    grid-template-columns: [left] 10px [body-start] 1fr [rbody-end] 10px [right];
-    grid-template-rows: [top] 0.05fr [header-end] 0.1fr [cbody-start] 0.97fr [cbody-end] 10px [bottom];
 }
 
 .page-button{
+
+    font-family: Nunito;
     cursor: pointer;
     border: none;
     background: none;
+    outline:none;
     color: #030303;
     text-transform: uppercase;
 
@@ -245,13 +251,17 @@ body {
 .header-el {
     padding-left: 1vw;
     padding-right: 1vw;
+    margin-bottom: 2vw;
+    width: 100%;
+    height: 4%;
     position: relative;
-    grid-area: top / left / header-end / right;
+    grid-area: body-top / body-left / body-header-end / body-right;
     background-color:#d3d4d6;
 }
 
 .page-grid {
-    grid-area: cbody-start / body-start / cbody-end / rbody-end;
+    width: 100%;
+    height: auto;
 }
 
 .awaiters {

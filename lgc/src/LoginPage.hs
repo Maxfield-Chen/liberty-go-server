@@ -22,15 +22,21 @@ import qualified UserInput
 loginPage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Event t ())
-loginPage dynPage = elDynAttr "div" (shouldShow Login "login-page" <$> dynPage) $ do
-  text "Username"
-  userName :: Dynamic t Text <-
-    value <$> inputElement def
-  text "Password"
-  userPassword :: Dynamic t Text <-
-    value <$> inputElement def
-  b <- button "Login"
-  let loginDyn =
-        UserInput.Login <$> userName <*> userPassword
-  loginEv <- fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b
+loginPage dynPage =
+  elDynAttr "div" (shouldShow Login "login-page" <$> dynPage) $ divClass "login-prompt" $ mdo
+  loginev <- divClass "login-form" $ do
+    userName :: Dynamic t Text <- divClass "login-username" $ do
+      text "Username"
+      el "br" $ blank
+      value <$> inputElement def
+    el "br" $ blank
+    userPassword :: Dynamic t Text <- divClass "login-password" $ do
+      text "Password"
+      el "br" $ blank
+      value <$> inputElement def
+    let loginDyn =
+          UserInput.Login <$> userName <*> userPassword
+    fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b
+  el "br" $ blank
+  b <- divClass "login-post" $ button "Sign in"
   pure b

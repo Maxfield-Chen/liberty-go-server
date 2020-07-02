@@ -95,17 +95,17 @@ body {
     width: 100%;
     height: 100%;
 }
-.login-post > button:active {
+.submit-button > button:active {
     box-shadow:inset 0 0.6em 2em -0.3em rgba(0,0,0,0.15),inset 0 0 0em 0.05em rgba(255,255,255,0.12);
 }
 
 
-.login-post > button {
+.submit-button > button {
     font-family: Nunito;
     font-weight: 800;
     display: inline-block;
     padding: 0.7em 1.7em;
-    margin: 0 0.3em 0.3em 0;
+    margin: 1vw 0.3em 0.3em 0;
     border-radius: 0.2em;
     box-sizing: border-box;
     text-decoration:none;
@@ -336,7 +336,7 @@ body {
 
 
 }
-.login-prompt{
+.form-prompt{
     margin: 0 auto;
     text-align: center;
     width: 12%;

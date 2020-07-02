@@ -22,17 +22,23 @@ import qualified UserInput
 registerPage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Event t ())
-registerPage dynPage = elDynAttr "div" (shouldShow Register "register-page" <$> dynPage) $ do
-  text "Email"
-  userEmail :: Dynamic t Text <-
+registerPage dynPage = elDynAttr "div" (shouldShow Register "register-page" <$> dynPage) $ divClass "form-prompt" $ do
+  userEmail :: Dynamic t Text <- divClass " register-" $ do
+    text "Email"
+    el "br" blank
     value <$> inputElement def
-  text "Username"
-  userName :: Dynamic t Text <-
+  el "br" blank
+  userName :: Dynamic t Text <- divClass " register-" $ do
+    text "Username"
+    el "br" blank
     value <$> inputElement def
-  text "Password"
-  userPassword :: Dynamic t Text <-
+  el "br" blank
+  userPassword :: Dynamic t Text <- divClass "register-" $ do
+    text "Password"
+    el "br"  blank
     value <$> inputElement def
-  b <- button "Register"
+  el "br" blank
+  b <- divClass  "submit-button" $ button "Register"
   let userDyn =
         UserInput.RegisterUser <$> userEmail <*> userName <*> userPassword
   loginEv <- fmapMaybe reqSuccess <$> SC.register (Right <$> userDyn) b

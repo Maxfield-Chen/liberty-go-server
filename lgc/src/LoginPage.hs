@@ -23,7 +23,7 @@ loginPage :: forall t m. MonadWidget t m =>
              Dynamic t Page
           -> m (Event t ())
 loginPage dynPage =
-  elDynAttr "div" (shouldShow Login "login-page" <$> dynPage) $ divClass "login-prompt" $ mdo
+  elDynAttr "div" (shouldShow Login "login-page" <$> dynPage) $ divClass "form-prompt" $ mdo
   loginev <- divClass "login-form" $ do
     userName :: Dynamic t Text <- divClass "login-username" $ do
       text "Username"
@@ -38,5 +38,5 @@ loginPage dynPage =
           UserInput.Login <$> userName <*> userPassword
     fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b
   el "br" $ blank
-  b <- divClass "login-post" $ button "Sign in"
+  b <- divClass "submit-button" $ button "Sign in"
   pure b

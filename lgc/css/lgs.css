@@ -164,7 +164,7 @@ body {
     font-family: Vollkorn SC;
     display: inline-block;
     height: 1.5vw;
-    margin-top: 1vw;
+    margin-top: .5vw;
     padding: 0 30px;
     color: #000;
     text-align: center;
@@ -182,11 +182,8 @@ body {
     box-sizing: border-box;
 }
 
-.read-only-board {
-    background-image: url("http://localhost:8888/raw/canvas.png");
-    display: grid;
-    grid-template-columns: repeat(19, minmax(10px,1fr));
-    grid-template-rows: repeat(19,minmax(10px,1fr));
+.board-footer > button.page-hidden{
+    display: none;
 }
 
 .profile-page {
@@ -203,7 +200,7 @@ body {
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(3, minmax(300px, 0.2fr));
-    grid-template-rows: repeat(7, minmax(450px, 0.2fr));
+    grid-template-rows: repeat(7, minmax(450px, 0.24fr));
     grid-gap: 2rem;
 }
 
@@ -230,6 +227,7 @@ body {
 }
 
 .space-black {
+    box-shadow: 3px 3px 7px #333;
     margin: 0;
     padding: 0;
     background-color: black;
@@ -240,6 +238,7 @@ body {
 }
 
 .space-white {
+    box-shadow: 3px 3px 0.5rem #333;
     background-position: center center;
     border: none;
     margin: 0;
@@ -304,7 +303,7 @@ body {
 
 .board-container {
     grid-area: rgb-start / pad / rgb-end / gb-end;
-    background-image: url("http://localhost:8888/raw/canvas.png");
+    background-image: url("http://localhost:8888/raw/light-texture.jpg");
 }
 
 .board-footer {
@@ -338,15 +337,15 @@ body {
 }
 .ro-board-container{
 
-    background-image: url("http://localhost:8888/raw/canvas.png");
+    background-image: url("http://localhost:8888/raw/light-texture.jpg");
     padding: 1vw;
 }
 .ro-board-overlay {
     height: 0;
     padding-top:100%;
     position: relative;
-    background-image: repeating-linear-gradient(#000 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 100%);
-    background-size: 5.26% 5.25%;
+    background-image: repeating-linear-gradient(#000 0 2px, transparent 2px 100%), repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 100%);
+    background-size: 5.22% 5.22%;
 }
 .board-overlay {
     margin: 1vw;
@@ -354,8 +353,8 @@ body {
     height: 0;
     padding-top:100%;
     position: relative;
-    background-image: repeating-linear-gradient(#000 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 100%);
-    background-size: 5.26% 5.25%;
+    background-image: repeating-linear-gradient(#000 0 2px, transparent 2px 100%), repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 100%);
+    background-size: 5.255% 5.255%;
 }
 
 .ro-board-canvas{

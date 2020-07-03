@@ -57,6 +57,31 @@ User (LensFor userId) (LensFor userEmail)
      = tableLenses
 
 
+data ChatMessageT f
+  = ChatMessage {_chat_message_id      :: Columnar f Int
+            ,_chat_message_sender_id :: PrimaryKey UserT f
+            ,_chat_message_content :: Columnar f Text
+            ,_chat_message_game_id :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
+
+type ChatMessage = ChatMessageT Identity
+type ChatMessageId = PrimaryKey ChatMessageT Identity
+
+deriving instance Eq ChatMessage
+deriving instance Show ChatMessage
+deriving instance ToJSON ChatMessage
+deriving instance FromJSON ChatMessage
+
+deriving instance Show (PrimaryKey ChatMessageT Identity)
+deriving instance ToJSON (PrimaryKey ChatMessageT Identity)
+deriving instance FromJSON (PrimaryKey ChatMessageT Identity)
+
+instance Table ChatMessageT where
+  data PrimaryKey ChatMessageT f = ChatMessageId (Columnar f Int) deriving (Generic, Beamable)
+  primaryKey = ChatMessageId . _chat_message_id
+
+
+ChatMessage (LensFor chat_message_id) (UserId (LensFor chat_message_sender_id)) (LensFor chat_message_content) (GameRecordId (LensFor chat_message_game_id)) = tableLenses
+
 data AwaiterT f
   = Awaiter {_awaiter_id      :: Columnar f Int
             ,_awaiter_user_id :: PrimaryKey UserT f
@@ -130,6 +155,7 @@ data LGSDb f =
     { users        :: f (TableEntity UserT)
      ,game_records :: f (TableEntity GameRecordT)
      ,awaiters     :: f (TableEntity AwaiterT)
+     ,chat_messages     :: f (TableEntity ChatMessageT)
     }
   deriving (Generic, Database be)
 

@@ -304,7 +304,7 @@ body {
 .board-container {
     padding: 3vw;
     grid-area: rgb-start / pad / rgb-end / gb-end;
-    background-image: url("http://localhost:8888/raw/light-texture.jpg");
+    background-image: url("http://localhost:8888/raw/dark-texture.jpg");
 }
 
 .board-footer {
@@ -338,7 +338,7 @@ body {
 }
 .ro-board-container{
 
-    background-image: url("http://localhost:8888/raw/light-texture.jpg");
+    background-image: url("http://localhost:8888/raw/dark-texture.jpg");
     padding: 1vw;
 }
 .ro-board-overlay {

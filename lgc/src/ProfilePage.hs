@@ -87,7 +87,7 @@ readOnlyBoard dynUserId dynAllGame = do
               _ -> error "unbound position when creating readonly-boardEl")
           (concat boardPositions)
       readOnlyBoardButton dynGameRecord
-    _ <- divClass "board-footer" $ do
+    _ <- divClass "submit-button" $ do
       apb <- acceptGameProposalButton dynAllGame dynUserId
       rpb <- rejectGameProposalButton dynAllGame dynUserId
       divClass "awaiters" $ do

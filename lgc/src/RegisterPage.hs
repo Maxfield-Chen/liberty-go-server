@@ -24,20 +24,11 @@ registerPage :: forall t m. MonadWidget t m =>
           -> m (Event t ())
 registerPage dynPage = elDynAttr "div" (shouldShow Register "register-page" <$> dynPage) $ divClass "form-prompt" $ do
   userEmail :: Dynamic t Text <- divClass " register-" $ do
-    text "Email"
-    el "br" blank
-    value <$> inputElement def
-  el "br" blank
+    value <$> placeHolderInput "Email"
   userName :: Dynamic t Text <- divClass " register-" $ do
-    text "Username"
-    el "br" blank
-    value <$> inputElement def
-  el "br" blank
+    value <$> placeHolderInput "Username"
   userPassword :: Dynamic t Text <- divClass "register-" $ do
-    text "Password"
-    el "br"  blank
-    value <$> inputElement def
-  el "br" blank
+    value <$> placeHolderInput "Password"
   b <- divClass  "submit-button" $ button "Register"
   let userDyn =
         UserInput.RegisterUser <$> userEmail <*> userName <*> userPassword

@@ -26,14 +26,9 @@ loginPage dynPage =
   elDynAttr "div" (shouldShow Login "login-page" <$> dynPage) $ divClass "form-prompt" $ mdo
   loginev <- divClass "login-form" $ do
     userName :: Dynamic t Text <- divClass "login-username" $ do
-      text "Username"
-      el "br" $ blank
-      value <$> inputElement def
-    el "br" $ blank
+      value <$> placeHolderInput "Username"
     userPassword :: Dynamic t Text <- divClass "login-password" $ do
-      text "Password"
-      el "br" $ blank
-      value <$> inputElement def
+      value <$> placeHolderInput "Password"
     let loginDyn =
           UserInput.Login <$> userName <*> userPassword
     fmapMaybe reqSuccess <$> SC.login (Right <$> loginDyn) b

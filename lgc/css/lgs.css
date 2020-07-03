@@ -1,77 +1,137 @@
 :root {
     --awaiter-size: 5.5em;
 }
-/* nunito-italic - latin */
-@font-face {
-  font-family: 'Nunito';
-  font-style: italic;
-  font-weight: 400;
-  src: local('Nunito Italic'), local('Nunito-Italic'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+input {
+    height: 38px;
+    margin-bottom:.8vw;
+    font-family: Vollkorn;
+    font-size: .6vw;
+    padding: 6px 10px;
+    background-color: #fff;
+    border: 1px solid #D1D1D1;
+    border-radius: 4px;
+    box-shadow: none;
+    box-sizing: border-box;
 }
-
-/* nunito-600 - latin */
+/* vollkorn-regular - latin */
 @font-face {
-  font-family: 'Nunito';
-  font-style: normal;
-  font-weight: 600;
-  src: local('Nunito SemiBold'), local('Nunito-SemiBold'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-600.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-600.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-}
-
-/* nunito-regular - latin */
-@font-face {
-  font-family: 'Nunito';
+  font-family: 'Vollkorn';
   font-style: normal;
   font-weight: 400;
-  src: local('Nunito Regular'), local('Nunito-Regular'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
-/* nunito-600italic - latin */
+/* vollkorn-600 - latin */
 @font-face {
-  font-family: 'Nunito';
-  font-style: italic;
+  font-family: 'Vollkorn';
+  font-style: normal;
   font-weight: 600;
-  src: local('Nunito SemiBold Italic'), local('Nunito-SemiBoldItalic'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-600italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-600italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-600.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-600.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
-/* nunito-800 - latin */
+/* vollkorn-700 - latin */
 @font-face {
-  font-family: 'Nunito';
+  font-family: 'Vollkorn';
+  font-style: normal;
+  font-weight: 700;
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-700.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-800 - latin */
+@font-face {
+  font-family: 'Vollkorn';
   font-style: normal;
   font-weight: 800;
-  src: local('Nunito ExtraBold'), local('Nunito-ExtraBold'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-800.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-800.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-800.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-800.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
-/* nunito-800italic - latin */
+/* vollkorn-italic - latin */
 @font-face {
-  font-family: 'Nunito';
+  font-family: 'Vollkorn';
+  font-style: italic;
+  font-weight: 400;
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-600italic - latin */
+@font-face {
+  font-family: 'Vollkorn';
+  font-style: italic;
+  font-weight: 600;
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-600italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-600italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-700italic - latin */
+@font-face {
+  font-family: 'Vollkorn';
+  font-style: italic;
+  font-weight: 700;
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-700italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-700italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-800italic - latin */
+@font-face {
+  font-family: 'Vollkorn';
   font-style: italic;
   font-weight: 800;
-  src: local('Nunito ExtraBold Italic'), local('Nunito-ExtraBoldItalic'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-800italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-800italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+  src: local(''),
+       url('../fonts/vollkorn-v12-latin-800italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/vollkorn-v12-latin-800italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
-/* nunito-900 - latin */
+/* vollkorn-sc-regular - latin */
 @font-face {
-  font-family: 'Nunito';
+  font-family: 'Vollkorn SC';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Vollkorn SC Regular'), local('VollkornSC-Regular'),
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-sc-700 - latin */
+@font-face {
+  font-family: 'Vollkorn SC';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Vollkorn SC Bold'), local('VollkornSC-Bold'),
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-700.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-sc-600 - latin */
+@font-face {
+  font-family: 'Vollkorn SC';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Vollkorn SC SemiBold'), local('VollkornSC-SemiBold'),
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-600.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-600.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* vollkorn-sc-900 - latin */
+@font-face {
+  font-family: 'Vollkorn SC';
   font-style: normal;
   font-weight: 900;
-  src: local('Nunito Black'), local('Nunito-Black'),
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-900.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('http://localhost:8888/raw/fonts/nunito-v12-latin-900.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+  src: local('Vollkorn SC Black'), local('VollkornSC-Black'),
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-900.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('http://localhost:8888/raw/fonts/vollkorn-sc-v3-latin-900.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
-
-
 
 @viewport {
     width: device-width ;
@@ -81,7 +141,7 @@
 html {
     width: 100%;
     height: 100%;
-    font-family: Nunito;
+    font-family: Vollkorn;
 }
 
 html {
@@ -101,19 +161,25 @@ body {
 
 
 .submit-button > button {
-    font-family: Nunito;
-    font-weight: 800;
+    font-family: Vollkorn SC;
     display: inline-block;
-    padding: 0.7em 1.7em;
-    margin: 1vw 0.3em 0.3em 0;
-    border-radius: 0.2em;
-    box-sizing: border-box;
-    text-decoration:none;
-    color: #FFFFFF;
-    background-color: #3369ff;
-    box-shadow: inset 0 -0.6em 1em -0.35em rgba(0,0,0,0.17),inset 0 0.6em 2em -0.3em rgba(255,255,255,0.15),inset 0 0 0em 0.05em rgba(255,255,255,0.12);
+    height: 1.5vw;
+    margin-top: 1vw;
+    padding: 0 30px;
+    color: #000;
     text-align: center;
-    position: relative;
+    font-size: .6vw;
+    font-weight: 600;
+    line-height: 38px;
+    letter-spacing: .1rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    cursor: pointer;
+    box-sizing: border-box;
 }
 
 .read-only-board {
@@ -323,8 +389,8 @@ body {
 
 .page-button{
 
-    font-family: Nunito;
-    font-weight: 800;
+    font-family: Vollkorn SC;
+    font-weight: 600;
     font-size: .7vw;
     margin-left: .5vw;
     cursor: pointer;
@@ -341,8 +407,7 @@ body {
     text-align: center;
     width: 12%;
     box-shadow: 0 2px 10px 0 rgba(0,0,0,.16),0 2px 5px 0 rgba(0,0,0,.15);
-    border-style: solid;
-    border-color: #f0f1f4;
+    border: 5px solid #333;
     padding:1vw;
 }
 .login-password input {
@@ -354,12 +419,13 @@ body {
     box-shadow: 2px 2px 2px 0 rgba(0,0,0,.16);
     padding-left: 1vw;
     padding-right: 1vw;
+    border: 3px solid #000;
+    min-height: 35px;
     margin-bottom: 2vw;
     width: 100%;
     height: 4%;
     position: relative;
     grid-area: body-top / body-left / body-header-end / body-right;
-    background-color:#f0f1f4;
 }
 
 .page-grid {

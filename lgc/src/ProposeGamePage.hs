@@ -26,35 +26,18 @@ proposeGamePage :: forall t m. MonadWidget t m =>
           -> m (Event t ())
 proposeGamePage dynPage = elDynAttr "div" (shouldShow ProposeGame "register-page" <$> dynPage) $
   divClass "form-prompt" $ do
-    dynMBlackPlayer :: Dynamic t (Maybe Int) <- divClass "propose-game" $ do
-      text "Black Player"
-      el "br" blank
-      fmap (readMaybe . unpack) . value <$> inputElement def
-    el "br" blank
-    dynMWhitePlayer :: Dynamic t (Maybe Int) <- divClass "propose-game-" $ do
-      text "White Player"
-      el "br" blank
-      fmap (readMaybe . unpack) . value <$> inputElement def
-    el "br" blank
-    blackTeacher :: Dynamic t (Maybe Int) <- divClass "propose-game-" $ do
-      text "Black Teacher"
-      el "br" blank
-      fmap (readMaybe . unpack) . value <$> inputElement def
-    el "br" blank
-    whiteTeacher :: Dynamic t (Maybe Int) <- divClass "propose-game-" $ do
-      text "White Teacher"
-      el "br" blank
-      fmap (readMaybe . unpack) . value <$> inputElement def
-    el "br" blank
-    blackFocus :: Dynamic t Text <- divClass "propose-game-" $ do
-      text "Black Focus"
-      el "br" blank
-      value <$> inputElement def
-    el "br" blank
-    whiteFocus :: Dynamic t Text <- divClass "propose-game-" $ do
-      text "White Focus"
-      el "br" blank
-      value <$> inputElement def
+    dynMBlackPlayer :: Dynamic t (Maybe Int) <- divClass "propose-game" $
+      fmap (readMaybe . unpack) . value <$> placeHolderInput "Black Player"
+    dynMWhitePlayer :: Dynamic t (Maybe Int) <- divClass "propose-game-" $
+      fmap (readMaybe . unpack) . value <$> placeHolderInput "White Player"
+    blackTeacher :: Dynamic t (Maybe Int) <- divClass "propose-game-" $
+      fmap (readMaybe . unpack) . value <$> placeHolderInput "Black Teacher"
+    whiteTeacher :: Dynamic t (Maybe Int) <- divClass "propose-game-" $
+      fmap (readMaybe . unpack) . value <$> placeHolderInput "White Teacher"
+    blackFocus :: Dynamic t Text <- divClass "propose-game-" $
+      value <$> placeHolderInput "Black Focus"
+    whiteFocus :: Dynamic t Text <- divClass "propose-game-" $
+      value <$> placeHolderInput "White Focus"
     b <- divClass "submit-button" $ button "Propose Game"
     let userDyn = Right <$> (UserInput.ProposedGame <$>
                             (fromMaybe (-1) <$> dynMBlackPlayer) <*>

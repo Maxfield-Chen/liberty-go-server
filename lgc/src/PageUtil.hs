@@ -20,6 +20,7 @@ import qualified GameDB
 import qualified OutputTypes as OT
 import           Reflex
 import           Reflex.Dom
+import Control.Lens
 
 
 data Page = Main | Register | Login | Play | Profile | ProposeGame deriving (Show, Eq)
@@ -68,7 +69,7 @@ awaiterButton :: forall t m a. MonadWidget t m =>
                   -> a
                   -> m (Event t a)
 awaiterButton dynBool className ret = do
-  (btn,_) <- elDynAttr' "button" (styleAwaiter <$> dynBool <*> constDyn className) $ text ""
+  (btn,_) <- elDynAttr' "button" (styleAwaiter <$> dynBool <*> constDyn className) blank
   pure $ ret <$ domEvent Click btn
 
 
@@ -77,8 +78,14 @@ boardButton :: forall t m. MonadWidget t m =>
              -> Dynamic t Space
              -> m (Event t Position)
 boardButton pos dynSpace = do
-                (btn, _) <- elDynAttr' "button" (ffor dynSpace styleSpace) $ text ""
+                (btn, _) <- elDynAttr' "button" (ffor dynSpace styleSpace) blank
                 pure $ pos <$ domEvent Click btn
+
+placeHolderInput :: forall t m . MonadWidget t m =>
+                    Text
+                 -> m (TextInput  t)
+placeHolderInput placeholder = textInput $
+  over textInputConfig_attributes (fmap (M.insert "placeholder" placeholder)) def
 
 styleAwaiter :: Maybe Bool -> Text -> M.Map Text Text
 styleAwaiter (Just False) className = "class" =: ("approved-" <> className)

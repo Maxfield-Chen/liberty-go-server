@@ -76,3 +76,10 @@ errPlayerExcluded (UserInput.User _ _ id) gameId =
       Nothing    -> throwError err410
       Just False -> throwError err401
       _          -> pure ()
+
+sendMessage :: UserInput.User ->  Int -> Bool -> AppM ()
+sendMessage (UserInput.User _ _ userId) gameId shared = do
+  userType <- GEX.getUserType userId gameId
+  case (userType, shared) of
+    (GDB.Watcher, True) -> throwError err401
+    _ -> pure ()

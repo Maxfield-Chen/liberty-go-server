@@ -149,10 +149,10 @@ getPlayersGameRecords playerId = do
       pure gameRecord
   pure relatedGames
 
-getUserType :: Int -> Int ->  AppM ( Maybe GDB.UserType)
+getUserType :: Int -> Int ->  AppM GDB.UserType
 getUserType senderId gameId = do
   mGameRecord <- getGameRecord gameId
-  pure ((\GDB.GameRecord{..} ->
+  pure . fromMaybe GDB.Watcher $ ((\GDB.GameRecord{..} ->
           let  GDB.UserId bp = _black_player
                GDB.UserId wp = _white_player
                GDB.UserId bt = _black_teacher
@@ -239,8 +239,7 @@ deleteAwaiter gameId playerId  = do
 insertChatMessage :: Int -> Text -> Bool -> Int ->  AppM [ GDB.ChatMessage]
 insertChatMessage senderId content shared gameId = do
   conn <- asks dbConnection
-  mUserType <- getUserType senderId gameId
-  let userType = fromMaybe GDB.Watcher mUserType
+  userType <- getUserType senderId gameId
   liftIO $ runBeamSqlite conn $ do
     runInsertReturningList $
       insertReturning

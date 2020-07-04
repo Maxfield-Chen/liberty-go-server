@@ -137,12 +137,41 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
 
 sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM [GDB.ChatMessage]
 sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage message shared) = do
+  AuthValidator.sendMessage user gameId shared
   GEX.insertChatMessage userId message shared gameId
 
 getMessages :: UserInput.User -> Int -> AppM [GDB.ChatMessage]
-getMessages user gameId = do
-   -- Todo filter so only the authorized messages are sent.
-   GEX.getMessages gameId
+getMessages (UserInput.User _ _ userId) gameId = do
+   messages <- GEX.getMessages gameId
+   userType <- GEX.getUserType userId gameId
+   mGameRecord <- GEX.getGameRecord gameId
+   let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
+   case (userType,gameInProgress) of
+      (_, False) -> pure messages
+      (GDB.Watcher, True) -> pure $ filter messageIsShared messages
+      (GDB.BlackPlayer,True) -> pure $ filter
+        (\message -> messageIsShared message ||
+          message ^. GDB.chat_message_user_type == GDB.BlackPlayer ||
+          message ^. GDB.chat_message_user_type == GDB.BlackTeacher)
+        messages
+      (GDB.BlackTeacher,True) -> pure $ filter
+        (\message -> messageIsShared message ||
+          message ^. GDB.chat_message_user_type == GDB.BlackPlayer ||
+          message ^. GDB.chat_message_user_type == GDB.BlackTeacher)
+        messages
+      (GDB.WhitePlayer,True) -> pure $ filter
+        (\message -> messageIsShared message ||
+          message ^. GDB.chat_message_user_type == GDB.WhitePlayer ||
+          message ^. GDB.chat_message_user_type == GDB.WhiteTeacher)
+        messages
+      (GDB.WhiteTeacher,True) -> pure $ filter
+        (\message -> messageIsShared message ||
+          message ^. GDB.chat_message_user_type == GDB.WhitePlayer ||
+          message ^. GDB.chat_message_user_type == GDB.WhiteTeacher)
+        messages
+
+messageIsShared :: GDB.ChatMessage -> Bool
+messageIsShared = ((==) True . GDB._chat_message_shared)
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do

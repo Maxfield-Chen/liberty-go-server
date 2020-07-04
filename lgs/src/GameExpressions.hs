@@ -236,8 +236,8 @@ deleteAwaiter gameId playerId  = do
              (\awaiter -> GDB._awaiter_user_id awaiter ==. val_ (GDB.UserId playerId)
              &&. GDB._awaiter_game_id awaiter ==. val_ (GDB.GameRecordId gameId ))
 
-insertChatMessage :: Int -> Int -> Text -> Int ->  AppM [ GDB.ChatMessage]
-insertChatMessage chatMessageId senderId content gameId = do
+insertChatMessage :: Int -> Text -> Bool -> Int ->  AppM [ GDB.ChatMessage]
+insertChatMessage senderId content shared gameId = do
   conn <- asks dbConnection
   mUserType <- getUserType senderId gameId
   let userType = fromMaybe GDB.Watcher mUserType
@@ -252,6 +252,7 @@ insertChatMessage chatMessageId senderId content gameId = do
             (val_ content )
             (val_ userType )
             (val_ (GDB.GameRecordId gameId))
+            (val_ shared)
             currentTimestamp_
           ])
 

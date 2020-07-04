@@ -9,6 +9,8 @@
 module LGSAPI where
 
 import           Data.Proxy
+import Data.Text
+import qualified  GameDB                                as GDB
 import qualified Game                                as G
 import qualified OutputTypes                         as OT
 import           Servant.API
@@ -41,6 +43,13 @@ type GameAPI = "play" :> "proposeGame"
 
                 :<|> "profile" :> "user"
                 :> Get '[JSON] OT.User
+
+                :<|> "chat" :> Capture "gameId" Int
+                :> "sendMessage" :> ReqBody '[JSON] UserInput.ChatMessage
+                :> Post '[JSON] [ GDB.ChatMessage]
+
+                :<|> "chat" :> Capture "gameId" Int
+                :> "getMessages" :> Post '[JSON] [ GDB.ChatMessage]
 
                 :<|> "play" :> Capture "gameId" Int
                 :> "acceptGameProposal" :> ReqBody '[JSON] Bool

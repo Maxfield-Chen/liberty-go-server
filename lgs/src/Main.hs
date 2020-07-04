@@ -48,6 +48,8 @@ protected Servant.Auth.Server.NoSuchUser = throwAll err410
 protected Servant.Auth.Server.Indefinite = throwAll err406
 
 gameOperations user  =
+  GI.sendMessage user :<|>
+  GI.getMessages user :<|>
   GI.acceptGameProposal user  :<|>
   GI.proposePass user  :<|>
   GI.proposeTerritory user  :<|>

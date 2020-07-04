@@ -68,6 +68,7 @@ data ChatMessageT f
             ,_chat_message_content :: Columnar f Text
             ,_chat_message_user_type :: Columnar f  UserType
             ,_chat_message_game_id :: PrimaryKey GameRecordT f
+            ,_chat_message_shared :: Columnar f  Bool
             ,_chat_timestamp     :: Columnar f Time.LocalTime
             } deriving (Generic, Beamable)
 
@@ -88,7 +89,7 @@ instance Table ChatMessageT where
   primaryKey = ChatMessageId . _chat_message_id
 
 
-ChatMessage (LensFor chat_message_id) (UserId (LensFor chat_message_sender_id)) (LensFor chat_message_content) ( LensFor chat_message_user_type) (GameRecordId (LensFor chat_message_game_id)) ( LensFor chat_timestamp)= tableLenses
+ChatMessage (LensFor chat_message_id) (UserId (LensFor chat_message_sender_id)) (LensFor chat_message_content) ( LensFor chat_message_user_type) (GameRecordId (LensFor chat_message_game_id)) ( LensFor chat_message_shared)( LensFor chat_timestamp)= tableLenses
 
 instance HasSqlValueSyntax be String => HasSqlValueSyntax be  ChatMessage where
   sqlValueSyntax = autoSqlValueSyntax

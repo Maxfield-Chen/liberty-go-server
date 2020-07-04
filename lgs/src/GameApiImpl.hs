@@ -135,6 +135,15 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
   mGR <-  convertGR gameRecord
   pure $ fromJust mGR
 
+sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM [GDB.ChatMessage]
+sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage message shared) = do
+  GEX.insertChatMessage userId message shared gameId
+
+getMessages :: UserInput.User -> Int -> AppM [GDB.ChatMessage]
+getMessages user gameId = do
+   -- Todo filter so only the authorized messages are sent.
+   GEX.getMessages gameId
+
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
   AuthValidator.acceptGameProposal user gameId

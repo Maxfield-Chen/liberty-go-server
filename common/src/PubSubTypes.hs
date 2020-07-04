@@ -68,7 +68,8 @@ instance ToJSON ErrorMessage where
                , "code" .= (3 :: Int)
                , "payload" .= t]
 
-data GameMessage = UpdateGame OT.GameUpdate deriving Show
+data GameMessage = UpdateGame OT.GameUpdate
+                 | ChatMessage OT.ChatMessage deriving Show
 
 data IncomingMessage = JoinGame GameId
                      | LeaveGame GameId deriving Show
@@ -77,12 +78,16 @@ instance ToJSON GameMessage where
   toJSON (UpdateGame g) =
     object ["type" .= ("update" :: Text)
           , "game" .= g]
+  toJSON (ChatMessage message) =
+    object ["type" .= ("message" :: Text)
+          , "content" .= message]
 
 instance FromJSON GameMessage where
   parseJSON o@(Object v) = do
     typ <- v.: "type" :: Parser Text
     case typ of
       "update" -> UpdateGame <$> v.: "game"
+      "message" -> ChatMessage <$> v.: "content"
       _        -> typeMismatch "Invalid Message Type" o
   parseJSON invalid = typeMismatch "Invalid JSON" invalid
 

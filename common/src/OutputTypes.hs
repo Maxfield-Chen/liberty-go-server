@@ -16,6 +16,7 @@ import           Data.Aeson.Types
 import           Data.Functor
 import qualified Data.HashMap.Strict as M
 import           Data.Text           (Text)
+import qualified Data.Time as Time
 import qualified Game                as G
 import qualified GameDB              as GDB
 import           GHC.Generics
@@ -34,6 +35,16 @@ data GameRecord =
     grWhiteFocus   :: Text
  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
+data ChatMessage =
+  ChatMessage
+  {
+    chatMessageId   :: Int,
+    chatMessageSenderId   :: Int,
+    chatMessageContent   :: Text,
+    chatMessageGameId   :: Int,
+    chatMessageShared   :: Bool,
+    chatMessageTimestamp :: Time.LocalTime
+  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
 data GameUpdate =
   GameUpdate
   {

@@ -252,6 +252,7 @@ insertChatMessage chatMessageId senderId content gameId = do
             (val_ content )
             (val_ userType )
             (val_ (GDB.GameRecordId gameId))
+            currentTimestamp_
           ])
 
 getMessages :: Int -> AppM [ GDB.ChatMessage ]

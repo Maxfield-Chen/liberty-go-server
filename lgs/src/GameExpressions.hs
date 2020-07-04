@@ -254,5 +254,12 @@ insertChatMessage chatMessageId senderId content gameId = do
             (val_ (GDB.GameRecordId gameId))
           ])
 
--- getMessages :: Int -> AppM ( Maybe GDB.ChatMessage)
--- getMessages gameId
+getMessages :: Int -> AppM [ GDB.ChatMessage ]
+getMessages gameId = do
+  conn <- asks dbConnection
+  liftIO $ runBeamSqlite conn $
+    runSelectReturningList $
+    select $ do
+    message <- all_ (GDB.chat_messages lgsDb)
+    guard_ (GDB._chat_message_game_id message ==. val_ (GDB.GameRecordId gameId))
+    pure message

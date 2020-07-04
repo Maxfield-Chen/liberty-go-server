@@ -57,10 +57,16 @@ User (LensFor userId) (LensFor userEmail)
      = tableLenses
 
 
+data UserType= BlackPlayer |WhitePlayer|BlackTeacher|WhiteTeacher|Watcher deriving(Show, Eq, ToJSON, FromJSON, Generic, Read)
+
+instance HasSqlValueSyntax be String => HasSqlValueSyntax be   UserType where
+  sqlValueSyntax = autoSqlValueSyntax
+
 data ChatMessageT f
   = ChatMessage {_chat_message_id      :: Columnar f Int
             ,_chat_message_sender_id :: PrimaryKey UserT f
             ,_chat_message_content :: Columnar f Text
+            ,_chat_message_user_type :: Columnar f  UserType
             ,_chat_message_game_id :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
 
 type ChatMessage = ChatMessageT Identity
@@ -80,7 +86,10 @@ instance Table ChatMessageT where
   primaryKey = ChatMessageId . _chat_message_id
 
 
-ChatMessage (LensFor chat_message_id) (UserId (LensFor chat_message_sender_id)) (LensFor chat_message_content) (GameRecordId (LensFor chat_message_game_id)) = tableLenses
+ChatMessage (LensFor chat_message_id) (UserId (LensFor chat_message_sender_id)) (LensFor chat_message_content) ( LensFor chat_message_user_type) (GameRecordId (LensFor chat_message_game_id)) = tableLenses
+
+instance HasSqlValueSyntax be String => HasSqlValueSyntax be  ChatMessage where
+  sqlValueSyntax = autoSqlValueSyntax
 
 data AwaiterT f
   = Awaiter {_awaiter_id      :: Columnar f Int
@@ -161,3 +170,6 @@ data LGSDb f =
 
 lgsDb :: DatabaseSettings be LGSDb
 lgsDb = defaultDbSettings
+
+instance FromBackendRow Sqlite  UserType where
+  fromBackendRow = read . unpack <$> fromBackendRow

@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE  RecordWildCards      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE LambdaCase            #-}
@@ -11,6 +12,7 @@ module GameExpressions where
 import           Control.Lens
 import           Control.Monad
 import           Data.Text              (Text)
+import           Data.Maybe
 import qualified Data.Time              as Time
 import           Database.Beam
 import           Database.Beam.Sqlite
@@ -21,7 +23,8 @@ import           GameDB                 (awaiter_game_id, awaiter_id,
                                          awaiter_user_id, blackFocus,
                                          blackPlayer, blackTeacher, game, grId,
                                          lgsDb, timestamp, userEmail, userId,
-                                         userName, userPasswordHash, whiteFocus)
+                                         userName, userPasswordHash, whiteFocus,
+                                         GameRecord, UserType, UserId)
 import qualified GameDB                 as GDB
 import qualified GameLogic              as GL
 import qualified UserInput
@@ -146,6 +149,22 @@ getPlayersGameRecords playerId = do
       pure gameRecord
   pure relatedGames
 
+getUserType :: Int -> Int ->  AppM ( Maybe GDB.UserType)
+getUserType senderId gameId = do
+  mGameRecord <- getGameRecord gameId
+  pure ((\GDB.GameRecord{..} ->
+          let  GDB.UserId bp = _black_player
+               GDB.UserId wp = _white_player
+               GDB.UserId bt = _black_teacher
+               GDB.UserId wt = _white_teacher
+          in fmap snd . listToMaybe $ filter ((==) senderId . fst)
+             [(bp, GDB.BlackPlayer),
+              (wp, GDB.WhitePlayer),
+              (fromMaybe (-1) bt, GDB.BlackPlayer),
+              (fromMaybe (-1) wt, GDB.WhiteTeacher)]
+       ) =<< mGameRecord)
+
+
 getGameRecord ::  Int ->  AppM (Maybe GDB.GameRecord)
 getGameRecord gameId = do
   conn <- asks dbConnection
@@ -216,3 +235,24 @@ deleteAwaiter gameId playerId  = do
       delete (GDB.awaiters lgsDb)
              (\awaiter -> GDB._awaiter_user_id awaiter ==. val_ (GDB.UserId playerId)
              &&. GDB._awaiter_game_id awaiter ==. val_ (GDB.GameRecordId gameId ))
+
+insertChatMessage :: Int -> Int -> Text -> Int ->  AppM [ GDB.ChatMessage]
+insertChatMessage chatMessageId senderId content gameId = do
+  conn <- asks dbConnection
+  mUserType <- getUserType senderId gameId
+  let userType = fromMaybe GDB.Watcher mUserType
+  liftIO $ runBeamSqlite conn $ do
+    runInsertReturningList $
+      insertReturning
+        (GDB.chat_messages lgsDb)
+        (insertExpressions
+          [GDB.ChatMessage
+            default_
+            (val_(  GDB.UserId senderId))
+            (val_ content )
+            (val_ userType )
+            (val_ (GDB.GameRecordId gameId))
+          ])
+
+-- getMessages :: Int -> AppM ( Maybe GDB.ChatMessage)
+-- getMessages gameId

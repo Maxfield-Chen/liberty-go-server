@@ -132,13 +132,24 @@ getGame dynGameId evMFetchGame mGameMessage = do
                        Just ws -> Just ws
                        Nothing -> mhttp) <$> dynMFetchGame <*> dynMWSGame
 
--- getChatMessage :: forall t m. MonadWidget t m =>
---                   Dynamic t GameId
---                   -> Event t [GDB.ChatMessage]
---                   -> Event t (Maybe GameMessage)
---                   -> m (Dynamic t [GDB.ChatMessage])
--- getChatMessage dynGameId evFetchMessages evMMessages = do
---   dynFetchMessages <- holdDyn
+getChatMessage :: forall t m. MonadWidget t m =>
+                  Dynamic t GameId
+                  -> Event t [OT.ChatMessage]
+                  -> Event t (Maybe GameMessage)
+                  -> m (Dynamic t [OT.ChatMessage])
+getChatMessage dynGameId evFetchMessages evMMessages = do
+  dynMMessages <- holdDyn (Just New) evMMessages
+  let dynRealTimeMessage = getChatMessageFromUpdate <$> dynGameId <*> dynMMessages
+  dynFetchMessages <- holdDyn [] evFetchMessages
+  pure $ (\realTime fetchMessages -> case realTime of
+             Just message -> message:fetchMessages
+             Nothing -> fetchMessages) <$> dynRealTimeMessage <*> dynFetchMessages
+
+getChatMessageFromUpdate :: Int -> Maybe GameMessage -> Maybe OT.ChatMessage
+getChatMessageFromUpdate  gameId = (=<<) (\case
+                                             ChatMessage outputMessage -> Just outputMessage
+                                             _ -> Nothing)
+
 
 
 getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game

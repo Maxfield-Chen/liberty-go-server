@@ -46,10 +46,10 @@ type GameAPI = "play" :> "proposeGame"
 
                 :<|> "chat" :> Capture "gameId" Int
                 :> "sendMessage" :> ReqBody '[JSON] UserInput.ChatMessage
-                :> Post '[JSON] [ GDB.ChatMessage]
+                :> Post '[JSON] ()
 
                 :<|> "chat" :> Capture "gameId" Int
-                :> "getMessages" :> Post '[JSON] [ GDB.ChatMessage]
+                :> "getMessages" :> Post '[JSON] [ OT.ChatMessage]
 
                 :<|> "play" :> Capture "gameId" Int
                 :> "acceptGameProposal" :> ReqBody '[JSON] Bool

@@ -19,6 +19,7 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.Functor
+import qualified Data.Time as Time
 import qualified Data.HashMap.Strict    as M
 import           Data.List              (delete, nub)
 import           Data.Maybe
@@ -141,24 +142,27 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
   mGR <-  convertGR gameRecord
   pure $ fromJust mGR
 
-sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM [GDB.ChatMessage]
+sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM ()
 sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage message shared) = do
   userType <- AuthValidator.sendMessage user gameId shared
   realTimeGameMap <- asks gameMap
+  timestamp <- Time.zonedTimeToLocalTime <$> liftIO Time.getZonedTime
+  let outputMessage = OT.ChatMessage userId message gameId userType shared timestamp
   liftIO . atomically $ do
     realTimeGame <- PS.getGame gameId realTimeGameMap
-    writeTChan (PST.gameChan realTimeGame) (PST.ChatMessage $ OT.ChatMessage userId message gameId userType shared)
+    writeTChan (PST.gameChan realTimeGame) (PST.ChatMessage outputMessage)
   config <- ask
   liftIO $ runReaderT (GEX.insertChatMessage userId message shared gameId) config
+  pure ()
 
-getMessages :: UserInput.User -> Int -> AppM [GDB.ChatMessage]
+getMessages :: UserInput.User -> Int -> AppM [OT.ChatMessage]
 getMessages (UserInput.User _ _ userId) gameId = do
   config <- ask
   messages <- liftIO $ runReaderT (GEX.getMessages gameId) config
   userType <- liftIO $ runReaderT (GEX.getUserType userId gameId) config
   mGameRecord <- liftIO $ runReaderT (GEX.getGameRecord gameId) config
   let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
-  pure $ filter ( shouldShowMessages userType gameInProgress) messages
+  pure $ fmap (OT.convertChatMessage userType) $ filter ( shouldShowMessages userType gameInProgress) messages
 
 shouldShowMessages :: GDB.UserType -> Bool -> GDB.ChatMessage->  Bool
 shouldShowMessages userType gameInProgress message =

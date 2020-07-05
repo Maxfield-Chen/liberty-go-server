@@ -69,7 +69,7 @@ data ChatMessageT f
             ,_chat_message_user_type :: Columnar f  UserType
             ,_chat_message_game_id :: PrimaryKey GameRecordT f
             ,_chat_message_shared :: Columnar f  Bool
-            ,_chat_timestamp     :: Columnar f Time.LocalTime
+            ,_chat_message_timestamp     :: Columnar f Time.LocalTime
             } deriving (Generic, Beamable)
 
 type ChatMessage = ChatMessageT Identity

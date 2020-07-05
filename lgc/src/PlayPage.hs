@@ -132,6 +132,15 @@ getGame dynGameId evMFetchGame mGameMessage = do
                        Just ws -> Just ws
                        Nothing -> mhttp) <$> dynMFetchGame <*> dynMWSGame
 
+-- getChatMessage :: forall t m. MonadWidget t m =>
+--                   Dynamic t GameId
+--                   -> Event t [GDB.ChatMessage]
+--                   -> Event t (Maybe GameMessage)
+--                   -> m (Dynamic t [GDB.ChatMessage])
+-- getChatMessage dynGameId evFetchMessages evMMessages = do
+--   dynFetchMessages <- holdDyn
+
+
 getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game
 getGameFromUpdate gameId = (=<<) (\case
                               UpdateGame (OT.GameUpdate gid g) -> case gid == gameId of
@@ -161,13 +170,13 @@ realTimeEl dynGameId b = do
 --                -> Event
 chatEl :: forall t m. MonadWidget t m =>
           Dynamic t GameId
-          -> Dynamic t [GDB.ChatMessage]
+          -> Dynamic t [OT.ChatMessage]
           -> Bool
           -> m ()
 chatEl dynGameId dynChatMessages shared = divClass "chat" $ do
   divClass "chat-messages" $ do
     simpleList dynChatMessages
-      (\dynMessage -> divClass "chat-message" $ dynText $ GDB._chat_message_content <$> dynMessage)
+      (\dynMessage -> divClass "chat-message" $ dynText $ OT.chatMessageContent <$> dynMessage)
   divClass "chat-send-bar" $ do
     sendInput <- textInput def
     let dynValue = _textInput_value sendInput

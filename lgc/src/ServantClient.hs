@@ -99,13 +99,13 @@ userForProfile :: MonadWidget t m =>
 getMessages :: MonadWidget t m =>
                  Dynamic t ( Either Text Int)
                  -> Event t ()
-                 -> m (Event t (ReqResult () [GDB.ChatMessage]))
+                 -> m (Event t (ReqResult () [OT.ChatMessage]))
 
 sendMessage :: MonadWidget t m =>
                  Dynamic t (Either Text  Int)
                  -> Dynamic t (Either Text  UserInput.ChatMessage)
                  -> Event t ()
-                 -> m (Event t (ReqResult () [GDB.ChatMessage]))
+                 -> m (Event t (ReqResult () ()))
 
 getGame :: MonadWidget t m =>
                  Dynamic t (Either Text Int)

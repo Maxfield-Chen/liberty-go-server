@@ -42,10 +42,23 @@ data ChatMessage =
     chatMessageContent   :: Text,
     chatMessageGameId   :: Int,
     chatMessageSenderType :: GDB.UserType,
-    chatMessageShared   :: Bool
+    chatMessageShared   :: Bool,
+    chatMessageTimestamp :: Time.LocalTime
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
 
 newChatMessage = ChatMessage (-1) "" (-1) GDB.Watcher False
+convertChatMessage :: GDB.UserType -> GDB.ChatMessage -> ChatMessage
+convertChatMessage senderType GDB.ChatMessage{..} =
+  let GDB.UserId senderId= _chat_message_sender_id
+      GDB.GameRecordId gameId = _chat_message_game_id
+  in ChatMessage
+  senderId
+  _chat_message_content
+  gameId
+  senderType
+  _chat_message_shared
+  _chat_message_timestamp
+
 
 data GameUpdate =
   GameUpdate

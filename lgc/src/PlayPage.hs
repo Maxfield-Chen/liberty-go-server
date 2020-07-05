@@ -46,8 +46,10 @@ playPage dynPage dynGameId =
     evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right  <$> dynGameId) evEmptyGetGame
     evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evEmptyGetGame
     evChatMessages <- fmapMaybe reqSuccess <$> SC.getMessages (Right <$> dynGameId) evEmptyGetGame
+    mGameMessage <- realTimeEl dynGameId evEmptyGetGame
+
     dynUser <- holdDyn OT.newUser evUser
-    dynGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
+    dynGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) mGameMessage
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
 
     evPlayerPage <- playerSidebar dynGR dynUser
@@ -120,10 +122,9 @@ boardEl dynGame =
 getGame :: forall t m. MonadWidget t m =>
              Dynamic t GameId
           -> Event t (Maybe G.Game)
-          -> Event t ()
+          -> Event t (Maybe GameMessage)
           -> m (Dynamic t (Maybe G.Game))
-getGame dynGameId evMFetchGame evGetGame = do
-  mGameMessage <- realTimeEl dynGameId evGetGame
+getGame dynGameId evMFetchGame mGameMessage = do
   dynMGameMessage <- holdDyn (Just New) mGameMessage
   let dynMWSGame = getGameFromUpdate <$> dynGameId <*> dynMGameMessage
   dynMFetchGame <- holdDyn (Just newGame) evMFetchGame

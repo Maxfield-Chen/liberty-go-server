@@ -138,6 +138,10 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
 sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM [GDB.ChatMessage]
 sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage message shared) = do
   AuthValidator.sendMessage user gameId shared
+  realTimeGameMap <- asks gameMap
+  liftIO . atomically $ do
+    realTimeGame <- PS.getGame gameId realTimeGameMap
+    writeTChan (PST.gameChan realTimeGame) (PST.ChatMessage $ OT.ChatMessage userId message gameId shared)
   GEX.insertChatMessage userId message shared gameId
 
 getMessages :: UserInput.User -> Int -> AppM [GDB.ChatMessage]
@@ -146,29 +150,30 @@ getMessages (UserInput.User _ _ userId) gameId = do
    userType <- GEX.getUserType userId gameId
    mGameRecord <- GEX.getGameRecord gameId
    let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
+   pure $ filter ( shouldShowMessages userType gameInProgress) messages
+
+shouldShowMessages :: GDB.UserType -> Bool -> GDB.ChatMessage->  Bool
+shouldShowMessages userType gameInProgress message =
    case (userType,gameInProgress) of
-      (_, False) -> pure messages
-      (GDB.Watcher, True) -> pure $ filter messageIsShared messages
-      (GDB.BlackPlayer,True) -> pure $ filter
-        (\message -> messageIsShared message ||
+      (_, False) -> True
+      (GDB.Watcher, True) -> messageIsShared message
+      (GDB.BlackPlayer,True) ->
+        (messageIsShared message ||
           message ^. GDB.chat_message_user_type == GDB.BlackPlayer ||
           message ^. GDB.chat_message_user_type == GDB.BlackTeacher)
-        messages
-      (GDB.BlackTeacher,True) -> pure $ filter
-        (\message -> messageIsShared message ||
+      (GDB.BlackTeacher,True) ->
+        (messageIsShared message ||
           message ^. GDB.chat_message_user_type == GDB.BlackPlayer ||
           message ^. GDB.chat_message_user_type == GDB.BlackTeacher)
-        messages
-      (GDB.WhitePlayer,True) -> pure $ filter
-        (\message -> messageIsShared message ||
+      (GDB.WhitePlayer,True) ->
+        (messageIsShared message ||
           message ^. GDB.chat_message_user_type == GDB.WhitePlayer ||
           message ^. GDB.chat_message_user_type == GDB.WhiteTeacher)
-        messages
-      (GDB.WhiteTeacher,True) -> pure $ filter
-        (\message -> messageIsShared message ||
+      (GDB.WhiteTeacher,True) ->
+        (messageIsShared message ||
           message ^. GDB.chat_message_user_type == GDB.WhitePlayer ||
           message ^. GDB.chat_message_user_type == GDB.WhiteTeacher)
-        messages
+
 
 messageIsShared :: GDB.ChatMessage -> Bool
 messageIsShared = ((==) True . GDB._chat_message_shared)

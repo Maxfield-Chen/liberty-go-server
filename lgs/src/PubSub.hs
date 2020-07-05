@@ -50,6 +50,7 @@ leave client@Client{..} game@Game{..} = do
   writeTVar clientGameChans $ map getGameChan (Set.toAscList newGameSet)
   modifyTVar gameClients $ Set.insert client
 
+-- TODO: Add filtering for ChatMessages so that auth is respected.
 getAvailableMessage :: Client -> STM GameMessage
 getAvailableMessage Client{..} = do
   clientGameChans <- readTVar clientGameChans

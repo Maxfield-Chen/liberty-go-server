@@ -38,12 +38,10 @@ data GameRecord =
 data ChatMessage =
   ChatMessage
   {
-    chatMessageId   :: Int,
     chatMessageSenderId   :: Int,
     chatMessageContent   :: Text,
     chatMessageGameId   :: Int,
-    chatMessageShared   :: Bool,
-    chatMessageTimestamp :: Time.LocalTime
+    chatMessageShared   :: Bool
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
 data GameUpdate =
   GameUpdate

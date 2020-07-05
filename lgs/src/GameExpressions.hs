@@ -33,9 +33,9 @@ import Config
 import Servant
 
 
-type AppM = ReaderT Config Handler
+type ConfigApp = ReaderT Config IO
 
-getUserViaCreds ::  Text -> Text ->  AppM (Maybe GDB.User)
+getUserViaCreds ::  Text -> Text ->  ConfigApp (Maybe GDB.User)
 getUserViaCreds name pass = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $
@@ -45,7 +45,7 @@ getUserViaCreds name pass = do
       guard_ (user ^. userName ==. val_ name &&. user ^. userPasswordHash ==. val_ pass)
       pure user
 
-getUserViaName ::  Text ->  AppM (Maybe GDB.User)
+getUserViaName ::  Text ->  ConfigApp (Maybe GDB.User)
 getUserViaName name = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $
@@ -55,12 +55,12 @@ getUserViaName name = do
       guard_ (user ^. userName ==. val_ name)
       pure user
 
-getUser ::  Int ->  AppM (Maybe GDB.User)
+getUser ::  Int ->  ConfigApp (Maybe GDB.User)
 getUser userId = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ runSelectReturningOne $ lookup_ (GDB.users lgsDb) (GDB.UserId userId)
 
-isPlayerAwaiter ::  Int -> Int ->  AppM Bool
+isPlayerAwaiter ::  Int -> Int ->  ConfigApp Bool
 isPlayerAwaiter playerId gameId = do
   conn <- asks dbConnection
   awaiters <- liftIO $ runBeamSqlite conn $
@@ -72,7 +72,7 @@ isPlayerAwaiter playerId gameId = do
     pure awaiter
   pure (not $ null awaiters)
 
-getAwaiters ::  Int ->  AppM [GDB.Awaiter]
+getAwaiters ::  Int ->  ConfigApp [GDB.Awaiter]
 getAwaiters gameId = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $
@@ -84,7 +84,7 @@ getAwaiters gameId = do
            &&. GDB._awaiter_game_id awaiter `references_` gameRecord)
     pure awaiter
 
-getGamePlayers ::  Int ->  AppM [GDB.User]
+getGamePlayers ::  Int ->  ConfigApp [GDB.User]
 getGamePlayers gameId = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $
@@ -97,18 +97,18 @@ getGamePlayers gameId = do
            ||.  GDB._white_player gameRecord `references_` user))
     pure user
 
-getBlackPlayer ::  Int ->  AppM (Maybe GDB.User)
+getBlackPlayer ::  Int ->  ConfigApp (Maybe GDB.User)
 getBlackPlayer gameId = do
   conn <- asks dbConnection
   liftIO $ referenceSingleUser conn GDB._black_player gameId
 
-getWhitePlayer ::  Int ->  AppM (Maybe GDB.User)
+getWhitePlayer ::  Int ->  ConfigApp (Maybe GDB.User)
 getWhitePlayer gameId = do
   conn <- asks dbConnection
   liftIO $ referenceSingleUser conn GDB._white_player gameId
 
 
-getPlayerColor ::  UserInput.User -> Int ->  AppM (Maybe G.Space)
+getPlayerColor ::  UserInput.User -> Int ->  ConfigApp (Maybe G.Space)
 getPlayerColor (UserInput.User _ name _) gameId = do
   conn <- asks dbConnection
   mPlayer <- getUserViaName name
@@ -131,7 +131,7 @@ referenceSingleUser conn f gameId = do
     pure user
 
 -- TODO : Return if teacher matches as well
-getPlayersGameRecords ::  Int ->  AppM [GDB.GameRecord]
+getPlayersGameRecords ::  Int ->  ConfigApp [GDB.GameRecord]
 getPlayersGameRecords playerId = do
   conn <- asks dbConnection
   relatedGames <-liftIO $
@@ -149,7 +149,7 @@ getPlayersGameRecords playerId = do
       pure gameRecord
   pure relatedGames
 
-getUserType :: Int -> Int ->  AppM GDB.UserType
+getUserType :: Int -> Int ->  ConfigApp GDB.UserType
 getUserType senderId gameId = do
   mGameRecord <- getGameRecord gameId
   pure . fromMaybe GDB.Watcher $ ((\GDB.GameRecord{..} ->
@@ -165,7 +165,7 @@ getUserType senderId gameId = do
        ) =<< mGameRecord)
 
 
-getGameRecord ::  Int ->  AppM (Maybe GDB.GameRecord)
+getGameRecord ::  Int ->  ConfigApp (Maybe GDB.GameRecord)
 getGameRecord gameId = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ runSelectReturningOne $ lookup_ (GDB.game_records lgsDb) (GDB.GameRecordId gameId)
@@ -175,7 +175,7 @@ mPlayerIdToExpr mPlayerId = case mPlayerId of
   Nothing       -> nothing_
 
 --TODO: Hash password before storage
-insertUser ::  Text -> Text -> Text ->  AppM [GDB.User]
+insertUser ::  Text -> Text -> Text ->  ConfigApp [GDB.User]
 insertUser userEmail userName userPassword = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ do
@@ -185,7 +185,7 @@ insertUser userEmail userName userPassword = do
         (insertExpressions
            [GDB.User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
 
-insertAwaiter ::  Int -> Int ->  AppM [GDB.Awaiter]
+insertAwaiter ::  Int -> Int ->  ConfigApp [GDB.Awaiter]
 insertAwaiter gameId userId = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ do
@@ -195,7 +195,7 @@ insertAwaiter gameId userId = do
       (insertExpressions
         [GDB.Awaiter default_ (val_ (GDB.UserId userId )) (val_ (GDB.GameRecordId gameId ))])
 
-insertGame ::  UserInput.ProposedGame -> G.Game ->  AppM [GDB.GameRecord]
+insertGame ::  UserInput.ProposedGame -> G.Game ->  ConfigApp [GDB.GameRecord]
 insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteTeacher blackFocus whiteFocus) game = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ do
@@ -215,7 +215,7 @@ insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteT
                currentTimestamp_
            ])
 
-updateGame ::  (G.Game -> G.Game) -> Int ->  AppM (Maybe G.Game)
+updateGame ::  (G.Game -> G.Game) -> Int ->  ConfigApp (Maybe G.Game)
 updateGame f gameId = do
   conn <- asks dbConnection
   mGameRecord <- getGameRecord gameId
@@ -227,7 +227,7 @@ updateGame f gameId = do
         pure (Just updatedGame)
       Nothing -> pure Nothing
 
-deleteAwaiter ::  Int -> Int ->  AppM ()
+deleteAwaiter ::  Int -> Int ->  ConfigApp ()
 deleteAwaiter gameId playerId  = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ do
@@ -236,7 +236,7 @@ deleteAwaiter gameId playerId  = do
              (\awaiter -> GDB._awaiter_user_id awaiter ==. val_ (GDB.UserId playerId)
              &&. GDB._awaiter_game_id awaiter ==. val_ (GDB.GameRecordId gameId ))
 
-insertChatMessage :: Int -> Text -> Bool -> Int ->  AppM [ GDB.ChatMessage]
+insertChatMessage :: Int -> Text -> Bool -> Int ->  ConfigApp [ GDB.ChatMessage]
 insertChatMessage senderId content shared gameId = do
   conn <- asks dbConnection
   userType <- getUserType senderId gameId
@@ -255,7 +255,7 @@ insertChatMessage senderId content shared gameId = do
             currentTimestamp_
           ])
 
-getMessages :: Int -> AppM [ GDB.ChatMessage ]
+getMessages :: Int -> ConfigApp [ GDB.ChatMessage ]
 getMessages gameId = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $

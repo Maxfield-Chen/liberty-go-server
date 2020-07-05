@@ -49,11 +49,12 @@ type AppM = ReaderT Config Handler
 placeStone :: UserInput.User -> Int -> G.Position -> AppM ((Either G.MoveError G.Outcome),G.Game)
 placeStone user gameId pos = do
   AuthValidator.placeStone user gameId
+  config <- ask
   rtGmap <- asks gameMap
   name pos $ \case
     Bound pos -> do
-      mGameRecord <-  GEX.getGameRecord gameId
-      mPlayerColor <- GEX.getPlayerColor user gameId
+      mGameRecord <-  liftIO $ runReaderT (GEX.getGameRecord gameId) config
+      mPlayerColor <- liftIO $ runReaderT (GEX.getPlayerColor user gameId) config
       let mPlaceStone = GL.placeStone <$> mPlayerColor <*> Just pos
       case (mPlaceStone, mGameRecord) of
         (Just placeStone, Just gameRecord) ->
@@ -65,7 +66,7 @@ placeStone user gameId pos = do
                 trace (show "Sending place stone msg") $ liftIO . atomically $ do
                   rtGame <- PS.getGame gameId rtGmap
                   writeTChan (PST.gameChan rtGame) (PST.UpdateGame $ OT.GameUpdate gameId updatedGame)
-                GEX.updateGame (const updatedGame) gameId $> ret
+                liftIO $ runReaderT (GEX.updateGame (const updatedGame) gameId ) config $> ret
         (Nothing, _) -> pure (Left G.NoBoard, newGame)
         otherwise -> pure (Left G.IllegalPlayer, newGame)
     Unbound -> pure (Left G.OutOfBounds, newGame)
@@ -73,14 +74,16 @@ placeStone user gameId pos = do
 -- TODO: Perform validation on regex of inputs allowed
 createNewUser :: UserInput.RegisterUser -> AppM ()
 createNewUser (UserInput.RegisterUser email name password) = do
-  mUser <-  GEX.getUserViaName name
+  config <- ask
+  mUser <-  liftIO $ runReaderT (GEX.getUserViaName name) config
   when (isJust mUser) (throwError err409)
-  GEX.insertUser email name password
+  liftIO $ runReaderT (GEX.insertUser email name password) config
   pure ()
 
 getGameId :: Int -> AppM (Maybe OT.GameRecord)
 getGameId gameId = do
-  mGR <-  GEX.getGameRecord gameId
+  config <- ask
+  mGR <-  liftIO $ runReaderT (GEX.getGameRecord gameId) config
   case mGR of
     Nothing -> pure Nothing
     Just gr -> convertGR gr
@@ -92,14 +95,15 @@ convertGR gr = do
         GDB.UserId wpId = GDB._white_player gr
         GDB.UserId mbtId = GDB._black_teacher gr
         GDB.UserId mwtId = GDB._white_teacher gr
-    mbp <- GEX.getUser bpId
-    mwp <- GEX.getUser wpId
+    config <- ask
+    mbp <- liftIO $ runReaderT (GEX.getUser bpId) config
+    mwp <- liftIO $ runReaderT (GEX.getUser wpId) config
     mbt <- case mbtId of
       Nothing   -> pure Nothing
-      Just btId -> GEX.getUser btId
+      Just btId -> liftIO $ runReaderT (GEX.getUser btId) config
     mwt <- case mwtId of
       Nothing   -> pure Nothing
-      Just wtId -> GEX.getUser wtId
+      Just wtId -> liftIO $ runReaderT (GEX.getUser wtId) config
     pure $ ((OT.convertGR gr) <$> mbp <*> mwp) <*> Just mbt <*> Just mwt
 
 
@@ -111,26 +115,28 @@ getUser UserInput.User{..} = pure $ OT.User userId userName userEmail
 
 getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
-  mGDBgrs <-  GEX.getPlayersGameRecords playerId
+  config <- ask
+  mGDBgrs <-  liftIO $ runReaderT (GEX.getPlayersGameRecords playerId) config
   mgrs <-  mapM convertGR mGDBgrs
   let grs = catMaybes mgrs
   mawts <- foldM (\m k -> do
-                     awaiters <- fmap OT.convertAwaiter <$> GEX.getAwaiters (OT.grId k)
+                     awaiters <- liftIO $ fmap OT.convertAwaiter <$> runReaderT (GEX.getAwaiters (OT.grId k)) config
                      pure $ M.insert (OT.grId k) awaiters m) mempty grs
   pure (grs, mawts)
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM OT.GameRecord
 proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _) = do
   AuthValidator.proposeGame proposingUser proposedGame
-  mPlayers <- mapM (GEX.getUser) $ [bp, wp]
-  mTeachers <- mapM (GEX.getUser) $ catMaybes [mbt, mwt]
+  config <- ask
+  mPlayers <- mapM (\userId -> liftIO $ runReaderT (GEX.getUser userId) config) $ [bp, wp]
+  mTeachers <- mapM (\userId -> liftIO $ runReaderT (GEX.getUser userId) config) $ catMaybes [mbt, mwt]
   let gameUsers = mPlayers ++ mTeachers
   when (nub gameUsers /= gameUsers) (throwError $
                                      err406 {errBody = "All proposed users must be unique."})
   when (Nothing `elem` mPlayers) (throwError $ err400 {errBody = "All proposed users must exist."})
   when (Nothing `elem` mTeachers) (throwError $ err400 {errBody = "All proposed teachers must exist."})
-  gameRecord:_ <- GEX.insertGame proposedGame newGame
-  mapM_ (GEX.insertAwaiter (gameRecord ^. grId)) $
+  gameRecord:_ <- liftIO $ runReaderT (GEX.insertGame proposedGame newGame) config
+  mapM_ (\userId -> liftIO $ runReaderT (GEX.insertAwaiter (gameRecord ^. grId) userId) config) $
     delete (UserInput.userId proposingUser) $ GDB._userId <$> catMaybes gameUsers
   mGR <-  convertGR gameRecord
   pure $ fromJust mGR
@@ -142,15 +148,17 @@ sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage messa
   liftIO . atomically $ do
     realTimeGame <- PS.getGame gameId realTimeGameMap
     writeTChan (PST.gameChan realTimeGame) (PST.ChatMessage $ OT.ChatMessage userId message gameId shared)
-  GEX.insertChatMessage userId message shared gameId
+  config <- ask
+  liftIO $ runReaderT (GEX.insertChatMessage userId message shared gameId) config
 
 getMessages :: UserInput.User -> Int -> AppM [GDB.ChatMessage]
 getMessages (UserInput.User _ _ userId) gameId = do
-   messages <- GEX.getMessages gameId
-   userType <- GEX.getUserType userId gameId
-   mGameRecord <- GEX.getGameRecord gameId
-   let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
-   pure $ filter ( shouldShowMessages userType gameInProgress) messages
+  config <- ask
+  messages <- liftIO $ runReaderT (GEX.getMessages gameId) config
+  userType <- liftIO $ runReaderT (GEX.getUserType userId gameId) config
+  mGameRecord <- liftIO $ runReaderT (GEX.getGameRecord gameId) config
+  let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
+  pure $ filter ( shouldShowMessages userType gameInProgress) messages
 
 shouldShowMessages :: GDB.UserType -> Bool -> GDB.ChatMessage->  Bool
 shouldShowMessages userType gameInProgress message =
@@ -182,52 +190,54 @@ acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
   AuthValidator.acceptGameProposal user gameId
 
-  mUser <- GEX.getUserViaName name
+  config <- ask
+  mUser <- liftIO $ runReaderT (GEX.getUserViaName name) config
   --fromJust on mUser checked by auth validator above
-  (GEX.deleteAwaiter gameId . GDB._userId . fromJust) mUser
-  awaiters <- GEX.getAwaiters gameId
+  liftIO $ runReaderT ((GEX.deleteAwaiter gameId . GDB._userId . fromJust) mUser) config
+  awaiters <- liftIO $ runReaderT (GEX.getAwaiters gameId) config
 
   --Only update proposal once all players have accepted
   case (null awaiters, shouldAccept) of
     (True, True) -> do
-      mGame <-GEX.updateGame (GL.updateGameProposal True) gameId
+      mGame <-liftIO $ runReaderT (GEX.updateGame (GL.updateGameProposal True) gameId) config
       pure (mGame <&> (^. G.status))
     (False, True) -> pure (Just G.GameProposed)
     (_, False)   -> do
       --TODO: Clean up remaining awaiters here.
-      mGame <- GEX.updateGame (GL.updateGameProposal False) gameId
+      mGame <- liftIO $ runReaderT (GEX.updateGame (GL.updateGameProposal False) gameId) config
       pure (mGame <&> (^. G.status))
 
 proposePass :: UserInput.User -> Int -> AppM (Maybe G.GameStatus)
 proposePass user gameId = do
   AuthValidator.proposePass user gameId
-  mSpace <- GEX.getPlayerColor user gameId
+  config <- ask
+  mSpace <- liftIO $ runReaderT (GEX.getPlayerColor user gameId) config
   case mSpace of
     Nothing -> throwError err410
     Just space -> do
-      mGame <-GEX.updateGame (GL.proposePass space) gameId
+      mGame <-liftIO $ runReaderT (GEX.updateGame (GL.proposePass space) gameId) config
       pure ( mGame <&> (^. G.status))
 
 proposeTerritory :: UserInput.User -> Int -> G.Territory -> AppM (Maybe G.GameStatus)
 proposeTerritory user gameId territory = do
   AuthValidator.proposeTerritory user gameId
-  mPlayerColor <- GEX.getPlayerColor user gameId
+  config <- ask
+  mPlayerColor <- liftIO $ runReaderT (GEX.getPlayerColor user gameId) config
   let mProposedColor = mPlayerColor
   case mProposedColor of
     Nothing -> throwError err410
     Just proposedColor -> do
-      mGame <- GEX.updateGame
-        (GL.proposeTerritory territory proposedColor)
-        gameId
+      mGame <- liftIO $ runReaderT (GEX.updateGame (GL.proposeTerritory territory proposedColor) gameId) config
       pure (mGame <&> (^. G.status))
 
 acceptTerritoryProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
 acceptTerritoryProposal user gameId shouldAccept = do
   AuthValidator.acceptTerritoryProposal user gameId
-  mPlayerColor <- GEX.getPlayerColor user gameId
+  config <- ask
+  mPlayerColor <- liftIO $ runReaderT (GEX.getPlayerColor user gameId) config
   let mUpdateState = GL.acceptTerritoryProposal <$> mPlayerColor <*> Just shouldAccept
   case mUpdateState of
     Nothing -> pure Nothing
     Just updateState -> do
-      mGame <- GEX.updateGame updateState gameId
+      mGame <- liftIO $ runReaderT (GEX.updateGame updateState gameId) config
       pure (mGame <&> (^. G.status))

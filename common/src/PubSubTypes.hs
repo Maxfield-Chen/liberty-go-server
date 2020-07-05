@@ -69,7 +69,9 @@ instance ToJSON ErrorMessage where
                , "payload" .= t]
 
 data GameMessage = UpdateGame OT.GameUpdate
-                 | ChatMessage OT.ChatMessage deriving Show
+                 | ChatMessage OT.ChatMessage
+                 | New deriving Show
+
 
 data IncomingMessage = JoinGame GameId
                      | LeaveGame GameId deriving Show

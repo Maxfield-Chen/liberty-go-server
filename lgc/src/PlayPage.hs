@@ -47,12 +47,11 @@ playPage dynPage dynGameId =
     evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evEmptyGetGame
     evChatMessages <- fmapMaybe reqSuccess <$> SC.getMessages (Right <$> dynGameId) evEmptyGetGame
     dynUser <- holdDyn OT.newUser evUser
-    evMGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
-    dynGame <- holdDyn newGame $ fromMaybe newGame <$> evMGame
+    dynGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
 
     evPlayerPage <- playerSidebar dynGR dynUser
-    boardEv       <- boardEl dynGame
+    boardEv       <- boardEl $ fromMaybe newGame <$> dynGame
     evOpponentPage <- opponentSidebar dynGR dynUser
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
@@ -122,20 +121,29 @@ getGame :: forall t m. MonadWidget t m =>
              Dynamic t GameId
           -> Event t (Maybe G.Game)
           -> Event t ()
-          -> m (Event t (Maybe G.Game))
+          -> m (Dynamic t (Maybe G.Game))
 getGame dynGameId evMFetchGame evGetGame = do
-  evMWSGame <- realTimeEl dynGameId evGetGame
-  pure $ mergeWith (\mws mhttp -> case mws of
+  mGameMessage <- realTimeEl dynGameId evGetGame
+  dynMGameMessage <- holdDyn (Just New) mGameMessage
+  let dynMWSGame = getGameFromUpdate <$> dynGameId <*> dynMGameMessage
+  dynMFetchGame <- holdDyn (Just newGame) evMFetchGame
+  pure $ (\mws mhttp -> case mws of
                        Just ws -> Just ws
-                       Nothing -> mhttp) [evMWSGame, evMFetchGame]
+                       Nothing -> mhttp) <$> dynMFetchGame <*> dynMWSGame
 
+getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game
+getGameFromUpdate gameId = (=<<) (\case
+                              UpdateGame (OT.GameUpdate gid g) -> case gid == gameId of
+                                True  -> Just g
+                                False -> Nothing
+                              _            -> Nothing)
 
 --TODO: Determine when to close WS connections, since they are getting overwhelming.
 -- Alternatively, see if one connection can be shared throughout the program.
 realTimeEl :: forall t m. MonadWidget t m =>
               Dynamic t GameId
            -> Event t ()
-           -> m (Event t (Maybe G.Game))
+           -> m (Event t (Maybe GameMessage))
 realTimeEl dynGameId b = do
   let joinMessage = (encodeUtf8 . (<> "}") . ("{\"type\": \"join\",\"gameId\": " <>)
                       . T.pack . show )
@@ -145,8 +153,7 @@ realTimeEl dynGameId b = do
     ws <- webSocket "ws://localhost:8888" $ def &
       webSocketConfig_send .~ newMessage
     pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
-  dynMGameMessage <- holdDyn (Just $ UpdateGame OT.newGameUpdate) evMGameMessage
-  pure $ updated (getGameFromUpdate <$> dynGameId <*> dynMGameMessage)
+  pure evMGameMessage
 
 -- getMessages :: forall t m. MonadWidget t m =>
 --                Dynamic t GameId
@@ -167,13 +174,3 @@ chatEl dynGameId dynChatMessages shared = divClass "chat" $ do
         evSendMessage = textInputGetEnter sendInput
     fmapMaybe reqSuccess <$> SC.sendMessage (Right <$> dynGameId) ( Right <$> dynSendInput) evSendMessage
   pure ()
-
-
-
-
-getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game
-getGameFromUpdate gameId = (=<<) (\case
-                              UpdateGame (OT.GameUpdate gid g) -> case gid == gameId of
-                                True  -> Just g
-                                False -> Nothing
-                              _            -> Nothing)

@@ -80,10 +80,10 @@ errPlayerExcluded (UserInput.User _ _ id) gameId =
       Just False -> throwError err401
       _          -> pure ()
 
-sendMessage :: UserInput.User ->  Int -> Bool -> AppM ()
+sendMessage :: UserInput.User ->  Int -> Bool -> AppM (GDB.UserType)
 sendMessage (UserInput.User _ _ userId) gameId shared = do
   config <- ask
   userType <- liftIO $ liftIO $ runReaderT (GEX.getUserType userId gameId) config
   case (userType, shared) of
     (GDB.Watcher, True) -> throwError err401
-    _ -> pure ()
+    _ -> pure userType

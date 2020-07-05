@@ -41,6 +41,7 @@ data ChatMessage =
     chatMessageSenderId   :: Int,
     chatMessageContent   :: Text,
     chatMessageGameId   :: Int,
+    chatMessageSenderType :: GDB.UserType,
     chatMessageShared   :: Bool
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
 data GameUpdate =
@@ -126,3 +127,25 @@ convertUser :: GDB.User -> User
 convertUser GDB.User{..} = User _userId _userName _userEmail
 
 type AllGames = ([GameRecord], M.HashMap Int [Awaiter])
+
+shouldShowMessages :: GDB.UserType -> Bool -> ChatMessage->  Bool
+shouldShowMessages userType gameInProgress message =
+   case (userType,gameInProgress) of
+      (_, False) -> True
+      (GDB.Watcher, True) -> chatMessageShared message
+      (GDB.BlackPlayer,True) ->
+        (chatMessageShared message ||
+          chatMessageSenderType message == GDB.BlackPlayer ||
+          chatMessageSenderType message == GDB.BlackTeacher)
+      (GDB.BlackTeacher,True) ->
+        (chatMessageShared message ||
+          chatMessageSenderType message == GDB.BlackPlayer ||
+          chatMessageSenderType message == GDB.BlackTeacher)
+      (GDB.WhitePlayer,True) ->
+        (chatMessageShared message ||
+          chatMessageSenderType message == GDB.WhitePlayer ||
+          chatMessageSenderType message == GDB.WhiteTeacher)
+      (GDB.WhiteTeacher,True) ->
+        (chatMessageShared message ||
+          chatMessageSenderType message == GDB.WhitePlayer ||
+          chatMessageSenderType message == GDB.WhiteTeacher)

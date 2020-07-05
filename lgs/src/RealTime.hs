@@ -23,18 +23,23 @@ import qualified Data.CaseInsensitive           as CI
 import           Data.Either                    (fromRight)
 import           Data.HashMap.Strict            as M hiding (foldr)
 import           Data.List
-import           Data.Maybe                     (fromJust)
+import           Data.Maybe                     (fromJust, fromMaybe)
 import           Data.Monoid                    (mappend)
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
 import           Data.Text.Encoding             as TES
+import qualified Game as G
 import           Data.Text.Lazy.Encoding        as TEL
 import           Debug.Trace
 import           Network.HTTP.Types.Status
+import  qualified OutputTypes as OT
 import           Network.Wai
 import           Network.Wai.Handler.WebSockets (websocketsOr)
 import qualified Network.WebSockets             as WS
 import qualified PubSub                         as PB
+import qualified GameExpressions as GEX
+import qualified GameDB as GDB
+import qualified GameApiImpl as GI
 import           PubSubTypes
 import           Servant
 import           Web.Cookie
@@ -105,8 +110,19 @@ receiveLoop client conn = do
           PB.leave client game
 
 sendLoop :: Client -> WS.Connection -> RealTimeApp ()
-sendLoop client conn = forever $
-  (liftIO . atomically $ PB.getAvailableMessage client) >>= send conn
+sendLoop client@Client{..} conn = do
+  -- TODO: see if there is a way to avoid from just here.
+  user <- fromJust <$> GEX.getUserViaName clientName
+  forever $ do
+    message <- liftIO . atomically $ PB.getAvailableMessage client
+    case message of
+      UpdateGame _ -> send conn message
+      ChatMessage chatMessage@OT.ChatMessage{..} -> do
+        userType <- GEX.getUserType (GDB._userId user) chatMessageGameId
+        mGameRecord <- GEX.getGameRecord chatMessageGameId
+        let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
+        guard (OT.shouldShowMessages userType gameInProgress chatMessage)
+        send conn message
 
 disconnect :: Client -> IO ()
 disconnect client@Client{..} = atomically $ do

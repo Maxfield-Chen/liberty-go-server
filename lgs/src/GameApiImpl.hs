@@ -143,11 +143,11 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
 
 sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM [GDB.ChatMessage]
 sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage message shared) = do
-  AuthValidator.sendMessage user gameId shared
+  userType <- AuthValidator.sendMessage user gameId shared
   realTimeGameMap <- asks gameMap
   liftIO . atomically $ do
     realTimeGame <- PS.getGame gameId realTimeGameMap
-    writeTChan (PST.gameChan realTimeGame) (PST.ChatMessage $ OT.ChatMessage userId message gameId shared)
+    writeTChan (PST.gameChan realTimeGame) (PST.ChatMessage $ OT.ChatMessage userId message gameId userType shared)
   config <- ask
   liftIO $ runReaderT (GEX.insertChatMessage userId message shared gameId) config
 

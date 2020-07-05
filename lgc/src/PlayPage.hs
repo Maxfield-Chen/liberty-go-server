@@ -51,8 +51,9 @@ playPage dynPage dynGameId =
     dynUser <- holdDyn OT.newUser evUser
     dynGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) mGameMessage
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
+    dynChatMessages <- getChatMessages dynGameId evChatMessages mGameMessage
 
-    evPlayerPage <- playerSidebar dynGR dynUser
+    evPlayerPage <- playerSidebar dynGR dynChatMessages dynUser
     boardEv       <- boardEl $ fromMaybe newGame <$> dynGame
     evOpponentPage <- opponentSidebar dynGR dynUser
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
@@ -81,9 +82,10 @@ opponentSidebar dynGameRecord dynProfileUser =
 
 playerSidebar :: forall t m . MonadWidget t m =>
                  Dynamic t OT.GameRecord
+              -> Dynamic t [ OT.ChatMessage]
               -> Dynamic t OT.User
               -> m (Event t Page)
-playerSidebar dynGameRecord dynProfileUser =
+playerSidebar dynGameRecord dynChatMessages dynProfileUser =
   divClass "sidebar-player" $ do
     evPage <- divClass "sidebar-player-info" $ do
       let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
@@ -94,7 +96,7 @@ playerSidebar dynGameRecord dynProfileUser =
         (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    divClass "sidebar-player-chat" $ inputElement def
+    divClass "sidebar-player-chat" $ chatEl (OT.grId <$> dynGameRecord) dynChatMessages False
     pure evPage
 
 boardEl :: forall t m . MonadWidget t m =>
@@ -132,12 +134,12 @@ getGame dynGameId evMFetchGame mGameMessage = do
                        Just ws -> Just ws
                        Nothing -> mhttp) <$> dynMFetchGame <*> dynMWSGame
 
-getChatMessage :: forall t m. MonadWidget t m =>
+getChatMessages:: forall t m. MonadWidget t m =>
                   Dynamic t GameId
                   -> Event t [OT.ChatMessage]
                   -> Event t (Maybe GameMessage)
                   -> m (Dynamic t [OT.ChatMessage])
-getChatMessage dynGameId evFetchMessages evMMessages = do
+getChatMessages dynGameId evFetchMessages evMMessages = do
   dynMMessages <- holdDyn (Just New) evMMessages
   let dynRealTimeMessage = getChatMessageFromUpdate <$> dynGameId <*> dynMMessages
   dynFetchMessages <- holdDyn [] evFetchMessages

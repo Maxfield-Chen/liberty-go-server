@@ -20,7 +20,7 @@ import           Data.Set       (Set)
 import           Data.Text
 import           Game           (Game, GameStatus, MoveError, Outcome, Position,
                                  Space)
-import qualified GameDB
+import qualified GameDB as GDB
 import           LGSAPI
 import qualified OutputTypes    as OT
 import           Reflex
@@ -96,10 +96,21 @@ userForProfile :: MonadWidget t m =>
                       Event t ()
                       -> m (Event t (ReqResult () OT.User))
 
+getMessages :: MonadWidget t m =>
+                 Dynamic t ( Either Text Int)
+                 -> Event t ()
+                 -> m (Event t (ReqResult () [GDB.ChatMessage]))
+
+sendMessage :: MonadWidget t m =>
+                 Dynamic t (Either Text  Int)
+                 -> Dynamic t (Either Text  UserInput.ChatMessage)
+                 -> Event t ()
+                 -> m (Event t (ReqResult () [GDB.ChatMessage]))
+
 getGame :: MonadWidget t m =>
                  Dynamic t (Either Text Int)
                  -> Event t ()
                  -> m (Event t (ReqResult () (Maybe OT.GameRecord)))
 
 
-((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> (register :<|> login :<|> gamesForUser :<|> getGame) :<|> _) = apiClients
+((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> sendMessage :<|> getMessages :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> (register :<|> login :<|> gamesForUser :<|> getGame) :<|> _) = apiClients

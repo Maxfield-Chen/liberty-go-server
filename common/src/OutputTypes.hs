@@ -44,6 +44,9 @@ data ChatMessage =
     chatMessageSenderType :: GDB.UserType,
     chatMessageShared   :: Bool
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
+
+newChatMessage = ChatMessage (-1) "" (-1) GDB.Watcher False
+
 data GameUpdate =
   GameUpdate
   {

@@ -20,6 +20,7 @@ import           Game                 (Position, boardPositions, newGame)
 import qualified Game                 as G
 import qualified GameLogic            as GL
 import qualified OutputTypes          as OT
+import qualified UserInput
 import           PageUtil
 import           Proofs
 import           PubSubTypes          hiding (GameId, gameId)
@@ -28,6 +29,7 @@ import           Reflex.Dom
 import           Servant.Reflex
 import qualified ServantClient        as SC
 import           Text.Read            (readMaybe)
+import qualified GameDB as GDB
 import           Theory.Named
 
 
@@ -43,10 +45,12 @@ playPage dynPage dynGameId =
         evEmptyGetGame = () <$ evGetGame
     evFetchMGR <- fmapMaybe reqSuccess <$> SC.getGame (Right  <$> dynGameId) evEmptyGetGame
     evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evEmptyGetGame
+    evChatMessages <- fmapMaybe reqSuccess <$> SC.getMessages (Right <$> dynGameId) evEmptyGetGame
     dynUser <- holdDyn OT.newUser evUser
     evMGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) evEmptyGetGame
     dynGame <- holdDyn newGame $ fromMaybe newGame <$> evMGame
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
+
     evPlayerPage <- playerSidebar dynGR dynUser
     boardEv       <- boardEl dynGame
     evOpponentPage <- opponentSidebar dynGR dynUser
@@ -143,6 +147,29 @@ realTimeEl dynGameId b = do
     pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
   dynMGameMessage <- holdDyn (Just $ UpdateGame OT.newGameUpdate) evMGameMessage
   pure $ updated (getGameFromUpdate <$> dynGameId <*> dynMGameMessage)
+
+-- getMessages :: forall t m. MonadWidget t m =>
+--                Dynamic t GameId
+--                -> Event
+chatEl :: forall t m. MonadWidget t m =>
+          Dynamic t GameId
+          -> Dynamic t [GDB.ChatMessage]
+          -> Bool
+          -> m ()
+chatEl dynGameId dynChatMessages shared = divClass "chat" $ do
+  divClass "chat-messages" $ do
+    simpleList dynChatMessages
+      (\dynMessage -> divClass "chat-message" $ dynText $ GDB._chat_message_content <$> dynMessage)
+  divClass "chat-send-bar" $ do
+    sendInput <- textInput def
+    let dynValue = _textInput_value sendInput
+        dynSendInput = flip UserInput.ChatMessage shared <$> dynValue
+        evSendMessage = textInputGetEnter sendInput
+    fmapMaybe reqSuccess <$> SC.sendMessage (Right <$> dynGameId) ( Right <$> dynSendInput) evSendMessage
+  pure ()
+
+
+
 
 getGameFromUpdate :: Int -> Maybe GameMessage -> Maybe G.Game
 getGameFromUpdate gameId = (=<<) (\case

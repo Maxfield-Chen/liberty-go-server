@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards   #-}
 
 module RealTime where
@@ -17,13 +18,14 @@ import           Control.Monad.Trans.Reader
 import           Crypto.JOSE.JWK
 import           Crypto.JWT
 import           Data.Aeson
+import           Data.Aeson.Types
 import qualified Data.ByteString                as BS
 import qualified Data.ByteString.Lazy           as BL
 import qualified Data.CaseInsensitive           as CI
 import           Data.Either                    (fromRight)
 import           Data.HashMap.Strict            as M hiding (foldr)
 import           Data.List
-import           Data.Maybe                     (fromJust, fromMaybe)
+import           Data.Maybe                     (fromJust, fromMaybe, isNothing)
 import           Data.Monoid                    (mappend)
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
@@ -61,10 +63,15 @@ application cfg pending = do
     Left _ -> WS.sendTextData conn $
       InitialConnectionError ""
     Right claimsSet -> do
-      let uName =
-            claimsSet ^. unregisteredClaims &
-              TES.decodeUtf8 . BL.toStrict . encode . M.lookupDefault "invalidTokenUser" "dat"
-      client <- liftIO . atomically $ PB.makeNewClient uName
+      let resultObject =
+            claimsSet ^. unregisteredClaims & fromJSON . M.lookupDefault emptyObject "dat"
+          resultObject :: Result (HashMap Text Value)
+          resultUserId = fromJSON =<< M.lookupDefault (String "") "userId" <$> resultObject
+          userId = case resultUserId of
+            Error message -> (-1)
+            Success id -> id
+
+      client <- liftIO . atomically $ PB.makeNewClient userId
       trace ("New Client" ++ show client) $ racePubSub cfg
         (receiveLoop client conn)
         (sendLoop client conn)
@@ -111,8 +118,10 @@ receiveLoop client conn = do
 
 sendLoop :: Client -> WS.Connection -> RealTimeApp ()
 sendLoop client@Client{..} conn = do
-  -- TODO: see if there is a way to avoid from just here.
-  user <- fromJust <$> GEX.getUserViaName clientName
+  maybeUser <- GEX.getUser clientId
+  -- TODO: probably should have better error handling here.
+  when (isNothing maybeUser) $ pure ()
+  let user = fromJust maybeUser
   forever $ do
     message <- liftIO . atomically $ PB.getAvailableMessage client
     case message of

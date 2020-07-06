@@ -28,11 +28,11 @@ makeEmptyGame gId = do
   clients <- newTVar Set.empty
   pure $ Game gId clients chan
 
-makeNewClient :: UserName -> STM Client
-makeNewClient uName = do
+makeNewClient ::  Int -> STM Client
+makeNewClient userId = do
   games <- newTVar Set.empty
   gameChans <- newTVar []
-  pure $ Client uName games gameChans
+  pure $ Client userId games gameChans
 
 subscribe :: Client -> Game -> STM ()
 subscribe client@Client{..} game@Game{..} = do

@@ -28,20 +28,20 @@ data Game = Game { gameId      :: Int
                  , gameClients :: TVar (Set.Set Client)
                  , gameChan    :: TChan GameMessage}
 
-data Client = Client { clientName      :: UserName
+data Client = Client { clientId      :: Int
                      , clientGames     :: TVar (Set.Set Game)
                      , clientGameChans :: TVar [TChan GameMessage]}
 
 getGameChan = gameChan
 
 instance Show Client where
-  show Client{..} = show clientName
+  show Client{..} = show clientId
 
 instance Eq Client where
-  (==) = on (==) clientName
+  (==) = on (==) clientId
 
 instance Ord Client where
-  compare = on compare clientName
+  compare = on compare clientId
 
 instance Eq Game where
   (==) = on (==) gameId

@@ -104,7 +104,7 @@ receiveLoop client conn = do
     case recMessage of
       Left err -> trace (show err) $ send conn err
       Right (JoinGame g) ->
-        trace ("Joining: " ++ show client) $ liftIO . atomically $ do
+        liftIO . atomically $ do
           game <- PB.getGame g gmap
           subscribed <- PB.clientSubbed client game
           guard (not subscribed)
@@ -131,7 +131,7 @@ sendLoop client@Client{..} conn = do
         mGameRecord <- GEX.getGameRecord chatMessageGameId
         let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
         guard (OT.shouldShowMessages userType gameInProgress chatMessage)
-        send conn message
+        trace (show message) $ send conn message
 
 disconnect :: Client -> IO ()
 disconnect client@Client{..} = atomically $ do

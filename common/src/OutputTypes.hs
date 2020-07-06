@@ -13,6 +13,7 @@
 module OutputTypes where
 
 import           Data.Aeson.Types
+import Data.Maybe
 import           Data.Functor
 import qualified Data.HashMap.Strict as M
 import           Data.Text           (Text)
@@ -86,6 +87,11 @@ teacherAwaiting :: (GameRecord -> Maybe User)
 teacherAwaiting f gr awaiters =
   let gameProposed = (((==) G.GameProposed) . G._status . grGame) gr
   in ((&&) gameProposed) <$> (elem <$> (userId <$> f gr) <*> (Just $ fmap awaiterUser awaiters))
+
+isWatcher :: User -> GameRecord -> Bool
+isWatcher u GameRecord{..} =
+  (not (u `elem` [grBlackPlayer, grWhitePlayer])) && not ( u `elem` catMaybes [grBlackTeacher, grWhiteTeacher])
+
 
 isBlack :: User -> GameRecord -> Bool
 isBlack u GameRecord{..} = grBlackPlayer == u

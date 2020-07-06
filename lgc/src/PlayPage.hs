@@ -13,6 +13,7 @@ module PlayPage where
 
 import           Data.Aeson
 import qualified Data.ByteString.Lazy as BL
+import GameDB (UserType(..))
 import           Data.Maybe
 import qualified Data.Text            as T
 import           Data.Text.Encoding   (encodeUtf8)
@@ -96,7 +97,7 @@ playerSidebar dynGameRecord dynChatMessages dynProfileUser =
         (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    divClass "sidebar-player-chat" $ chatEl (OT.grId <$> dynGameRecord) dynChatMessages False
+    divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser False leftFilter
     pure evPage
 
 boardEl :: forall t m . MonadWidget t m =>
@@ -132,7 +133,7 @@ getGame dynGameId evMFetchGame mGameMessage = do
   dynMFetchGame <- holdDyn (Just newGame) evMFetchGame
   pure $ (\mws mhttp -> case mws of
                        Just ws -> Just ws
-                       Nothing -> mhttp) <$> dynMFetchGame <*> dynMWSGame
+                       Nothing -> mhttp) <$> dynMWSGame <*> dynMFetchGame
 
 getChatMessages:: forall t m. MonadWidget t m =>
                   Dynamic t GameId
@@ -140,16 +141,18 @@ getChatMessages:: forall t m. MonadWidget t m =>
                   -> Event t (Maybe GameMessage)
                   -> m (Dynamic t [OT.ChatMessage])
 getChatMessages dynGameId evFetchMessages evMMessages = do
-  dynMMessages <- holdDyn (Just New) evMMessages
-  let dynRealTimeMessage = getChatMessageFromUpdate <$> dynGameId <*> dynMMessages
+  dynMMessages <- foldDyn (\new messages -> messages <> [new]) [] evMMessages
+  let dynRealTimeMessage = (\messages gameId -> map (getChatMessageFromUpdate gameId) messages) <$> dynMMessages <*> dynGameId
+
   dynFetchMessages <- holdDyn [] evFetchMessages
-  pure $ (\realTime fetchMessages -> case realTime of
-             Just message -> message:fetchMessages
-             Nothing -> fetchMessages) <$> dynRealTimeMessage <*> dynFetchMessages
+  pure $ (\messages new -> messages <> catMaybes new) <$> dynFetchMessages <*> dynRealTimeMessage
 
 getChatMessageFromUpdate :: Int -> Maybe GameMessage -> Maybe OT.ChatMessage
 getChatMessageFromUpdate  gameId = (=<<) (\case
-                                             ChatMessage outputMessage -> Just outputMessage
+                                             ChatMessage outputMessage ->
+                                               case gameId == OT.chatMessageGameId outputMessage of
+                                                True -> Just outputMessage
+                                                False -> Nothing
                                              _ -> Nothing)
 
 
@@ -178,22 +181,44 @@ realTimeEl dynGameId b = do
     pure $ decode <$> BL.fromStrict <$> _webSocket_recv ws
   pure evMGameMessage
 
--- getMessages :: forall t m. MonadWidget t m =>
---                Dynamic t GameId
---                -> Event
 chatEl :: forall t m. MonadWidget t m =>
-          Dynamic t GameId
+          Dynamic t OT.GameRecord
           -> Dynamic t [OT.ChatMessage]
+          -> Dynamic t OT.User
           -> Bool
+          -> ([OT.ChatMessage] -> Bool -> [OT.ChatMessage])
           -> m ()
-chatEl dynGameId dynChatMessages shared = divClass "chat" $ do
+chatEl dynGameRecord dynChatMessages dynProfileUser shared filterMessages = divClass "chat" $ do
+  let dynIsBlack = OT.isBlack <$> dynProfileUser <*> dynGameRecord
+      dynGameId = OT.grId <$> dynGameRecord
   divClass "chat-messages" $ do
-    simpleList dynChatMessages
-      (\dynMessage -> divClass "chat-message" $ dynText $ OT.chatMessageContent <$> dynMessage)
+    simpleList (filterMessages <$> dynChatMessages <*> dynIsBlack)
+      (\dynMessage -> divClass "chat-message" $
+        dynText $ OT.chatMessageContent <$> dynMessage)
   divClass "chat-send-bar" $ do
-    sendInput <- textInput def
-    let dynValue = _textInput_value sendInput
-        dynSendInput = flip UserInput.ChatMessage shared <$> dynValue
-        evSendMessage = textInputGetEnter sendInput
-    fmapMaybe reqSuccess <$> SC.sendMessage (Right <$> dynGameId) ( Right <$> dynSendInput) evSendMessage
+    evValue <- inputW
+    dynValue <- holdDyn "" evValue
+    let dynSendInput = flip UserInput.ChatMessage shared <$> dynValue
+        evFire = () <$ evValue
+    fmapMaybe reqSuccess <$> SC.sendMessage (Right <$> dynGameId) ( Right <$> dynSendInput) evFire
   pure ()
+
+leftFilter messages isBlack =
+    filter (\message -> case isBlack of
+                True ->
+                  OT.chatMessageSenderType message `elem` [BlackPlayer,BlackTeacher]
+                False ->
+                  OT.chatMessageSenderType message `elem` [WhitePlayer, WhiteTeacher]
+            ) messages
+
+-- output an input text widget with auto clean on return and return an
+-- event firing on return containing the string before clean
+inputW ::  forall t m.  MonadWidget t m => m (Event t T.Text)
+inputW = do
+  rec
+    let send = keypress Enter input
+        -- send signal firing on *return* key press
+    input <- inputElement $ def
+      & inputElementConfig_setValue .~ fmap (const "") send
+    -- inputElement with content reset on send
+  return $ tag (current $ _inputElement_value input) send

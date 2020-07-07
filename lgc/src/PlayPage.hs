@@ -194,8 +194,15 @@ chatEl dynGameRecord dynChatMessages dynProfileUser shared filterMessages = divC
       dynGameId = OT.grId <$> dynGameRecord
   divClass "chat-messages" $ do
     simpleList (filterMessages <$> dynChatMessages <*> dynIsBlack)
-      (\dynMessage -> divClass "chat-message" $
-        dynText $ OT.chatMessageContent <$> dynMessage)
+      (\dynMessage -> do
+          let className =
+                (("class" =:) . ("chat-message-" <>) . T.pack . show . OT.chatMessageSenderType) <$> dynMessage
+          elDynAttr "div" className $ dynText $
+            (\message ->
+               T.pack (show (OT.chatMessageSenderType message)) <>
+               ": " <>
+               OT.chatMessageContent message) <$>
+            dynMessage)
   divClass "chat-send-bar" $ do
     evValue <- inputW
     dynValue <- holdDyn "" evValue

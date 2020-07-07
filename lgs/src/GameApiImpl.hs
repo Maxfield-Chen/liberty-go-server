@@ -162,7 +162,7 @@ getMessages (UserInput.User _ _ userId) gameId = do
   userType <- liftIO $ runReaderT (GEX.getUserType userId gameId) config
   mGameRecord <- liftIO $ runReaderT (GEX.getGameRecord gameId) config
   let gameInProgress = fromMaybe True $ (==) G.InProgress . G._status . GDB._game <$> mGameRecord
-  pure $ fmap (OT.convertChatMessage userType) $ filter ( shouldShowMessages userType gameInProgress) messages
+  pure $ fmap OT.convertChatMessage $ filter ( shouldShowMessages userType gameInProgress) messages
 
 shouldShowMessages :: GDB.UserType -> Bool -> GDB.ChatMessage->  Bool
 shouldShowMessages userType gameInProgress message =

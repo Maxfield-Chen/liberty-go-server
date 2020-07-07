@@ -56,7 +56,7 @@ playPage dynPage dynGameId =
 
     evPlayerPage <- playerSidebar dynGR dynChatMessages dynUser
     boardEv       <- boardEl $ fromMaybe newGame <$> dynGame
-    evOpponentPage <- opponentSidebar dynGR dynUser
+    evOpponentPage <- opponentSidebar dynGR dynChatMessages dynUser
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right <$> dynGameId) posDyn (() <$ boardEv)
@@ -64,9 +64,10 @@ playPage dynPage dynGameId =
 
 opponentSidebar :: forall t m . MonadWidget t m =>
                  Dynamic t OT.GameRecord
+              -> Dynamic t [ OT.ChatMessage]
               -> Dynamic t OT.User
               -> m (Event t Page)
-opponentSidebar dynGameRecord dynProfileUser =
+opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
   divClass "sidebar-opponent" $ do
     evPage <- divClass "sidebar-opponent-info" $ do
       let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
@@ -78,7 +79,7 @@ opponentSidebar dynGameRecord dynProfileUser =
         (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    divClass "sidebar-opponent-chat" $ inputElement def
+    divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
     pure evPage
 
 playerSidebar :: forall t m . MonadWidget t m =>
@@ -203,12 +204,26 @@ chatEl dynGameRecord dynChatMessages dynProfileUser shared filterMessages = divC
     fmapMaybe reqSuccess <$> SC.sendMessage (Right <$> dynGameId) ( Right <$> dynSendInput) evFire
   pure ()
 
+rightFilter messages isBlack =
+    filter (\message -> case isBlack of
+                True ->
+                  OT.chatMessageSenderType message `elem` [WhitePlayer, WhiteTeacher] ||
+                  (OT.chatMessageSenderType message `elem` [BlackPlayer, BlackTeacher] &&
+                  OT.chatMessageShared message )
+                False ->
+                  OT.chatMessageSenderType message `elem` [BlackPlayer,BlackTeacher] ||
+                  (OT.chatMessageSenderType message `elem` [WhitePlayer, WhiteTeacher] &&
+                  OT.chatMessageShared message )
+            ) messages
+
 leftFilter messages isBlack =
     filter (\message -> case isBlack of
                 True ->
-                  OT.chatMessageSenderType message `elem` [BlackPlayer,BlackTeacher]
+                  OT.chatMessageSenderType message `elem` [BlackPlayer,BlackTeacher] &&
+                  ( not $ OT.chatMessageShared message)
                 False ->
-                  OT.chatMessageSenderType message `elem` [WhitePlayer, WhiteTeacher]
+                  OT.chatMessageSenderType message `elem` [WhitePlayer, WhiteTeacher] &&
+                  ( not $ OT.chatMessageShared message)
             ) messages
 
 -- output an input text widget with auto clean on return and return an

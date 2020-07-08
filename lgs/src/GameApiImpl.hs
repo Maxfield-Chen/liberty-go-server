@@ -19,11 +19,11 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.Functor
-import qualified Data.Time as Time
 import qualified Data.HashMap.Strict    as M
 import           Data.List              (delete, nub)
 import           Data.Maybe
 import           Data.Text              (Text)
+import qualified Data.Time              as Time
 import           Debug.Trace
 import           Game                   (newGame)
 import qualified Game                   as G
@@ -80,6 +80,14 @@ createNewUser (UserInput.RegisterUser email name image password) = do
   when (isJust mUser) (throwError err409)
   liftIO $ runReaderT (GEX.insertUser email name image password) config
   pure ()
+
+getUserId :: Int -> AppM (Maybe OT.User)
+getUserId userId = do
+  config <- ask
+  maybeUser <-  liftIO $ runReaderT (GEX.getUser userId) config
+  case maybeUser of
+    Nothing   -> pure Nothing
+    Just user -> pure . Just $ OT.convertUser user
 
 getGameId :: Int -> AppM (Maybe OT.GameRecord)
 getGameId gameId = do

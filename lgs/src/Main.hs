@@ -16,6 +16,7 @@ import           Control.Monad.Except                (liftIO)
 import           Control.Monad.Reader
 import           Data.Aeson                          (FromJSON, ToJSON)
 import           Data.Text                           (Text)
+import           Database.SQLite.Simple              (open)
 import qualified Game                                as G
 import qualified GameApiImpl                         as GI
 import qualified GameDB                              as GDB
@@ -28,12 +29,12 @@ import           Servant
 import           Servant.Auth.Server
 import           Servant.Auth.Server.SetCookieOrphan ()
 import qualified UserInput
-import Database.SQLite.Simple (open)
 
 unprotected :: CookieSettings -> JWTSettings -> ServerT C.Unprotected GI.AppM
 unprotected cs jwts = GI.createNewUser
                  :<|> checkCreds cs jwts
                  :<|> GI.getGamesForPlayer
+                 :<|> GI.getUserId
                  :<|> GI.getGameId
 
 protected :: Servant.Auth.Server.AuthResult UserInput.User -> ServerT C.GameAPI GI.AppM

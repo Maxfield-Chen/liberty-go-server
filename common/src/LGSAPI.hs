@@ -9,9 +9,9 @@
 module LGSAPI where
 
 import           Data.Proxy
-import Data.Text
-import qualified  GameDB                                as GDB
+import           Data.Text
 import qualified Game                                as G
+import qualified GameDB                              as GDB
 import qualified OutputTypes                         as OT
 import           Servant.API
 import           Servant.Auth.Server
@@ -30,6 +30,9 @@ type Unprotected = "users" :> "register"
 
               :<|> "users" :> Capture "userId" Int :> "games"
                 :> Get '[JSON] OT.AllGames
+
+              :<|> "users" :> Capture "userId" Int
+                :> Get '[JSON] (Maybe OT.User)
 
               :<|> "play" :> Capture "gameId" Int :> Get '[JSON] (Maybe OT.GameRecord)
 

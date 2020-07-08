@@ -20,7 +20,7 @@ import           Data.Set       (Set)
 import           Data.Text
 import           Game           (Game, GameStatus, MoveError, Outcome, Position,
                                  Space)
-import qualified GameDB as GDB
+import qualified GameDB         as GDB
 import           LGSAPI
 import qualified OutputTypes    as OT
 import           Reflex
@@ -88,6 +88,11 @@ gamesForUser :: MonadWidget t m =>
                       -> Event t ()
                       -> m (Event t (ReqResult () OT.AllGames))
 
+getUser :: MonadWidget t m =>
+                      Dynamic t (Either Text Int)
+                      -> Event t ()
+                      -> m (Event t (ReqResult () (Maybe OT.User)))
+
 gamesForProfile :: MonadWidget t m =>
                       Event t ()
                       -> m (Event t (ReqResult () OT.AllGames))
@@ -113,4 +118,4 @@ getGame :: MonadWidget t m =>
                  -> m (Event t (ReqResult () (Maybe OT.GameRecord)))
 
 
-((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> sendMessage :<|> getMessages :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> (register :<|> login :<|> gamesForUser :<|> getGame) :<|> _) = apiClients
+((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> sendMessage :<|> getMessages :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> (register :<|> login :<|> gamesForUser :<|> getUser :<|> getGame) :<|> _) = apiClients

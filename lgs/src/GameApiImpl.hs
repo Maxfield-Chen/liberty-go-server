@@ -74,11 +74,11 @@ placeStone user gameId pos = do
 
 -- TODO: Perform validation on regex of inputs allowed
 createNewUser :: UserInput.RegisterUser -> AppM ()
-createNewUser (UserInput.RegisterUser email name password) = do
+createNewUser (UserInput.RegisterUser email name image password) = do
   config <- ask
   mUser <-  liftIO $ runReaderT (GEX.getUserViaName name) config
   when (isJust mUser) (throwError err409)
-  liftIO $ runReaderT (GEX.insertUser email name password) config
+  liftIO $ runReaderT (GEX.insertUser email name image password) config
   pure ()
 
 getGameId :: Int -> AppM (Maybe OT.GameRecord)
@@ -112,7 +112,7 @@ getGamesForProfile :: UserInput.User -> AppM OT.AllGames
 getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
 
 getUser :: UserInput.User -> AppM OT.User
-getUser UserInput.User{..} = pure $ OT.User userId userName userEmail
+getUser UserInput.User{..} = pure $ OT.User userId userName userImage userEmail
 
 getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
@@ -143,7 +143,7 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
   pure $ fromJust mGR
 
 sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM ()
-sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage message shared) = do
+sendMessage user@(UserInput.User _ _ _ userId) gameId (UserInput.ChatMessage message shared) = do
   userType <- AuthValidator.sendMessage user gameId shared
   realTimeGameMap <- asks gameMap
   timestamp <- Time.zonedTimeToLocalTime <$> liftIO Time.getZonedTime
@@ -156,7 +156,7 @@ sendMessage user@(UserInput.User _ _ userId) gameId (UserInput.ChatMessage messa
   pure ()
 
 getMessages :: UserInput.User -> Int -> AppM [OT.ChatMessage]
-getMessages (UserInput.User _ _ userId) gameId = do
+getMessages (UserInput.User _ _ _ userId) gameId = do
   config <- ask
   messages <- liftIO $ runReaderT (GEX.getMessages gameId) config
   userType <- liftIO $ runReaderT (GEX.getUserType userId gameId) config
@@ -191,7 +191,7 @@ messageIsShared :: GDB.ChatMessage -> Bool
 messageIsShared = ((==) True . GDB._chat_message_shared)
 
 acceptGameProposal :: UserInput.User -> Int -> Bool -> AppM (Maybe G.GameStatus)
-acceptGameProposal user@(UserInput.User _ name _) gameId shouldAccept = do
+acceptGameProposal user@(UserInput.User _ name _ _) gameId shouldAccept = do
   AuthValidator.acceptGameProposal user gameId
 
   config <- ask

@@ -109,7 +109,7 @@ getWhitePlayer gameId = do
 
 
 getPlayerColor ::  UserInput.User -> Int ->  ConfigApp (Maybe G.Space)
-getPlayerColor (UserInput.User _ name _) gameId = do
+getPlayerColor (UserInput.User _ name _ _) gameId = do
   conn <- asks dbConnection
   mPlayer <- getUserViaName name
   mBlackPlayer <- getBlackPlayer gameId
@@ -175,15 +175,15 @@ mPlayerIdToExpr mPlayerId = case mPlayerId of
   Nothing       -> nothing_
 
 --TODO: Hash password before storage
-insertUser ::  Text -> Text -> Text ->  ConfigApp [GDB.User]
-insertUser userEmail userName userPassword = do
+insertUser ::  Text -> Text -> Int -> Text ->  ConfigApp [GDB.User]
+insertUser userEmail userName userImage userPassword = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ do
     runInsertReturningList $
       insertReturning
         (GDB.users lgsDb)
         (insertExpressions
-           [GDB.User default_ (val_ userEmail) (val_ userName) (val_ userPassword)])
+           [GDB.User default_ (val_ userEmail) (val_ userName) (val_ userImage) (val_ userPassword)])
 
 insertAwaiter ::  Int -> Int ->  ConfigApp [GDB.Awaiter]
 insertAwaiter gameId userId = do

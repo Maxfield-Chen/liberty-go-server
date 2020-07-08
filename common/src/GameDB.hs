@@ -24,10 +24,25 @@ import           Database.Beam.Sqlite
 import           Game
 import           Servant.Auth.Server
 
+data ProfileImage =
+   Bull |
+   Cow |
+   Donkey |
+   Duck |
+   Goat |
+   Goose |
+   Horse |
+   Pig |
+   Rabbit |
+   Ram |
+   Rooster |
+   Sheep deriving (Show, Eq, Enum)
+
 data UserT f
   = User {_userId           :: Columnar f Int
          ,_userEmail        :: Columnar f Text
          ,_userName         :: Columnar f Text
+         ,_userImage         :: Columnar f Int
          ,_userPasswordHash :: Columnar f Text} deriving (Generic, Beamable)
 
 type User = UserT Identity
@@ -53,7 +68,7 @@ instance Table UserT where
   primaryKey = UserId . _userId
 
 User (LensFor userId) (LensFor userEmail)
-     (LensFor userName) (LensFor userPasswordHash)
+     (LensFor userName) (LensFor userImage) (LensFor userPasswordHash)
      = tableLenses
 
 

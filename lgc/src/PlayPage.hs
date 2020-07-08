@@ -91,8 +91,9 @@ playerSidebar dynGameRecord dynChatMessages dynProfileUser =
   divClass "sidebar-player" $ do
     evPage <- divClass "sidebar-player-info" $ do
       let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
-      evPlayer <- genDynButton "sidebar-player-user"
-        (T.pack . show . OT.userName <$> dynProfileUser)
+      evPlayer <- dynButton
+        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynProfileUser)
+        "sidebar-player-user"
         Profile
       evTeacher <- genDynButton "sidebar-player-teacher"
         (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)

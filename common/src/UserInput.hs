@@ -21,6 +21,7 @@ data RegisterUser =
   {
     rUserEmail    :: Text,
     rUserName     :: Text,
+    rUserImage     :: Int,
     rUserPassword :: Text
  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
@@ -29,6 +30,7 @@ data User =
   User
     { userEmail :: Text
     , userName  :: Text
+    , userImage  :: Int
     , userId    :: Int
     } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 

@@ -64,6 +64,16 @@ genDynButton className btnText ret = do
   pure $ ret <$ domEvent Click btn
 
 
+dynButton :: forall t m a. MonadWidget t m =>
+          Dynamic t Text
+          -> Text
+          -> a
+          -> m (Event t a)
+dynButton dynClassName extraClass ret = do
+  (btn, _) <- elDynAttr' "button" (("class" =:) . ((extraClass <> " ") <> )  <$> dynClassName) $ blank
+  pure $ ret <$ domEvent Click btn
+
+
 awaiterButton :: forall t m a. MonadWidget t m =>
                      Dynamic t (Maybe Bool)
                   -> Text

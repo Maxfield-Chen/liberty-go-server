@@ -141,12 +141,13 @@ data User =
   {
     userId    :: Int,
     userName  :: Text,
+    userImage :: Int,
     userEmail :: Text
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
-newUser = User (-1) "" ""
+newUser = User (-1) "" 1 ""
 convertUser :: GDB.User -> User
-convertUser GDB.User{..} = User _userId _userName _userEmail
+convertUser GDB.User{..} = User _userId _userName _userImage _userEmail
 
 type AllGames = ([GameRecord], M.HashMap Int [Awaiter])
 

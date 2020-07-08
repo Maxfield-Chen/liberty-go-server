@@ -34,7 +34,7 @@ placeStone :: UserInput.User -> Int -> AppM ()
 placeStone = errPlayerExcluded
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM ()
-proposeGame (UserInput.User _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
+proposeGame (UserInput.User _ _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
   do
     config <- ask
     mUser <- liftIO $ runReaderT  (GEX.getUser id) config
@@ -49,7 +49,7 @@ proposeGame (UserInput.User _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
         when (not callingUserIncluded) $ throwError err401
 
 acceptGameProposal :: UserInput.User -> Int -> AppM ()
-acceptGameProposal (UserInput.User _ _ id) gameId =
+acceptGameProposal (UserInput.User _ _ _ id) gameId =
   do
     config <- ask
     mUser <- liftIO $ runReaderT (GEX.getUser id) config
@@ -70,7 +70,7 @@ acceptTerritoryProposal :: UserInput.User -> Int -> AppM ()
 acceptTerritoryProposal = errPlayerExcluded
 
 errPlayerExcluded :: UserInput.User -> Int -> AppM ()
-errPlayerExcluded (UserInput.User _ _ id) gameId =
+errPlayerExcluded (UserInput.User _ _ _ id) gameId =
   do
     config <- ask
     mUser <-  liftIO $ runReaderT (GEX.getUser id) config
@@ -81,7 +81,7 @@ errPlayerExcluded (UserInput.User _ _ id) gameId =
       _          -> pure ()
 
 sendMessage :: UserInput.User ->  Int -> Bool -> AppM (GDB.UserType)
-sendMessage (UserInput.User _ _ userId) gameId shared = do
+sendMessage (UserInput.User _ _ _ userId) gameId shared = do
   config <- ask
   userType <- liftIO $ liftIO $ runReaderT (GEX.getUserType userId gameId) config
   case (userType, shared) of

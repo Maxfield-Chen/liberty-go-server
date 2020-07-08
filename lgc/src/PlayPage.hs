@@ -13,15 +13,15 @@ module PlayPage where
 
 import           Data.Aeson
 import qualified Data.ByteString.Lazy as BL
-import GameDB (UserType(..))
 import           Data.Maybe
 import qualified Data.Text            as T
 import           Data.Text.Encoding   (encodeUtf8)
 import           Game                 (Position, boardPositions, newGame)
 import qualified Game                 as G
+import           GameDB               (UserType (..))
+import qualified GameDB               as GDB
 import qualified GameLogic            as GL
 import qualified OutputTypes          as OT
-import qualified UserInput
 import           PageUtil
 import           Proofs
 import           PubSubTypes          hiding (GameId, gameId)
@@ -30,8 +30,8 @@ import           Reflex.Dom
 import           Servant.Reflex
 import qualified ServantClient        as SC
 import           Text.Read            (readMaybe)
-import qualified GameDB as GDB
 import           Theory.Named
+import qualified UserInput
 
 
 type GameId = Int
@@ -72,11 +72,13 @@ opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
     evPage <- divClass "sidebar-opponent-info" $ do
       let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
           dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
-      evPlayer <- genDynButton "sidebar-opponent-user"
-        (T.pack . show . OT.userName <$> dynOpponent)
+      evPlayer <- dynButton
+        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynOpponent)
+        "sidebar-opponent-user"
         Profile
-      evTeacher <- genDynButton "sidebar-opponent-teacher"
-        (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
+      evTeacher <- dynButton
+        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage . fromMaybe OT.newUser <$> dynMTeacher)
+        "sidebar-opponent-teacher"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
     divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
@@ -95,8 +97,9 @@ playerSidebar dynGameRecord dynChatMessages dynProfileUser =
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynProfileUser)
         "sidebar-player-user"
         Profile
-      evTeacher <- genDynButton "sidebar-player-teacher"
-        (T.pack . show . OT.userName . fromMaybe OT.newUser <$> dynMTeacher)
+      evTeacher <- dynButton
+        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage . fromMaybe OT.newUser <$> dynMTeacher)
+        "sidebar-player-teacher"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
     divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser False leftFilter
@@ -153,7 +156,7 @@ getChatMessageFromUpdate :: Int -> Maybe GameMessage -> Maybe OT.ChatMessage
 getChatMessageFromUpdate  gameId = (=<<) (\case
                                              ChatMessage outputMessage ->
                                                case gameId == OT.chatMessageGameId outputMessage of
-                                                True -> Just outputMessage
+                                                True  -> Just outputMessage
                                                 False -> Nothing
                                              _ -> Nothing)
 

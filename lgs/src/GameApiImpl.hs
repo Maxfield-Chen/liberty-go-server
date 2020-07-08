@@ -78,6 +78,7 @@ createNewUser (UserInput.RegisterUser email name image password) = do
   config <- ask
   mUser <-  liftIO $ runReaderT (GEX.getUserViaName name) config
   when (isJust mUser) (throwError err409)
+  when (image < 0 || image >= length [minBound :: GDB.ProfileImage ..maxBound]) (throwError err401)
   liftIO $ runReaderT (GEX.insertUser email name image password) config
   pure ()
 

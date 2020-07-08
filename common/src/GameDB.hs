@@ -25,6 +25,7 @@ import           Game
 import           Servant.Auth.Server
 
 data ProfileImage =
+   None |
    Bull |
    Cow |
    Donkey |
@@ -36,13 +37,13 @@ data ProfileImage =
    Rabbit |
    Ram |
    Rooster |
-   Sheep deriving (Show, Eq, Enum)
+   Sheep deriving (Show, Eq, Enum, Bounded)
 
 data UserT f
   = User {_userId           :: Columnar f Int
          ,_userEmail        :: Columnar f Text
          ,_userName         :: Columnar f Text
-         ,_userImage         :: Columnar f Int
+         ,_userImage        :: Columnar f Int
          ,_userPasswordHash :: Columnar f Text} deriving (Generic, Beamable)
 
 type User = UserT Identity
@@ -78,13 +79,13 @@ instance HasSqlValueSyntax be String => HasSqlValueSyntax be   UserType where
   sqlValueSyntax = autoSqlValueSyntax
 
 data ChatMessageT f
-  = ChatMessage {_chat_message_id      :: Columnar f Int
+  = ChatMessage {_chat_message_id    :: Columnar f Int
             ,_chat_message_sender_id :: PrimaryKey UserT f
-            ,_chat_message_content :: Columnar f Text
+            ,_chat_message_content   :: Columnar f Text
             ,_chat_message_user_type :: Columnar f  UserType
-            ,_chat_message_game_id :: PrimaryKey GameRecordT f
-            ,_chat_message_shared :: Columnar f  Bool
-            ,_chat_message_timestamp     :: Columnar f Time.LocalTime
+            ,_chat_message_game_id   :: PrimaryKey GameRecordT f
+            ,_chat_message_shared    :: Columnar f  Bool
+            ,_chat_message_timestamp :: Columnar f Time.LocalTime
             } deriving (Generic, Beamable)
 
 type ChatMessage = ChatMessageT Identity
@@ -179,10 +180,10 @@ instance FromBackendRow Sqlite Game where
 
 data LGSDb f =
   LGSDb
-    { users        :: f (TableEntity UserT)
-     ,game_records :: f (TableEntity GameRecordT)
-     ,awaiters     :: f (TableEntity AwaiterT)
-     ,chat_messages     :: f (TableEntity ChatMessageT)
+    { users         :: f (TableEntity UserT)
+     ,game_records  :: f (TableEntity GameRecordT)
+     ,awaiters      :: f (TableEntity AwaiterT)
+     ,chat_messages :: f (TableEntity ChatMessageT)
     }
   deriving (Generic, Database be)
 

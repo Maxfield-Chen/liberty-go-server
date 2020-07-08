@@ -13,11 +13,11 @@
 module OutputTypes where
 
 import           Data.Aeson.Types
-import Data.Maybe
 import           Data.Functor
 import qualified Data.HashMap.Strict as M
+import           Data.Maybe
 import           Data.Text           (Text)
-import qualified Data.Time as Time
+import qualified Data.Time           as Time
 import qualified Game                as G
 import qualified GameDB              as GDB
 import           GHC.Generics
@@ -40,11 +40,11 @@ data ChatMessage =
   ChatMessage
   {
     chatMessageSenderId   :: Int,
-    chatMessageContent   :: Text,
-    chatMessageGameId   :: Int,
+    chatMessageContent    :: Text,
+    chatMessageGameId     :: Int,
     chatMessageSenderType :: GDB.UserType,
-    chatMessageShared   :: Bool,
-    chatMessageTimestamp :: Time.LocalTime
+    chatMessageShared     :: Bool,
+    chatMessageTimestamp  :: Time.LocalTime
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read)
 
 newChatMessage = ChatMessage (-1) "" (-1) GDB.Watcher False
@@ -145,7 +145,7 @@ data User =
     userEmail :: Text
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
-newUser = User (-1) "" 1 ""
+newUser = User (-1) "" 0 ""
 convertUser :: GDB.User -> User
 convertUser GDB.User{..} = User _userId _userName _userImage _userEmail
 

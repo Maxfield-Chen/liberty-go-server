@@ -104,16 +104,16 @@ profileBoards dynAllGames dynUser =
               )
     divClass "profile-lpad" $ blank
   --TODO: Add Pagination / truncation at 14 boards (CSS restriction)
-    dynEvents <- divClass "profile-boards-container" $ divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
+    dynEvents <- divClass "profile-boards-container" $ divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUser)
     divClass "profile-rpad" $ blank
     pure $ switchDyn $ leftmost <$> dynEvents
 
 
 readOnlyBoard :: forall t m . MonadWidget t m =>
-                 Dynamic t UserId
+                 Dynamic t OT.User
               -> Dynamic t (OT.GameRecord, [OT.Awaiter])
               -> m (Event t Int)
-readOnlyBoard dynUserId dynAllGame = do
+readOnlyBoard dynUser dynAllGame = do
   let dynGameRecord = fst <$> dynAllGame
       dynAwaiters = snd <$> dynAllGame
       dynBlackPlayerAwaiter = OT.userAwaiting OT.grBlackPlayer <$> dynGameRecord <*> dynAwaiters
@@ -121,16 +121,43 @@ readOnlyBoard dynUserId dynAllGame = do
       dynMBlackTeacherAwaiter = OT.teacherAwaiting OT.grBlackTeacher <$> dynGameRecord <*> dynAwaiters
       dynMWhiteTeacherAwaiter = OT.teacherAwaiting OT.grWhiteTeacher <$> dynGameRecord <*> dynAwaiters
       dynGame = OT.grGame <$> dynGameRecord
+      dynUserId = OT.userId <$> dynUser
   divClass "read-only-container" $ do
-    selBoard <-divClass "ro-board-container" $ do
-      _ <- divClass "ro-board-overlay" $ divClass "board-grid" $ do
+    divClass "ro-black-players" $ do
+          evBlack <- dynTextButton "ro-black"
+            (OT.userName . OT.grBlackPlayer <$> dynGameRecord)
+            ()
+          evBlackTeacher <- dynClassTextButton
+            (maybe
+                "hide"
+                (const "ro-black-teacher") .
+                OT.grBlackTeacher
+                <$> dynGameRecord)
+            ((" and " <>) . OT.userName . fromMaybe OT.newUser . OT.grBlackTeacher <$> dynGameRecord)
+            ()
+          pure $ leftmost [evBlack, evBlackTeacher]
+    divClass "ro-white-players" $ do
+          evWhiteTeacher <- dynClassTextButton
+            (maybe
+                "hide"
+                (const "ro-white-teacher") .
+                OT.grWhiteTeacher
+                <$> dynGameRecord)
+            ((" and " <>) .  OT.userName . fromMaybe OT.newUser . OT.grWhiteTeacher <$> dynGameRecord)
+            ()
+          evWhite <- dynTextButton "ro-white"
+            (OT.userName . OT.grWhitePlayer <$> dynGameRecord)
+            ()
+          pure $ leftmost [evWhite, evWhiteTeacher]
+    divClass "ro-board-container" $ do
+      divClass "ro-board-overlay" $ divClass "board-grid" $ do
         mapM (\pos -> name pos $
           \case
               Bound boundPos -> boardButton pos $
                 GL.getPosition boundPos <$> dynGame
               _ -> error "unbound position when creating readonly-boardEl")
           (concat boardPositions)
-      readOnlyBoardButton dynGameRecord
+    selBoard <- readOnlyBoardButton dynGameRecord
     _ <- divClass "board-footer" $ do
       apb <- acceptGameProposalButton dynAllGame dynUserId
       rpb <- rejectGameProposalButton dynAllGame dynUserId

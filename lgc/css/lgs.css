@@ -389,7 +389,7 @@ body {
 
 .play-page {
     display: grid;
-    grid-template-columns: [left] 10px [cstart] 0.15fr [cgb-start] 0.4fr [pad] 1fr [gb-end] 0.4fr [rpad] 0.15fr [opponent-sb-end] 10px [right];
+    grid-template-columns: [left] 10px [cstart] 0.25fr [cgb-start] 0.1fr [pad] 1fr [gb-end] 0.1fr [rpad] 0.25fr [opponent-sb-end] 10px [right];
     grid-template-rows: [top] 10px [rgb-start] 0.8fr [rgb-end] 10px [bottom];
     gap:1vw ;
     width: 100%;
@@ -397,7 +397,10 @@ body {
 }
 
 .sidebar-player {
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.16), 0 2px 5px 0 rgba(0,0,0,.15);
+    border: 5px solid #333;
     grid-area: top / cstart / rgb-end / cgb-start;
+    padding: 1vw;
     width:100% ;
     height:100% ;
 }
@@ -405,6 +408,9 @@ body {
 
 .sidebar-opponent {
     grid-area: top / rpad / rgb-end / opponent-sb-end;
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.16), 0 2px 5px 0 rgba(0,0,0,.15);
+    border: 5px solid #333;
+    padding: 1vw;
 }
 
 .body-grid {
@@ -575,6 +581,284 @@ body {
     display:none;
 }
 
+.Cow {
+    background:url("http://localhost:8888/raw/Cow.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+
+.None {
+    display: none;
+}
+
+.Bull.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Bull.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Bull.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Bull.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Bull {
+    background:url("http://localhost:8888/raw/Bull.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Donkey.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Donkey.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Donkey.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Donkey.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Donkey {
+    background:url("http://localhost:8888/raw/Donkey.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Duck.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Duck.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Duck.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Duck.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Duck {
+    background:url("http://localhost:8888/raw/Duck.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Goat.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Goat.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Goat.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Goat.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Goat {
+    background:url("http://localhost:8888/raw/Goat.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Goose.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Goose.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Goose.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Goose.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Goose {
+    background:url("http://localhost:8888/raw/Goose.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Horse.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Horse.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Horse.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Horse.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Horse {
+    background:url("http://localhost:8888/raw/Horse.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Pig.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Pig.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Pig.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Pig.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Pig {
+    background:url("http://localhost:8888/raw/Pig.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Rabbit.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Rabbit.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Rabbit.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Rabbit.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Rabbit {
+    background:url("http://localhost:8888/raw/Rabbit.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Ram.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Ram.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Ram.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Ram.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Ram {
+    background:url("http://localhost:8888/raw/Ram.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Rooster.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Rooster.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Rooster.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Rooster.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Rooster {
+    background:url("http://localhost:8888/raw/Rooster.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+.Sheep.sidebar-opponent-user {
+    background:url("http://localhost:8888/raw/Sheep.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Sheep.sidebar-opponent-teacher {
+    background:url("http://localhost:8888/raw/Sheep.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    transform: scaleX(-1);
+    outline: none;
+}
+.Sheep {
+    background:url("http://localhost:8888/raw/Sheep.png") no-repeat;
+    cursor:pointer;
+    border:none;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    outline: none;
+}
+
 .sidebar-player-info {
     display:inline-block;
 }
@@ -582,7 +866,7 @@ body {
 .sidebar-player-user {
     width:6vw ;
     height:6vw ;
-    margin-right: .1vw ;
+    margin-right: -1vw ;
     margin-bottom: 1vw ;
 }
 
@@ -608,7 +892,7 @@ body {
 .sidebar-opponent-user {
     width:6vw ;
     height:6vw ;
-    margin-right: .1vw ;
+    margin-left: -1vw ;
     margin-bottom: 1vw ;
 }
 

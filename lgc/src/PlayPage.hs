@@ -72,13 +72,13 @@ opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
     evPage <- divClass "sidebar-opponent-info" $ do
       let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
           dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
-      evPlayer <- dynButton
-        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynOpponent)
-        "sidebar-opponent-user"
-        Profile
       evTeacher <- dynButton
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage . fromMaybe OT.newUser <$> dynMTeacher)
         "sidebar-opponent-teacher"
+        Profile
+      evPlayer <- dynButton
+        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynOpponent)
+        "sidebar-opponent-user"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
     divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter

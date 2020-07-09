@@ -11,27 +11,32 @@
 
 module AuthValidator where
 
+import           Config
 import           Control.Monad
-import           Control.Monad.Trans (liftIO)
+import           Control.Monad.Reader
+import           Control.Monad.Trans  (liftIO)
 import           Data.Maybe
-import           Data.Text           (Text)
-import qualified Game                as G
-import qualified GameDB              as GDB hiding (User)
-import qualified GameExpressions     as GEX
-import qualified GameLogic           as GL
+import           Data.Text            (Text)
+import qualified Game                 as G
+import qualified GameDB               as GDB hiding (User)
+import qualified GameExpressions      as GEX
+import qualified GameLogic            as GL
 import           Proofs
 import           Servant
 import           Servant.Auth.Server
 import           Servant.Server
 import           Theory.Named
 import qualified UserInput
-import  Control.Monad.Reader
-import Config
 
 type AppM = ReaderT Config Handler
 
 placeStone :: UserInput.User -> Int -> AppM ()
-placeStone = errPlayerExcluded
+placeStone user gameId = do
+  config <- ask
+  errPlayerExcluded user gameId
+  awaiters <- liftIO $ runReaderT (GEX.getAwaiters gameId) config
+  when (not $ null awaiters) $ throwError err401
+
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM ()
 proposeGame (UserInput.User _ _ _ id) (UserInput.ProposedGame bp wp bt wt _ _) =
@@ -86,4 +91,4 @@ sendMessage (UserInput.User _ _ _ userId) gameId shared = do
   userType <- liftIO $ liftIO $ runReaderT (GEX.getUserType userId gameId) config
   case (userType, shared) of
     (GDB.Watcher, True) -> throwError err401
-    _ -> pure userType
+    _                   -> pure userType

@@ -62,11 +62,11 @@ profileBoards dynAllGames dynUser =
       dynUserId = OT.userId <$> dynUser
   in do
     divClass "profile-user-info" $ do
+      divClass "profile-name" $ dynText (OT.userName <$> dynUser)
       dynClassExtraButton
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynUser)
         "profile-player-image"
         Profile
-      divClass "profile-name" $ dynText (OT.userName <$> dynUser)
       divClass "profile-separater" $ blank
       divClass "profile-history" $ do
         let dynGameRecords = OT.finishedGames <$> dynAllGames

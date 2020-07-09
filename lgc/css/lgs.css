@@ -188,16 +188,43 @@ body {
 
 .profile-page {
     display: grid;
-    grid-template-columns: 2fr 6fr 2fr;
+    grid-template-columns: 1fr 0.5fr 6fr 0.5fr;
     grid-template-rows: 1fr 8fr 1fr;
 }
+.profile-user-info {
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.16), 0 2px 5px 0 rgba(0,0,0,.15);
+    border: 5px solid #333;
+    padding: 1vw;
+    display: block;
+}
+.profile-player-image {
+    width:8vw ;
+    height:8vw ;
+    margin-left: 10%;
+    margin-top: -10%;
+    cursor: none;
+}
 
+.profile-separater {
+    width: 100%;
+    height: 3px;
+    background-color: #030303;
+}
+
+.profile-name {
+    font-family: Vollkorn SC;
+    font-weight: 600;
+    font-size: 1vw;
+    color: #030303;
+    text-transform: uppercase;
+    text-align: center;
+    height: 1%;
+}
 .profile-boards-container{
 
     display: inherit;
 }
 .profile-boards {
-    margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(3, minmax(300px, 0.2fr));
     grid-template-rows: repeat(7, minmax(450px, 0.24fr));

@@ -12,7 +12,9 @@
 module PlayPage where
 
 import           Data.Aeson
+import           Data.Bool
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.Map             as M
 import           Data.Maybe
 import qualified Data.Text            as T
 import           Data.Text.Encoding   (encodeUtf8)
@@ -69,19 +71,34 @@ opponentSidebar :: forall t m . MonadWidget t m =>
               -> m (Event t Page)
 opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
   divClass "sidebar-opponent" $ do
+    let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
+        dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
+        dynUserColor = bool G.White G.Black <$>
+          (OT.isBlack <$> dynOpponent <*> dynGameRecord)
+    divClass "sidebar-opponent-color" $
+      dynText ((<> " Team") . T.pack . show <$> dynUserColor)
     evPage <- divClass "sidebar-opponent-info" $ do
-      let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
-          dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
-      evTeacher <- dynButton
+      evTeacher <- dynClassExtraButton
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage . fromMaybe OT.newUser <$> dynMTeacher)
         "sidebar-opponent-teacher"
         Profile
-      evPlayer <- dynButton
+      evPlayer <- dynClassExtraButton
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynOpponent)
         "sidebar-opponent-user"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
+    el "br" blank
+    evPlayerName <- dynTextButton "sidebar-player-name" (OT.userName <$> dynProfileUser) Profile
+    evTeacherName <- dynClassTextButton
+      (maybe "sidebar-teacher-name-hidden" (const "sidebar-teacher-name") <$> dynMTeacher)
+      (OT.userName . fromMaybe OT.newUser <$> dynMTeacher) Profile
+    el "br" blank
+    divClass "sidebar-opponent-captures" $
+      dynText
+        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . OT.grGame)
+         <$> dynUserColor <*> dynGameRecord)
+    divClass "sidebar-chat-separater" blank
+    divClass "sidebar-opponent-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
     pure evPage
 
 playerSidebar :: forall t m . MonadWidget t m =>
@@ -91,18 +108,39 @@ playerSidebar :: forall t m . MonadWidget t m =>
               -> m (Event t Page)
 playerSidebar dynGameRecord dynChatMessages dynProfileUser =
   divClass "sidebar-player" $ do
+    let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
+        dynProfileUserColor = bool G.White G.Black <$>
+          (OT.isBlack <$> dynProfileUser <*> dynGameRecord)
+    divClass "sidebar-player-color" $
+      dynText ((<> " Team") . T.pack . show <$> dynProfileUserColor)
     evPage <- divClass "sidebar-player-info" $ do
-      let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
-      evPlayer <- dynButton
+      evPlayer <- dynClassExtraButton
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynProfileUser)
         "sidebar-player-user"
         Profile
-      evTeacher <- dynButton
+      evTeacher <- dynClassExtraButton
         (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage . fromMaybe OT.newUser <$> dynMTeacher)
         "sidebar-player-teacher"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    divClass "sidebar-player-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser False leftFilter
+    el "br" blank
+    evPlayerName <- dynTextButton "sidebar-player-name" (OT.userName <$> dynProfileUser) Profile
+    evTeacherName <- dynClassTextButton
+      (maybe "sidebar-teacher-name-hidden" (const "sidebar-teacher-name") <$> dynMTeacher)
+      (OT.userName . fromMaybe OT.newUser <$> dynMTeacher) Profile
+    evPass <- divClass "sidebar-player-pass" $ button "Pass"
+    el "br" blank
+    divClass "sidebar-player-turn" $
+      dynText ((<> " to Play.") . T.pack . show . GL.nextToPlay . OT.grGame <$> dynGameRecord)
+    divClass "sidebar-player-captures" $
+      dynText
+        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . OT.grGame)
+         <$> dynProfileUserColor <*> dynGameRecord)
+
+    evPass <- fmapMaybe reqSuccess <$> SC.pass (Right . OT.grId <$> dynGameRecord) evPass
+    divClass "sidebar-chat-separater" blank
+    divClass "sidebar-player-chat" $
+      chatEl dynGameRecord dynChatMessages dynProfileUser False leftFilter
     pure evPage
 
 boardEl :: forall t m . MonadWidget t m =>
@@ -236,15 +274,3 @@ leftFilter messages isBlack =
                   OT.chatMessageSenderType message `elem` [WhitePlayer, WhiteTeacher] &&
                   ( not $ OT.chatMessageShared message)
             ) messages
-
--- output an input text widget with auto clean on return and return an
--- event firing on return containing the string before clean
-inputW ::  forall t m.  MonadWidget t m => m (Event t T.Text)
-inputW = do
-  rec
-    let send = keypress Enter input
-        -- send signal firing on *return* key press
-    input <- inputElement $ def
-      & inputElementConfig_setValue .~ fmap (const "") send
-    -- inputElement with content reset on send
-  return $ tag (current $ _inputElement_value input) send

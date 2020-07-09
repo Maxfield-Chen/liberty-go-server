@@ -31,11 +31,8 @@ import qualified UserInput
 type AppM = ReaderT Config Handler
 
 placeStone :: UserInput.User -> Int -> AppM ()
-placeStone user gameId = do
-  config <- ask
-  errPlayerExcluded user gameId
-  awaiters <- liftIO $ runReaderT (GEX.getAwaiters gameId) config
-  when (not $ null awaiters) $ throwError err401
+placeStone user gameId = errPlayerExcluded user gameId >>
+  noAwaiters gameId
 
 
 proposeGame :: UserInput.User -> UserInput.ProposedGame -> AppM ()
@@ -65,14 +62,22 @@ acceptGameProposal (UserInput.User _ _ _ id) gameId =
           invalidUser <- liftIO $ not <$> runReaderT (GEX.isPlayerAwaiter (GDB._userId user) gameId) config
           when invalidUser $ throwError err401
 
+
+noAwaiters :: Int -> AppM ()
+noAwaiters gameId = do
+  config <- ask
+  awaiters <- liftIO $ runReaderT (GEX.getAwaiters gameId) config
+  when (not $ null awaiters) $ throwError err401
+
 proposePass :: UserInput.User -> Int -> AppM ()
-proposePass = errPlayerExcluded
+proposePass user gameId = errPlayerExcluded user gameId >>
+  noAwaiters gameId
 
 proposeTerritory :: UserInput.User -> Int -> AppM ()
-proposeTerritory = errPlayerExcluded
+proposeTerritory user gameId = errPlayerExcluded user gameId >> noAwaiters gameId
 
 acceptTerritoryProposal :: UserInput.User -> Int -> AppM ()
-acceptTerritoryProposal = errPlayerExcluded
+acceptTerritoryProposal user gameId = errPlayerExcluded user gameId >> noAwaiters gameId
 
 errPlayerExcluded :: UserInput.User -> Int -> AppM ()
 errPlayerExcluded (UserInput.User _ _ _ id) gameId =

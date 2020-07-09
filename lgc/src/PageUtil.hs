@@ -11,16 +11,16 @@
 
 module PageUtil where
 
-import qualified Data.Map    as M
-import           Data.Text   (Text)
-import qualified Data.Text   as T
-import           Game        (Position, Space (..))
-import qualified Game        as G
+import           Control.Lens
+import qualified Data.Map     as M
+import           Data.Text    (Text)
+import qualified Data.Text    as T
+import           Game         (Position, Space (..))
+import qualified Game         as G
 import qualified GameDB
-import qualified OutputTypes as OT
+import qualified OutputTypes  as OT
 import           Reflex
 import           Reflex.Dom
-import Control.Lens
 
 
 data Page = Main | Register | Login | Play | Profile | ProposeGame deriving (Show, Eq)
@@ -54,25 +54,33 @@ genButton className btnText ret = do
   (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: className) $ dynText (constDyn btnText)
   pure $ ret <$ domEvent Click btn
 
-genDynButton :: forall t m a. MonadWidget t m =>
+dynTextButton :: forall t m a. MonadWidget t m =>
              Text
           -> Dynamic t Text
           -> a
           -> m (Event t a)
-genDynButton className btnText ret = do
+dynTextButton className btnText ret = do
   (btn, _) <- elDynAttr' "button" (constDyn $ "class" =: className) $ dynText btnText
   pure $ ret <$ domEvent Click btn
 
 
-dynButton :: forall t m a. MonadWidget t m =>
+dynClassExtraButton :: forall t m a. MonadWidget t m =>
           Dynamic t Text
           -> Text
           -> a
           -> m (Event t a)
-dynButton dynClassName extraClass ret = do
+dynClassExtraButton dynClassName extraClass ret = do
   (btn, _) <- elDynAttr' "button" (("class" =:) . ((extraClass <> " ") <> )  <$> dynClassName) $ blank
   pure $ ret <$ domEvent Click btn
 
+dynClassTextButton :: forall t m a. MonadWidget t m =>
+          Dynamic t Text
+          -> Dynamic t Text
+          -> a
+          -> m (Event t a)
+dynClassTextButton dynClassName buttonText ret = do
+  (btn, _) <- elDynAttr' "button" (("class" =:) <$> dynClassName) $ dynText buttonText
+  pure $ ret <$ domEvent Click btn
 
 awaiterButton :: forall t m a. MonadWidget t m =>
                      Dynamic t (Maybe Bool)
@@ -109,3 +117,15 @@ styleSpace space = "class" =: (case space of
                                 G.Empty -> "space-empty"
                                 Black   -> "space-black"
                                 White   -> "space-white")
+
+-- output an input text widget with auto clean on return and return an
+-- event firing on return containing the string before clean
+inputW ::  forall t m.  MonadWidget t m => m (Event t T.Text)
+inputW = do
+  rec
+    let send = keypress Enter input
+        -- send signal firing on *return* key press
+    input <- inputElement $ def
+      & inputElementConfig_setValue .~ fmap (const "") send
+    -- inputElement with content reset on send
+  return $ tag (current $ _inputElement_value input) send

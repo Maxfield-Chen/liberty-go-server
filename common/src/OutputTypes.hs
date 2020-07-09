@@ -151,6 +151,9 @@ convertUser GDB.User{..} = User _userId _userName _userImage _userEmail
 
 type AllGames = ([GameRecord], M.HashMap Int [Awaiter])
 
+finishedGames :: AllGames -> [GameRecord]
+finishedGames (gameRecords, _) = filter ((== G.TerritoryAccepted) . G._status . grGame) gameRecords
+
 shouldShowMessages :: GDB.UserType -> Bool -> ChatMessage->  Bool
 shouldShowMessages userType gameInProgress message =
    case (userType,gameInProgress) of

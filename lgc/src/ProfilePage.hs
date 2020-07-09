@@ -13,10 +13,12 @@ module ProfilePage where
 
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map            as Map
+import           Data.Maybe
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import           Game                (boardPositions)
 import qualified Game                as G
+import qualified GameDB              as GDB
 import qualified GameLogic           as GL
 import qualified OutputTypes         as OT
 import           PageUtil
@@ -39,15 +41,15 @@ profilePage dynPage = elDynAttr "div" (shouldShow Profile "profile-page" <$> dyn
   evAllGames <- fmapMaybe reqSuccess <$> SC.gamesForProfile evProfilePage
   evUser <- fmapMaybe reqSuccess <$> SC.userForProfile evProfilePage
   dynAllGames <- holdDyn ([],mempty) evAllGames
-  dynUserId <- holdDyn (-1) $ OT.userId <$> evUser
+  dynUserId <- holdDyn OT.newUser evUser
   profileBoards dynAllGames dynUserId
 
 
 profileBoards :: forall t m. MonadWidget t m =>
                  Dynamic t OT.AllGames
-              -> Dynamic t UserId
+              -> Dynamic t OT.User
               -> m (Event t Int)
-profileBoards dynAllGames dynUserId =
+profileBoards dynAllGames dynUser =
   let dynGames = (\(grs, awaiters) ->
                     filter ((\gs -> case gs of
                                  G.TerritoryAccepted -> False
@@ -57,11 +59,53 @@ profileBoards dynAllGames dynUserId =
                       (\gr -> (gr, HashMap.lookupDefault [] (OT.grId gr) awaiters)) <$>
                     grs)
                  <$> dynAllGames
+      dynUserId = OT.userId <$> dynUser
   in do
-    divClass "profile-lpad" $ text ""
+    divClass "profile-user-info" $ do
+      dynClassExtraButton
+        (T.pack . show . (\image -> toEnum image :: GDB.ProfileImage) . OT.userImage <$> dynUser)
+        "profile-player-image"
+        Profile
+      divClass "profile-name" $ dynText (OT.userName <$> dynUser)
+      divClass "profile-separater" $ blank
+      divClass "profile-history" $ do
+        let dynGameRecords = OT.finishedGames <$> dynAllGames
+        simpleList dynGameRecords
+            (\dynGameRecord ->
+               divClass "profile-finished-game" $ do
+                divClass "profile-finished-players" $ do
+                  evBlack <- dynTextButton "profile-finished-black"
+                    (OT.userName . OT.grBlackPlayer <$> dynGameRecord)
+                    ()
+                  evWhite <- dynTextButton "profile-finished-white"
+                    (OT.userName . OT.grWhitePlayer <$> dynGameRecord)
+                    ()
+                  evBlackTeacher <- dynClassTextButton
+                    (maybe
+                       "profile-finished-black-teacher"
+                       (const "profile-finished-black-teacher") .
+                       OT.grBlackTeacher
+                       <$> dynGameRecord)
+                    (OT.userName . fromMaybe OT.newUser . OT.grWhiteTeacher <$> dynGameRecord)
+                    ()
+                  evWhiteTeacher <- dynClassTextButton
+                    (maybe
+                       "profile-finished-white-teacher"
+                       (const "profile-finished-white-teacher") .
+                       OT.grWhiteTeacher
+                       <$> dynGameRecord)
+                    (OT.userName . fromMaybe OT.newUser . OT.grWhiteTeacher <$> dynGameRecord)
+                    ()
+                  pure $ leftmost [evBlack, evWhite, evBlackTeacher, evWhiteTeacher]
+                divClass "profile-finished-score" $
+                  dynText $ ((\(black, white) ->
+                              "Black: " <> (T.pack $ show black) <> ", " <> (T.pack $ show white)) . G._finalScore . OT.grGame) <$> dynGameRecord
+
+              )
+    divClass "profile-lpad" $ blank
   --TODO: Add Pagination / truncation at 14 boards (CSS restriction)
     dynEvents <- divClass "profile-boards-container" $ divClass "profile-boards" $ simpleList dynGames (readOnlyBoard dynUserId)
-    divClass "profile-rpad" $ text ""
+    divClass "profile-rpad" $ blank
     pure $ switchDyn $ leftmost <$> dynEvents
 
 

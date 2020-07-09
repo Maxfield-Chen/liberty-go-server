@@ -123,32 +123,33 @@ readOnlyBoard dynUser dynAllGame = do
       dynGame = OT.grGame <$> dynGameRecord
       dynUserId = OT.userId <$> dynUser
   divClass "read-only-container" $ do
-    divClass "ro-black-players" $ do
-          evBlack <- dynTextButton "ro-black"
-            (OT.userName . OT.grBlackPlayer <$> dynGameRecord)
-            ()
-          evBlackTeacher <- dynClassTextButton
-            (maybe
-                "hide"
-                (const "ro-black-teacher") .
-                OT.grBlackTeacher
-                <$> dynGameRecord)
-            ((" and " <>) . OT.userName . fromMaybe OT.newUser . OT.grBlackTeacher <$> dynGameRecord)
-            ()
-          pure $ leftmost [evBlack, evBlackTeacher]
-    divClass "ro-white-players" $ do
-          evWhiteTeacher <- dynClassTextButton
-            (maybe
-                "hide"
-                (const "ro-white-teacher") .
-                OT.grWhiteTeacher
-                <$> dynGameRecord)
-            ((" and " <>) .  OT.userName . fromMaybe OT.newUser . OT.grWhiteTeacher <$> dynGameRecord)
-            ()
-          evWhite <- dynTextButton "ro-white"
-            (OT.userName . OT.grWhitePlayer <$> dynGameRecord)
-            ()
-          pure $ leftmost [evWhite, evWhiteTeacher]
+    divClass "ro-player-names" $ do
+        divClass "ro-black-players" $ do
+              evBlack <- dynTextButton "ro-black"
+                (("Black: " <>) . OT.userName . OT.grBlackPlayer <$> dynGameRecord)
+                ()
+              evBlackTeacher <- dynClassTextButton
+                (maybe
+                    "hide"
+                    (const "ro-black-teacher") .
+                    OT.grBlackTeacher
+                    <$> dynGameRecord)
+                ((" and " <>) . OT.userName . fromMaybe OT.newUser . OT.grBlackTeacher <$> dynGameRecord)
+                ()
+              pure $ leftmost [evBlack, evBlackTeacher]
+        divClass "ro-white-players" $ do
+              evWhite <- dynTextButton "ro-white"
+                (("White: " <>) . OT.userName . OT.grWhitePlayer <$> dynGameRecord)
+                ()
+              evWhiteTeacher <- dynClassTextButton
+                (maybe
+                    "hide"
+                    (const "ro-white-teacher") .
+                    OT.grWhiteTeacher
+                    <$> dynGameRecord)
+                ((" and " <>) .  OT.userName . fromMaybe OT.newUser . OT.grWhiteTeacher <$> dynGameRecord)
+                ()
+              pure $ leftmost [evWhite, evWhiteTeacher]
     divClass "ro-board-container" $ do
       divClass "ro-board-overlay" $ divClass "board-grid" $ do
         mapM (\pos -> name pos $

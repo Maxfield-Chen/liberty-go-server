@@ -228,7 +228,7 @@ body {
 .profile-boards {
     display: grid;
     grid-template-columns: repeat(3, minmax(300px, 0.2fr));
-    grid-template-rows: repeat(7, minmax(450px, 0.24fr));
+    grid-template-rows: repeat(7, minmax(450px, 0.6fr));
     grid-gap: 2rem;
 }
 
@@ -298,7 +298,7 @@ body {
 
 .read-only-board-button {
     grid-row: grid-start / footer-start;
-    grid-column: row-grid-start / right;
+    grid-column: left / right;
     background-color: Transparent;
     background-repeat: no-repeat;
     border: none;
@@ -324,8 +324,8 @@ body {
     width: 100%;
     position: relative;
     display: grid;
-    grid-template-rows: [top] 0.5fr [grid-start] 8fr [footer-start] 1.5fr [bot];
-    grid-template-columns: [left] 1vw [row-grid-start] 9.5fr [right];
+    grid-template-rows: [top] 0.5fr [white-start] 0px [grid-start] 7.5fr [footer-start] 1.5fr [bot];
+    grid-template-columns: [left] 1fr [right];
 }
 
 .board-container {
@@ -378,15 +378,6 @@ body {
     background-color: transparent;
     border: none;
 }
-.ro-white-teacher {
-    transform: rotate(-90deg);
-    margin-left: -3vw;
-    margin-top: 2.5vw;
-}
-.ro-white {
-    transform: rotate(-90deg);
-    margin-left: -3vw;
-}
 
 .ro-black-players button {
     font-family: Vollkorn SC;
@@ -401,20 +392,29 @@ body {
     border: none;
 }
 .ro-black-players {
-    grid-row: top / grid-start;
+    grid-row: top / white-start;
     grid-column: left / right;
 }
+.ro-white-players button {
+    font-family: Vollkorn SC;
+    font-weight: 600;
+    font-size: 0.7vw;
+    color: #030303;
+    text-transform: uppercase;
+    height: 0.5%;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: none;
+}
 .ro-white-players {
-    display: inherit;
-    grid-column: left / row-grid-start;
-    grid-row: grid-start / footer-start;
-    margin-left: 0.5vw;
-    margin-top: 2vw;
+    grid-row: white-start / grid-start;
+    grid-column: left / right;
 }
 
 .ro-board-container{
     grid-row: grid-start / footer-start;
-    grid-column: row-grid-start / right;
+    grid-column: left / right;
     background-image: url("http://localhost:8888/raw/dark-texture.jpg");
     padding: 1vw;
 }
@@ -598,8 +598,10 @@ body {
     display: none;
 }
 
+.ro-white {
+    padding-right: 0;
+}
 .ro-black {
-    margin-left: 1.5vw;
     padding-right: 0;
 }
 

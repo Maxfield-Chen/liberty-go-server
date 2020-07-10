@@ -87,17 +87,16 @@ opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
         "sidebar-opponent-user"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    el "br" blank
-    evPlayerName <- dynTextButton "sidebar-player-name" (OT.userName <$> dynProfileUser) Profile
     evTeacherName <- dynClassTextButton
-      (maybe "sidebar-teacher-name-hidden" (const "sidebar-teacher-name") <$> dynMTeacher)
+      (maybe "sidebar-teacher-name-hidden" (const "sidebar-opponent-teacher-name") <$> dynMTeacher)
       (OT.userName . fromMaybe OT.newUser <$> dynMTeacher) Profile
-    el "br" blank
+    evPlayerName <- dynTextButton "sidebar-opponent-player-name" (OT.userName <$> dynOpponent) Profile
+    divClass "sidebar-separater" blank
     divClass "sidebar-opponent-captures" $
       dynText
         ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . OT.grGame)
          <$> dynUserColor <*> dynGameRecord)
-    divClass "sidebar-chat-separater" blank
+    divClass "sidebar-separater" blank
     divClass "sidebar-opponent-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
     pure evPage
 
@@ -123,13 +122,11 @@ playerSidebar dynGameRecord dynChatMessages dynProfileUser =
         "sidebar-player-teacher"
         Profile
       pure $ leftmost [evPlayer, evTeacher]
-    el "br" blank
     evPlayerName <- dynTextButton "sidebar-player-name" (OT.userName <$> dynProfileUser) Profile
     evTeacherName <- dynClassTextButton
       (maybe "sidebar-teacher-name-hidden" (const "sidebar-teacher-name") <$> dynMTeacher)
       (OT.userName . fromMaybe OT.newUser <$> dynMTeacher) Profile
-    evPass <- divClass "sidebar-player-pass" $ button "Pass"
-    el "br" blank
+    divClass "sidebar-separater" blank
     divClass "sidebar-player-turn" $
       dynText ((<> " to Play.") . T.pack . show . GL.nextToPlay . OT.grGame <$> dynGameRecord)
     divClass "sidebar-player-captures" $
@@ -137,8 +134,9 @@ playerSidebar dynGameRecord dynChatMessages dynProfileUser =
         ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . OT.grGame)
          <$> dynProfileUserColor <*> dynGameRecord)
 
-    evPass <- fmapMaybe reqSuccess <$> SC.pass (Right . OT.grId <$> dynGameRecord) evPass
-    divClass "sidebar-chat-separater" blank
+    evPass <- divClass "sidebar-player-pass" $ button "Pass"
+    evPassResponse <- fmapMaybe reqSuccess <$> SC.pass (Right . OT.grId <$> dynGameRecord) evPass
+    divClass "sidebar-separater" blank
     divClass "sidebar-player-chat" $
       chatEl dynGameRecord dynChatMessages dynProfileUser False leftFilter
     pure evPage

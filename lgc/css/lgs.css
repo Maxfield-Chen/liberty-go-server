@@ -507,15 +507,15 @@ body {
 }
 
 .board-grid {
-    height: 100%;
-    width: 100%;
-    bottom: 2.5%;
-    right: 2.5%;
+    height: 105%;
+    width: 105%;
+    bottom: -1vw;
+    right: -1vw;
     position: absolute;
     grid-area: board;
     display: grid;
-    grid-template-columns: repeat(19,minmax(5px,1fr));
-    grid-template-rows: repeat(19,minmax(5px,1fr));
+    grid-template-columns: repeat(20,minmax(5px,1fr));
+    grid-template-rows: repeat(20,minmax(5px,1fr));
 }
 
 .play-page {

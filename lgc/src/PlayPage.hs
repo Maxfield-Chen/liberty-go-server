@@ -56,9 +56,9 @@ playPage dynPage dynGameId =
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
     dynChatMessages <- getChatMessages dynGameId evChatMessages mGameMessage
 
-    evPlayerPage <- playerSidebar dynGR dynChatMessages dynUser
+    evPlayerPage <- playerSidebar dynGR dynChatMessages dynGame dynUser
     boardEv       <- boardEl $ fromMaybe newGame <$> dynGame
-    evOpponentPage <- opponentSidebar dynGR dynChatMessages dynUser
+    evOpponentPage <- opponentSidebar dynGR dynChatMessages dynGame dynUser
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right <$> dynGameId) posDyn (() <$ boardEv)
@@ -67,9 +67,10 @@ playPage dynPage dynGameId =
 opponentSidebar :: forall t m . MonadWidget t m =>
                  Dynamic t OT.GameRecord
               -> Dynamic t [ OT.ChatMessage]
+              -> Dynamic t (Maybe G.Game)
               -> Dynamic t OT.User
               -> m (Event t Page)
-opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
+opponentSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
   divClass "sidebar-opponent" $ do
     let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
         dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
@@ -94,8 +95,8 @@ opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
     divClass "sidebar-separater" blank
     divClass "sidebar-opponent-captures" $
       dynText
-        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . OT.grGame)
-         <$> dynUserColor <*> dynGameRecord)
+        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . fromMaybe newGame)
+         <$> dynUserColor <*> dynMaybeGame)
     divClass "sidebar-separater" blank
     divClass "sidebar-opponent-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
     pure evPage
@@ -103,9 +104,10 @@ opponentSidebar dynGameRecord dynChatMessages dynProfileUser =
 playerSidebar :: forall t m . MonadWidget t m =>
                  Dynamic t OT.GameRecord
               -> Dynamic t [ OT.ChatMessage]
+              -> Dynamic t (Maybe G.Game)
               -> Dynamic t OT.User
               -> m (Event t Page)
-playerSidebar dynGameRecord dynChatMessages dynProfileUser =
+playerSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
   divClass "sidebar-player" $ do
     let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
         dynProfileUserColor = bool G.White G.Black <$>
@@ -128,11 +130,12 @@ playerSidebar dynGameRecord dynChatMessages dynProfileUser =
       (OT.userName . fromMaybe OT.newUser <$> dynMTeacher) Profile
     divClass "sidebar-separater" blank
     divClass "sidebar-player-turn" $
-      dynText ((<> " to Play.") . T.pack . show . GL.nextToPlay . OT.grGame <$> dynGameRecord)
+      dynText ((<> " to Play.") . T.pack . show . GL.nextToPlay . fromMaybe G.newGame
+               <$> dynMaybeGame)
     divClass "sidebar-player-captures" $
       dynText
-        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . OT.grGame)
-         <$> dynProfileUserColor <*> dynGameRecord)
+        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . fromMaybe G.newGame)
+         <$> dynProfileUserColor <*> dynMaybeGame)
 
     evPass <- divClass "sidebar-player-pass" $ button "Pass"
     evPassResponse <- fmapMaybe reqSuccess <$> SC.pass (Right . OT.grId <$> dynGameRecord) evPass
@@ -176,7 +179,7 @@ getGame dynGameId evMFetchGame mGameMessage = do
                        Just ws -> Just ws
                        Nothing -> mhttp) <$> dynMWSGame <*> dynMFetchGame
 
-getChatMessages:: forall t m. MonadWidget t m =>
+getChatMessages :: forall t m. MonadWidget t m =>
                   Dynamic t GameId
                   -> Event t [OT.ChatMessage]
                   -> Event t (Maybe GameMessage)

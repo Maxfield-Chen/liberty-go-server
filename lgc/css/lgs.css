@@ -454,7 +454,7 @@ body {
     padding-top:100%;
     position: relative;
     background-image: repeating-linear-gradient(#000 0 2px, transparent 2px 100%), repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 100%);
-    background-size: 5.22% 5.22%;
+    background-size: 5.22% 5.545%;
 }
 .board-top {
     grid-area: top / left / board-start / right;
@@ -477,7 +477,7 @@ body {
 }
 
 .number-separater {
-    margin: 0.3vw 0;
+    margin: 0.42vw 0;
 }
 .board-overlay {
     grid-area: board-start / col-board-start / numbers / letters;

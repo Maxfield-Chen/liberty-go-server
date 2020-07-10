@@ -151,7 +151,7 @@ boardEl dynGame =
   divClass "board-container" $ do
     let letters = "ABCDEFGHIJKLMNOPQRST"
     divClass "board-top" $ text letters
-    divClass "board-left" $ text "1" >> mapM ((divClass "number-separater" blank >> ) . text . T.pack . show) [2..19]
+    divClass "board-left" $ text "19" >> mapM ((divClass "number-separater" blank >> ) . text . T.pack . show) (reverse [1..18])
     evPos <- divClass "board-overlay" $ divClass "board-grid" $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                     \case
@@ -163,7 +163,7 @@ boardEl dynGame =
                                   (pure [] :: m [Event t Position])
                                   (concat boardPositions)
       pure $ leftmost buttonEvs
-    divClass "board-right" $ text "1" >> mapM ((divClass "number-separater" blank >> ) . text . T.pack . show) [2..19]
+    divClass "board-right" $ text "19" >> mapM ((divClass "number-separater" blank >> ) . text . T.pack . show) (reverse [1..18])
     divClass "board-bottom" $ text letters
     pure evPos
 

@@ -1,5 +1,6 @@
 :root {
     --awaiter-size: 5.5em;
+    --coordinates-size: 2.5vw;
 }
 input {
     height: 38px;
@@ -335,8 +336,19 @@ body {
 }
 
 .board-container {
-    padding: 3vw;
+    font-family: Vollkorn SC;
+    font-weight: 600;
+    font-size: 2vw;
+    color: #030303;
+    text-transform: uppercase;
+    text-decoration: none;
+    overflow-wrap: break-word;
+    background-color: transparent;
+    border: none;
+    display: grid;
     grid-area: rgb-start / pad / rgb-end / gb-end;
+    grid-template-rows: [top] var(--coordinates-size) [board-start] 1fr [numbers] var(--coordinates-size) [bottom];
+    grid-template-columns: [left] var(--coordinates-size) [col-board-start] 1fr [letters] var(--coordinates-size) [right];
     background-image: url("http://localhost:8888/raw/dark-texture.jpg");
 }
 
@@ -431,8 +443,22 @@ body {
     background-image: repeating-linear-gradient(#000 0 2px, transparent 2px 100%), repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 100%);
     background-size: 5.22% 5.22%;
 }
+.board-top {
+    grid-area: top / left / board-start / right;
+    letter-spacing: 1.3vw;
+    padding-left: 2vw;
+}
+.board-bottom {
+    grid-area: numbers / left / bottom / right;
+}
+.board-left {
+    grid-area: board-start / left / numbers / col-board-start;
+}
+.board-right {
+    grid-area: board-start / letters / numbers / right;
+}
 .board-overlay {
-    grid-area: board;
+    grid-area: board-start / col-board-start / numbers / letters;
     height: 0;
     padding-top:100%;
     position: relative;

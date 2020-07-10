@@ -149,8 +149,9 @@ boardEl :: forall t m . MonadWidget t m =>
            -> m (Event t Position)
 boardEl dynGame =
   divClass "board-container" $ do
-    divClass "board-top" $ text ""
-    divClass "board-left" $ text ""
+    let letters = "ABCDEFGHIJKLMNOPQRST"
+    divClass "board-top" $ text letters
+    divClass "board-left" $ mapM ((el "br" blank >> ) . text . T.pack . show) [1..19]
     evPos <- divClass "board-overlay" $ divClass "board-grid" $ do
       buttonEvs <- foldr (\pos mButtonEvs -> name pos $
                                     \case
@@ -162,8 +163,8 @@ boardEl dynGame =
                                   (pure [] :: m [Event t Position])
                                   (concat boardPositions)
       pure $ leftmost buttonEvs
-    divClass "board-right" $ text ""
-    divClass "board-bottom" $ text ""
+    divClass "board-right" $ mapM ((el "br" blank >> ) . text . T.pack . show) [1..19]
+    divClass "board-bottom" $ text letters
     pure evPos
 
 getGame :: forall t m. MonadWidget t m =>

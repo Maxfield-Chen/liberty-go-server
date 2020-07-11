@@ -350,8 +350,9 @@ body {
 }
 
 .board-container {
-    font-family: 'Anonymous Pro';
-    font-size: 2vw;
+    padding: 1.5vw;
+    font-family: Vollkorn SC;
+    font-size: 1.5vw;
     color: #030303;
     text-transform: uppercase;
     text-decoration: none;
@@ -454,17 +455,17 @@ body {
     padding-top:100%;
     position: relative;
     background-image: repeating-linear-gradient(#000 0 2px, transparent 2px 100%), repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 100%);
-    background-size: 5.22% 5.545%;
+    background-size: 5.55% 5.55%;
 }
 .board-top {
     grid-area: top / left / board-start / right;
-    letter-spacing: 1.3vw;
-    padding-left: 2vw;
+    letter-spacing: 1.6vw;
+    padding-left: 2.5vw;
 }
 .board-bottom {
     grid-area: numbers / left / bottom / right;
-    letter-spacing: 1.3vw;
-    padding-left: 2vw;
+    letter-spacing: 1.6vw;
+    padding-left: 2.5vw;
 }
 .board-left {
     grid-area: top / left / bottom / col-board-start;
@@ -477,15 +478,16 @@ body {
 }
 
 .number-separater {
-    margin: 0.42vw 0;
+    margin: 0.5vw 0;
 }
 .board-overlay {
     grid-area: board-start / col-board-start / numbers / letters;
+    margin: 0.5vw;
     height: 0;
     padding-top:100%;
     position: relative;
     background-image: repeating-linear-gradient(#000 0 2px, transparent 2px 100%), repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 100%);
-    background-size: 5.255% 5.255%;
+    background-size: 5.55% 5.55%;
 }
 
 .ro-board-canvas{
@@ -507,15 +509,15 @@ body {
 }
 
 .board-grid {
-    height: 105%;
-    width: 105%;
-    bottom: -1vw;
-    right: -1vw;
+    height: 100%;
+    width: 100%;
+    bottom: 0vw;
+    right: 0vw;
     position: absolute;
     grid-area: board;
     display: grid;
-    grid-template-columns: repeat(20,minmax(5px,1fr));
-    grid-template-rows: repeat(20,minmax(5px,1fr));
+    grid-template-columns: repeat(19,minmax(5px,1fr));
+    grid-template-rows: repeat(19,minmax(5px,1fr));
 }
 
 .play-page {

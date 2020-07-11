@@ -509,10 +509,10 @@ body {
 }
 
 .board-grid {
-    height: 100%;
-    width: 100%;
-    bottom: 0vw;
-    right: 0vw;
+    height: 105%;
+    width: 105%;
+    bottom: -2.5%;
+    right: -2.6%;
     position: absolute;
     grid-area: board;
     display: grid;

@@ -149,7 +149,7 @@ boardEl :: forall t m . MonadWidget t m =>
            -> m (Event t Position)
 boardEl dynGame =
   divClass "board-container" $ do
-    let letters = "ABCDEFGHIJKLMNOPQRS"
+    let letters = "ABCDEFGHJKLMNOPQRST"
     divClass "board-top" $ text letters
     divClass "board-left" $ text "19" >> mapM ((divClass "number-separater" blank >> ) . text . T.pack . show) (reverse [1..18])
     evPos <- divClass "board-overlay" $ divClass "board-grid" $ do

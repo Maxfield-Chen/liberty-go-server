@@ -29,6 +29,7 @@ import           GameDB                 (GameRecord, UserId, UserType,
                                          userName, userPasswordHash, whiteFocus)
 import qualified GameDB                 as GDB
 import qualified GameLogic              as GL
+import qualified OutputTypes            as OT
 import           Servant
 import qualified UserInput
 
@@ -176,6 +177,21 @@ getUserType senderId gameId = do
               (fromMaybe (-1) wt, GDB.WhiteTeacher)]
        ) =<< mGameRecord)
 
+convertDeepGameRecord :: GDB.GameRecord ->  ConfigApp (Maybe OT.GameRecord)
+convertDeepGameRecord gr = do
+    let GDB.UserId bpId = GDB._black_player gr
+        GDB.UserId wpId = GDB._white_player gr
+        GDB.UserId mbtId = GDB._black_teacher gr
+        GDB.UserId mwtId = GDB._white_teacher gr
+    mbp <- getUser bpId
+    mwp <- getUser wpId
+    mbt <- case mbtId of
+      Nothing   -> pure Nothing
+      Just btId -> getUser btId
+    mwt <- case mwtId of
+      Nothing   -> pure Nothing
+      Just wtId -> getUser wtId
+    pure $ ((OT.convertGR gr) <$> mbp <*> mwp) <*> Just mbt <*> Just mwt
 
 getGameRecord ::  Int ->  ConfigApp (Maybe GDB.GameRecord)
 getGameRecord gameId = do

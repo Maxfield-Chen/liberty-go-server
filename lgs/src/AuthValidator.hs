@@ -21,6 +21,7 @@ import qualified Game                 as G
 import qualified GameDB               as GDB hiding (User)
 import qualified GameExpressions      as GEX
 import qualified GameLogic            as GL
+import qualified OutputTypes          as OT
 import           Proofs
 import           Servant
 import           Servant.Auth.Server
@@ -78,6 +79,30 @@ proposeTerritory user gameId = errPlayerExcluded user gameId >> noAwaiters gameI
 
 acceptTerritoryProposal :: UserInput.User -> Int -> AppM ()
 acceptTerritoryProposal user gameId = errPlayerExcluded user gameId >> noAwaiters gameId
+
+markMove :: UserInput.User -> Int -> AppM (Maybe OT.GameRecord)
+markMove = errUserExcluded
+
+
+errUserExcluded :: UserInput.User -> Int -> AppM (Maybe OT.GameRecord)
+errUserExcluded (UserInput.User _ _ _ id) gameId =
+  do
+    config <- ask
+    mBaseGameRecord <- liftIO $ runReaderT (GEX.getGameRecord gameId) config
+    case mBaseGameRecord of
+      Nothing -> throwError err410
+      Just baseGameRecord -> do
+        mGameRecord <- liftIO $ runReaderT (GEX.convertDeepGameRecord baseGameRecord) config
+        let players = OT.userId <$> catMaybes [OT.grBlackPlayer <$> mGameRecord
+                                , OT.grWhitePlayer <$> mGameRecord
+                                , OT.grBlackTeacher =<< mGameRecord
+                                , OT.grWhiteTeacher =<< mGameRecord]
+        case id `elem` players of
+          False -> throwError err401
+          _     -> pure mGameRecord
+
+matchUserId :: GDB.UserId -> Int
+matchUserId (GDB.UserId ret) = ret
 
 errPlayerExcluded :: UserInput.User -> Int -> AppM ()
 errPlayerExcluded (UserInput.User _ _ _ id) gameId =

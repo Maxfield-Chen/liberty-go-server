@@ -54,6 +54,13 @@ type GameAPI = "play" :> "proposeGame"
                 :<|> "chat" :> Capture "gameId" Int
                 :> "getMessages" :> Post '[JSON] [ OT.ChatMessage]
 
+                :<|> "review" :> Capture "gameId" Int
+                :> "markMove" :> ReqBody '[JSON] UserInput.MarkedMove
+                :> Post '[JSON] [OT.MarkedMove]
+
+                :<|> "review" :> Capture "gameId" Int
+                :> "getMarkMove" :> Get '[JSON] [OT.MarkedMove]
+
                 :<|> "play" :> Capture "gameId" Int
                 :> "acceptGameProposal" :> ReqBody '[JSON] Bool
                                      :> Post '[JSON] (Maybe G.GameStatus)

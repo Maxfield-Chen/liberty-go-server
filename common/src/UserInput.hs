@@ -21,7 +21,7 @@ data RegisterUser =
   {
     rUserEmail    :: Text,
     rUserName     :: Text,
-    rUserImage     :: Int,
+    rUserImage    :: Int,
     rUserPassword :: Text
  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
@@ -30,13 +30,20 @@ data User =
   User
     { userEmail :: Text
     , userName  :: Text
-    , userImage  :: Int
+    , userImage :: Int
     , userId    :: Int
     } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
+data MarkedMove =
+  MarkedMove {
+    markedMoveTurnNumber   :: Int
+  , markedMoveUserId       :: Int
+  , markedMoveGameRecordId :: Int
+} deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
+
 data  ChatMessage =
-   ChatMessage { chatMessage     :: Text,
-                 chatShared ::  Bool} deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
+   ChatMessage { chatMessage :: Text,
+                 chatShared  ::  Bool} deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
 data Login =
   Login { loginName     :: Text,
           loginPassword :: Text} deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)

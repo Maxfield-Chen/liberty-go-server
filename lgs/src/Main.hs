@@ -51,6 +51,8 @@ protected Servant.Auth.Server.Indefinite = throwAll err406
 gameOperations user  =
   GI.sendMessage user :<|>
   GI.getMessages user :<|>
+  GI.markMove user :<|>
+  GI.getMarkedMoves user :<|>
   GI.acceptGameProposal user  :<|>
   GI.proposePass user  :<|>
   GI.proposeTerritory user  :<|>

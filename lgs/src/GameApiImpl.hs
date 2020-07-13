@@ -96,26 +96,12 @@ getGameId gameId = do
   mGR <-  liftIO $ runReaderT (GEX.getGameRecord gameId) config
   case mGR of
     Nothing -> pure Nothing
-    Just gr -> convertGR gr
+    Just gr -> liftIO $ runReaderT (GEX.convertDeepGameRecord gr) config
 
---TODO: Validate that this doesn't return Nothing when teachers are null
-convertGR :: GDB.GameRecord ->  AppM (Maybe OT.GameRecord)
-convertGR gr = do
-    let GDB.UserId bpId = GDB._black_player gr
-        GDB.UserId wpId = GDB._white_player gr
-        GDB.UserId mbtId = GDB._black_teacher gr
-        GDB.UserId mwtId = GDB._white_teacher gr
-    config <- ask
-    mbp <- liftIO $ runReaderT (GEX.getUser bpId) config
-    mwp <- liftIO $ runReaderT (GEX.getUser wpId) config
-    mbt <- case mbtId of
-      Nothing   -> pure Nothing
-      Just btId -> liftIO $ runReaderT (GEX.getUser btId) config
-    mwt <- case mwtId of
-      Nothing   -> pure Nothing
-      Just wtId -> liftIO $ runReaderT (GEX.getUser wtId) config
-    pure $ ((OT.convertGR gr) <$> mbp <*> mwp) <*> Just mbt <*> Just mwt
-
+getMarkedMoves :: UserInput.User -> Int -> AppM [OT.MarkedMove]
+getMarkedMoves UserInput.User{..} gameId = do
+  config <- ask
+  liftIO $ fmap OT.convertMarkedMove <$> runReaderT (GEX.getMarkedMoves gameId) config
 
 getGamesForProfile :: UserInput.User -> AppM OT.AllGames
 getGamesForProfile UserInput.User{..} = getGamesForPlayer userId
@@ -127,7 +113,9 @@ getGamesForPlayer :: Int -> AppM OT.AllGames
 getGamesForPlayer playerId = do
   config <- ask
   mGDBgrs <-  liftIO $ runReaderT (GEX.getPlayersGameRecords playerId) config
-  mgrs <-  mapM convertGR mGDBgrs
+  mgrs <-  mapM
+    (\gameRecord -> liftIO $ runReaderT (GEX.convertDeepGameRecord gameRecord) config)
+    mGDBgrs
   let grs = catMaybes mgrs
   mawts <- foldM (\m k -> do
                      awaiters <- liftIO $ fmap OT.convertAwaiter <$> runReaderT (GEX.getAwaiters (OT.grId k)) config
@@ -148,8 +136,17 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
   gameRecord:_ <- liftIO $ runReaderT (GEX.insertGame proposedGame newGame) config
   mapM_ (\userId -> liftIO $ runReaderT (GEX.insertAwaiter (gameRecord ^. grId) userId) config) $
     delete (UserInput.userId proposingUser) $ GDB._userId <$> catMaybes gameUsers
-  mGR <-  convertGR gameRecord
+  mGR <-  liftIO $ runReaderT (GEX.convertDeepGameRecord gameRecord) config
   pure $ fromJust mGR
+
+markMove :: UserInput.User -> Int -> UserInput.MarkedMove -> AppM [OT.MarkedMove]
+markMove user@(UserInput.User _ _ _ userId) gameId UserInput.MarkedMove{..} = do
+  mGameRecord <- AuthValidator.markMove user gameId
+  let turnNumber = ((+ (-1)) . length . G._record . OT.grGame . fromJust ) mGameRecord
+  config <- ask
+  baseMove <-
+    liftIO $ runReaderT (GEX.insertMarkedMove gameId userId turnNumber) config
+  pure $ OT.convertMarkedMove <$> baseMove
 
 sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM ()
 sendMessage user@(UserInput.User _ _ _ userId) gameId (UserInput.ChatMessage message shared) = do

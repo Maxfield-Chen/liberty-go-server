@@ -459,7 +459,7 @@ body {
 }
 .board-top {
     grid-area: top / left / board-start / right;
-    letter-spacing: 1.6vw;
+    letter-spacing: 1.53vw;
     padding-left: 2.5vw;
 }
 .board-bottom {

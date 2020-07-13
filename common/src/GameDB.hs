@@ -110,6 +110,33 @@ ChatMessage (LensFor chat_message_id) (UserId (LensFor chat_message_sender_id)) 
 instance HasSqlValueSyntax be String => HasSqlValueSyntax be  ChatMessage where
   sqlValueSyntax = autoSqlValueSyntax
 
+data MarkedMoveT f
+  = MarkedMove {_marked_move_id       :: Columnar f Int
+            ,_marked_move_turn_number :: Columnar f Int
+            ,_marked_move_user_id     :: PrimaryKey UserT f
+            ,_marked_move_game_id     :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
+
+type MarkedMove = MarkedMoveT Identity
+type MarkedMoveId = PrimaryKey MarkedMoveT Identity
+
+deriving instance Eq MarkedMove
+deriving instance Show MarkedMove
+deriving instance ToJSON MarkedMove
+deriving instance FromJSON MarkedMove
+
+deriving instance Show (PrimaryKey MarkedMoveT Identity)
+deriving instance ToJSON (PrimaryKey MarkedMoveT Identity)
+deriving instance FromJSON (PrimaryKey MarkedMoveT Identity)
+
+instance Table MarkedMoveT where
+  data PrimaryKey MarkedMoveT f = MarkedMoveId (Columnar f Int) deriving (Generic, Beamable)
+  primaryKey = MarkedMoveId . _marked_move_id
+
+
+MarkedMove (LensFor markedMoveId) (LensFor markedMoveTurnNumber)
+        (UserId (LensFor markedMoveUserId)) (GameRecordId (LensFor marked_move_game_id))
+        = tableLenses
+
 data AwaiterT f
   = Awaiter {_awaiter_id      :: Columnar f Int
             ,_awaiter_user_id :: PrimaryKey UserT f
@@ -137,15 +164,17 @@ Awaiter (LensFor awaiter_id) (UserId (LensFor awaiter_user_id))
         = tableLenses
 
 data GameRecordT f
-  = GameRecord {_gameId        :: Columnar f Int
-               ,_game          :: Columnar f Game
-               ,_black_player  :: PrimaryKey UserT f
-               ,_white_player  :: PrimaryKey UserT f
-               ,_black_teacher :: PrimaryKey UserT (Nullable f)
-               ,_white_teacher :: PrimaryKey UserT (Nullable f)
-               ,_black_focus   :: Columnar f Text
-               ,_white_focus   :: Columnar f Text
-               ,_timestamp     :: Columnar f Time.LocalTime
+  = GameRecord {_gameId                   :: Columnar f Int
+               ,_game                     :: Columnar f Game
+               ,_black_player             :: PrimaryKey UserT f
+               ,_white_player             :: PrimaryKey UserT f
+               ,_black_teacher            :: PrimaryKey UserT (Nullable f)
+               ,_white_teacher            :: PrimaryKey UserT (Nullable f)
+               ,_black_focus              :: Columnar f Text
+               ,_white_focus              :: Columnar f Text
+               ,_black_guidance_remaining :: Columnar f Int
+               ,_white_guidance_remaining :: Columnar f Int
+               ,_timestamp                :: Columnar f Time.LocalTime
                } deriving (Generic, Beamable)
 
 type GameRecord = GameRecordT Identity
@@ -168,6 +197,7 @@ GameRecord (LensFor grId) (LensFor game)
            (UserId (LensFor blackPlayer)) (UserId (LensFor whitePlayer))
            (UserId (LensFor blackTeacher)) (UserId (LensFor whiteTeacher))
            (LensFor blackFocus) (LensFor whiteFocus)
+           (LensFor blackGuidanceRemaining) (LensFor whiteGuidanceRemaining)
            (LensFor timestamp)
            = tableLenses
 
@@ -184,6 +214,7 @@ data LGSDb f =
      ,game_records  :: f (TableEntity GameRecordT)
      ,awaiters      :: f (TableEntity AwaiterT)
      ,chat_messages :: f (TableEntity ChatMessageT)
+     ,marked_moves  :: f (TableEntity MarkedMoveT)
     }
   deriving (Generic, Database be)
 

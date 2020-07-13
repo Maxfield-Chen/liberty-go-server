@@ -1,36 +1,36 @@
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE  RecordWildCards      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
 module GameExpressions where
 
+import           Config
 import           Control.Lens
 import           Control.Monad
-import           Data.Text              (Text)
+import           Control.Monad.Reader
 import           Data.Maybe
+import           Data.Text              (Text)
 import qualified Data.Time              as Time
 import           Database.Beam
 import           Database.Beam.Sqlite
 import           Database.SQLite.Simple
 import           Debug.Trace
 import qualified Game                   as G
-import           GameDB                 (awaiter_game_id, awaiter_id,
+import           GameDB                 (GameRecord, UserId, UserType,
+                                         awaiter_game_id, awaiter_id,
                                          awaiter_user_id, blackFocus,
                                          blackPlayer, blackTeacher, game, grId,
                                          lgsDb, timestamp, userEmail, userId,
-                                         userName, userPasswordHash, whiteFocus,
-                                         GameRecord, UserType, UserId)
+                                         userName, userPasswordHash, whiteFocus)
 import qualified GameDB                 as GDB
 import qualified GameLogic              as GL
+import           Servant
 import qualified UserInput
-import           Control.Monad.Reader
-import Config
-import Servant
 
 
 type ConfigApp = ReaderT Config IO
@@ -71,6 +71,18 @@ isPlayerAwaiter playerId gameId = do
             &&. GDB._awaiter_game_id awaiter ==. val_ (GDB.GameRecordId gameId))
     pure awaiter
   pure (not $ null awaiters)
+
+getMarkedMoves ::  Int ->  ConfigApp [GDB.MarkedMove]
+getMarkedMoves gameId = do
+  conn <- asks dbConnection
+  liftIO $ runBeamSqlite conn $
+    runSelectReturningList $
+    select $ do
+    markedMove <- all_ (GDB.marked_moves lgsDb)
+    gameRecord <- all_ (GDB.game_records (lgsDb))
+    guard_ (GDB._gameId gameRecord ==. val_ gameId
+           &&. GDB._marked_move_game_id markedMove `references_` gameRecord)
+    pure markedMove
 
 getAwaiters ::  Int ->  ConfigApp [GDB.Awaiter]
 getAwaiters gameId = do
@@ -185,6 +197,20 @@ insertUser userEmail userName userImage userPassword = do
         (insertExpressions
            [GDB.User default_ (val_ userEmail) (val_ userName) (val_ userImage) (val_ userPassword)])
 
+insertMarkedMove ::  Int -> Int -> Int -> ConfigApp [GDB.MarkedMove]
+insertMarkedMove gameId userId turnNumber = do
+  conn <- asks dbConnection
+  liftIO $ runBeamSqlite conn $ do
+    runInsertReturningList $
+      insertReturning
+      (GDB.marked_moves lgsDb)
+      (insertExpressions
+        [GDB.MarkedMove
+         default_
+         (val_ turnNumber)
+         (val_ (GDB.UserId userId ))
+         (val_ (GDB.GameRecordId gameId ))])
+
 insertAwaiter ::  Int -> Int ->  ConfigApp [GDB.Awaiter]
 insertAwaiter gameId userId = do
   conn <- asks dbConnection
@@ -212,6 +238,8 @@ insertGame (UserInput.ProposedGame blackPlayer whitePlayer mBlackTeacher mWhiteT
                (mPlayerIdToExpr mWhiteTeacher)
                (val_ blackFocus)
                (val_ whiteFocus)
+               (val_ 3)
+               (val_ 3)
                currentTimestamp_
            ])
 

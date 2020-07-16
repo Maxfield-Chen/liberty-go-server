@@ -114,7 +114,11 @@ data MarkedMoveT f
   = MarkedMove {_marked_move_id       :: Columnar f Int
             ,_marked_move_turn_number :: Columnar f Int
             ,_marked_move_user_id     :: PrimaryKey UserT f
-            ,_marked_move_game_id     :: PrimaryKey GameRecordT f} deriving (Generic, Beamable)
+            ,_marked_move_game_id     :: PrimaryKey GameRecordT f
+            , _marked_move_one        :: Columnar (Nullable f) Int
+            , _marked_move_two        :: Columnar (Nullable f) Int
+            , _marked_move_three      :: Columnar (Nullable f) Int
+            } deriving (Generic, Beamable)
 
 type MarkedMove = MarkedMoveT Identity
 type MarkedMoveId = PrimaryKey MarkedMoveT Identity
@@ -135,7 +139,8 @@ instance Table MarkedMoveT where
 
 MarkedMove (LensFor markedMoveId) (LensFor markedMoveTurnNumber)
         (UserId (LensFor markedMoveUserId)) (GameRecordId (LensFor marked_move_game_id))
-        = tableLenses
+        (LensFor markedMoveOne) (LensFor markedMoveTwo) (LensFor markedMoveThree)
+  = tableLenses
 
 data AwaiterT f
   = Awaiter {_awaiter_id      :: Columnar f Int

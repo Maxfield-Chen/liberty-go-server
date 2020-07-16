@@ -39,6 +39,9 @@ data MarkedMove =
     markedMoveTurnNumber   :: Int
   , markedMoveUserId       :: Int
   , markedMoveGameRecordId :: Int
+  , markedMoveOne          :: Maybe Int
+  , markedMoveTwo          :: Maybe Int
+  , markedMoveThree        :: Maybe Int
 } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 data  ChatMessage =

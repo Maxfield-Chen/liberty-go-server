@@ -140,12 +140,12 @@ proposeGame proposingUser proposedGame@(UserInput.ProposedGame bp wp mbt mwt _ _
   pure $ fromJust mGR
 
 markMove :: UserInput.User -> Int -> UserInput.MarkedMove -> AppM [OT.MarkedMove]
-markMove user@(UserInput.User _ _ _ userId) gameId UserInput.MarkedMove{..} = do
+markMove user@(UserInput.User _ _ _ userId) gameId move = do
   mGameRecord <- AuthValidator.markMove user gameId
   let turnNumber = ((+ (-1)) . length . G._record . OT.grGame . fromJust ) mGameRecord
   config <- ask
   baseMove <-
-    liftIO $ runReaderT (GEX.insertMarkedMove gameId userId turnNumber) config
+    liftIO $ runReaderT (GEX.insertMarkedMove move) config
   pure $ OT.convertMarkedMove <$> baseMove
 
 sendMessage :: UserInput.User -> Int ->  UserInput.ChatMessage -> AppM ()

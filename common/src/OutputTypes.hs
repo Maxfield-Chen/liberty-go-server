@@ -127,16 +127,19 @@ convertGR GDB.GameRecord{..} bp wp mbt mwt =
 data MarkedMove =
   MarkedMove
   {
-    markedMoveTurnNumber :: Int,
-    markedMoveUserId     :: Int,
-    markedMoveGameId     :: Int
+    markedMoveTurnNumber :: Int
+  , markedMoveUserId     :: Int
+  , markedMoveGameId     :: Int
+  , markedMoveOne        :: Maybe Int
+  , markedMoveTwo        :: Maybe Int
+  , markedMoveThree      :: Maybe Int
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 convertMarkedMove :: GDB.MarkedMove ->MarkedMove
 convertMarkedMove GDB.MarkedMove{..} =
   let (GDB.UserId userId) =_marked_move_user_id
       (GDB.GameRecordId gameId) =_marked_move_game_id
-  in MarkedMove _marked_move_turn_number userId gameId
+  in MarkedMove _marked_move_turn_number userId gameId _marked_move_one _marked_move_two _marked_move_three
 
 data Awaiter =
   Awaiter

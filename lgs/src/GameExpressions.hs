@@ -202,6 +202,7 @@ mPlayerIdToExpr mPlayerId = case mPlayerId of
   Just playerId -> just_ (val_ (GDB.UserId playerId))
   Nothing       -> nothing_
 
+
 --TODO: Hash password before storage
 insertUser ::  Text -> Text -> Int -> Text ->  ConfigApp [GDB.User]
 insertUser userEmail userName userImage userPassword = do
@@ -213,8 +214,8 @@ insertUser userEmail userName userImage userPassword = do
         (insertExpressions
            [GDB.User default_ (val_ userEmail) (val_ userName) (val_ userImage) (val_ userPassword)])
 
-insertMarkedMove ::  Int -> Int -> Int -> ConfigApp [GDB.MarkedMove]
-insertMarkedMove gameId userId turnNumber = do
+insertMarkedMove :: UserInput.MarkedMove -> ConfigApp [GDB.MarkedMove]
+insertMarkedMove UserInput.MarkedMove{..} = do
   conn <- asks dbConnection
   liftIO $ runBeamSqlite conn $ do
     runInsertReturningList $
@@ -223,9 +224,13 @@ insertMarkedMove gameId userId turnNumber = do
       (insertExpressions
         [GDB.MarkedMove
          default_
-         (val_ turnNumber)
-         (val_ (GDB.UserId userId ))
-         (val_ (GDB.GameRecordId gameId ))])
+         (val_ markedMoveTurnNumber)
+         (val_ (GDB.UserId markedMoveUserId ))
+         (val_ (GDB.GameRecordId markedMoveGameRecordId ))
+         (maybe nothing_ (just_ . val_) markedMoveOne)
+         (maybe nothing_ (just_ . val_) markedMoveTwo)
+         (maybe nothing_ (just_ . val_) markedMoveThree)
+        ])
 
 insertAwaiter ::  Int -> Int ->  ConfigApp [GDB.Awaiter]
 insertAwaiter gameId userId = do

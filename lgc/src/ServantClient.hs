@@ -111,6 +111,15 @@ sendMessage :: MonadWidget t m =>
                  -> Dynamic t (Either Text  UserInput.ChatMessage)
                  -> Event t ()
                  -> m (Event t (ReqResult () ()))
+markMove :: MonadWidget t m =>
+                 Dynamic t (Either Text Int)
+                 -> Dynamic t (Either Text  UserInput.MarkedMove)
+                 -> Event t ()
+                 -> m (Event t (ReqResult () [OT.MarkedMove]))
+getMarkedMoves :: MonadWidget t m =>
+                 Dynamic t (Either Text Int)
+                 -> Event t ()
+                 -> m (Event t (ReqResult () [OT.MarkedMove]))
 
 getGame :: MonadWidget t m =>
                  Dynamic t (Either Text Int)
@@ -118,4 +127,4 @@ getGame :: MonadWidget t m =>
                  -> m (Event t (ReqResult () (Maybe OT.GameRecord)))
 
 
-((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> sendMessage :<|> getMessages :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> (register :<|> login :<|> gamesForUser :<|> getUser :<|> getGame) :<|> _) = apiClients
+((proposeGame :<|> gamesForProfile  :<|> userForProfile :<|> sendMessage :<|> getMessages :<|> markMove :<|> getMarkedMoves :<|> acceptGameProposal :<|> pass :<|> proposeTerritory :<|> acceptTerritoryProposal :<|> placeStone) :<|> (register :<|> login :<|> gamesForUser :<|> getUser :<|> getGame) :<|> _) = apiClients

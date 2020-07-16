@@ -464,7 +464,7 @@ body {
 }
 .board-bottom {
     grid-area: numbers / left / bottom / right;
-    letter-spacing: 1.6vw;
+    letter-spacing: 1.53vw;
     padding-left: 2.5vw;
 }
 .board-left {

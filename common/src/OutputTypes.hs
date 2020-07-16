@@ -26,14 +26,16 @@ import           Servant.Auth.Server
 data GameRecord =
   GameRecord
   {
-    grId           :: Int,
-    grGame         :: G.Game,
-    grBlackPlayer  :: User,
-    grWhitePlayer  :: User,
-    grBlackTeacher :: Maybe User,
-    grWhiteTeacher :: Maybe User,
-    grBlackFocus   :: Text,
-    grWhiteFocus   :: Text
+    grId                     :: Int,
+    grGame                   :: G.Game,
+    grBlackPlayer            :: User,
+    grWhitePlayer            :: User,
+    grBlackTeacher           :: Maybe User,
+    grWhiteTeacher           :: Maybe User,
+    grBlackFocus             :: Text,
+    grWhiteFocus             :: Text,
+    grBlackGuidanceRemaining :: Int,
+    grWhiteGuidanceRemaining :: Int
  } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 data ChatMessage =
@@ -122,6 +124,8 @@ convertGR GDB.GameRecord{..} bp wp mbt mwt =
     (convertUser <$> mwt)
     _black_focus
     _white_focus
+    _black_guidance_remaining
+    _white_guidance_remaining
 
 
 data MarkedMove =

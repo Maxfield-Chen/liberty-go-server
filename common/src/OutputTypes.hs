@@ -72,7 +72,7 @@ data GameUpdate =
 
 newGameUpdate = GameUpdate (-1) G.newGame
 
-newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" ""
+newGameRecord = GameRecord (-1) G.newGame newUser newUser Nothing Nothing "" "" 3 3
 
 userAwaiting :: (GameRecord -> User)
              -> GameRecord

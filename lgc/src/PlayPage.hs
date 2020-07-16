@@ -138,6 +138,16 @@ playerSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
          <$> dynProfileUserColor <*> dynMaybeGame)
 
     evPass <- divClass "sidebar-player-pass" $ button "Pass"
+    evPass <- divClass "sidebar-player-request-guidance" $
+      dynTextButton
+        "sidebar-player-request-guidance-button"
+        ((\color ->
+            let formatText = (<> " Requests for Guidance") . T.pack . show
+            in case color of
+              G.Black -> formatText . OT.grBlackGuidanceRemaining
+              G.White -> formatText . OT.grWhiteGuidanceRemaining
+            ) <$> dynProfileUserColor <*> dynGameRecord)
+        ()
     evPassResponse <- fmapMaybe reqSuccess <$> SC.pass (Right . OT.grId <$> dynGameRecord) evPass
     divClass "sidebar-separater" blank
     divClass "sidebar-player-chat" $

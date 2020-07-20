@@ -134,9 +134,9 @@ data MarkedMove =
     markedMoveTurnNumber :: Int
   , markedMoveUserId     :: Int
   , markedMoveGameId     :: Int
-  , markedMoveOne        :: Maybe Int
-  , markedMoveTwo        :: Maybe Int
-  , markedMoveThree      :: Maybe Int
+  , markedMoveOne        :: Maybe G.Position
+  , markedMoveTwo        :: Maybe G.Position
+  , markedMoveThree      :: Maybe G.Position
   } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 convertMarkedMove :: GDB.MarkedMove ->MarkedMove

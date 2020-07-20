@@ -13,6 +13,7 @@ module UserInput where
 
 import           Data.Aeson.Types
 import           Data.Text           (Text)
+import           Game
 import           GHC.Generics
 import           Servant.Auth.Server
 
@@ -39,9 +40,9 @@ data MarkedMove =
     markedMoveTurnNumber   :: Int
   , markedMoveUserId       :: Int
   , markedMoveGameRecordId :: Int
-  , markedMoveOne          :: Maybe Int
-  , markedMoveTwo          :: Maybe Int
-  , markedMoveThree        :: Maybe Int
+  , markedMoveOne          :: Maybe Position
+  , markedMoveTwo          :: Maybe Position
+  , markedMoveThree        :: Maybe Position
 } deriving (Generic, ToJSON, FromJSON, Eq, Show, Read, ToJWT, FromJWT)
 
 data  ChatMessage =

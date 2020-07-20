@@ -115,9 +115,9 @@ data MarkedMoveT f
             ,_marked_move_turn_number :: Columnar f Int
             ,_marked_move_user_id     :: PrimaryKey UserT f
             ,_marked_move_game_id     :: PrimaryKey GameRecordT f
-            , _marked_move_one        :: Columnar (Nullable f) Int
-            , _marked_move_two        :: Columnar (Nullable f) Int
-            , _marked_move_three      :: Columnar (Nullable f) Int
+            , _marked_move_one        :: Columnar (Nullable f) Position
+            , _marked_move_two        :: Columnar (Nullable f) Position
+            , _marked_move_three      :: Columnar (Nullable f) Position
             } deriving (Generic, Beamable)
 
 type MarkedMove = MarkedMoveT Identity
@@ -207,6 +207,12 @@ GameRecord (LensFor grId) (LensFor game)
            = tableLenses
 
 -- LGL SQL Representation Definitions
+instance HasSqlValueSyntax be String => HasSqlValueSyntax be Position where
+  sqlValueSyntax = autoSqlValueSyntax
+
+instance FromBackendRow Sqlite Position where
+  fromBackendRow = read . unpack <$> fromBackendRow
+
 instance HasSqlValueSyntax be String => HasSqlValueSyntax be Game where
   sqlValueSyntax = autoSqlValueSyntax
 

@@ -37,6 +37,19 @@ import qualified UserInput
 
 
 type GameId = Int
+data PlayAction =  Waiting | InProgress | Counting | Done | MarkingMoves {
+    moveOne   :: G.Position
+  , moveTwo   :: G.Position
+  , moveThree :: G.Position
+                                                       }
+data PlayState = PlayState {
+   playAction       :: PlayAction
+ , playGameId       :: GameId
+ , playGameRecord   :: OT.GameRecord
+ , playLiveGame     :: G.Game
+ , playChatMessages :: [OT.ChatMessage]
+ , playUser         :: OT.User
+                           }
 
 playPage :: forall t m . MonadWidget t m =>
             Dynamic t Page
@@ -52,30 +65,38 @@ playPage dynPage dynGameId =
     mGameMessage <- realTimeEl dynGameId evEmptyGetGame
 
     dynUser <- holdDyn OT.newUser evUser
-    dynGame <- getGame dynGameId (fmap OT.grGame <$> evFetchMGR) mGameMessage
+    dynGame <- fmap (fromMaybe newGame) <$> (getGame dynGameId (fmap OT.grGame <$> evFetchMGR) mGameMessage)
     dynGR <- holdDyn OT.newGameRecord (fromMaybe OT.newGameRecord <$> evFetchMGR)
     dynChatMessages <- getChatMessages dynGameId evChatMessages mGameMessage
+  --TODO: determine how to link in events from other elements to set the state
+    let dynPlayState = PlayState InProgress <$>
+          dynGameId <*>
+          dynGR <*>
+          dynGame <*>
+          dynChatMessages <*>
+          dynUser
 
-    evPlayerPage <- playerSidebar dynGR dynChatMessages dynGame dynUser
-    boardEv       <- boardEl $ fromMaybe newGame <$> dynGame
-    evOpponentPage <- opponentSidebar dynGR dynChatMessages dynGame dynUser
+    evPlayerPage <- playerSidebar dynPlayState
+    boardEv       <- boardEl dynGame
+    evOpponentPage <- opponentSidebar dynPlayState
     posDyn        <- holdDyn (Left "No Pos") $ Right <$> boardEv
     _ <- fmapMaybe reqSuccess <$>
       SC.placeStone (Right <$> dynGameId) posDyn (() <$ boardEv)
     pure $ leftmost [evPlayerPage, evOpponentPage]
 
 opponentSidebar :: forall t m . MonadWidget t m =>
-                 Dynamic t OT.GameRecord
-              -> Dynamic t [ OT.ChatMessage]
-              -> Dynamic t (Maybe G.Game)
-              -> Dynamic t OT.User
+                 Dynamic t PlayState
               -> m (Event t Page)
-opponentSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
+opponentSidebar playState =
   divClass "sidebar-opponent" $ do
-    let dynOpponent = OT.getOpponent <$> dynProfileUser <*> dynGameRecord
-        dynMTeacher = OT.getTeacher <$> dynOpponent <*> dynGameRecord
+    let dynOpponent = OT.getOpponent <$>
+          (playUser <$> playState) <*>
+          (playGameRecord <$> playState)
+        dynMTeacher = OT.getTeacher <$>
+          dynOpponent <*>
+          (playGameRecord <$> playState)
         dynUserColor = bool G.White G.Black <$>
-          (OT.isBlack <$> dynOpponent <*> dynGameRecord)
+          (OT.isBlack <$> dynOpponent <*> (playGameRecord <$> playState))
     divClass "sidebar-opponent-color" $
       dynText ((<> " Team") . T.pack . show <$> dynUserColor)
     evPage <- divClass "sidebar-opponent-info" $ do
@@ -95,21 +116,21 @@ opponentSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
     divClass "sidebar-separater" blank
     divClass "sidebar-opponent-captures" $
       dynText
-        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . fromMaybe newGame)
-         <$> dynUserColor <*> dynMaybeGame)
+        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures)
+         <$> dynUserColor <*> (playLiveGame <$> playState))
     divClass "sidebar-separater" blank
-    divClass "sidebar-opponent-chat" $ chatEl dynGameRecord dynChatMessages dynProfileUser True rightFilter
+    divClass "sidebar-opponent-chat" $ chatEl playState True rightFilter
     pure evPage
 
 playerSidebar :: forall t m . MonadWidget t m =>
-                 Dynamic t OT.GameRecord
-              -> Dynamic t [ OT.ChatMessage]
-              -> Dynamic t (Maybe G.Game)
-              -> Dynamic t OT.User
+                 Dynamic t PlayState
               -> m (Event t Page)
-playerSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
+playerSidebar playState =
   divClass "sidebar-player" $ do
-    let dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
+    let dynGameRecord = playGameRecord <$> playState
+        dynProfileUser = playUser <$> playState
+        dynLiveGame = playLiveGame <$> playState
+        dynMTeacher = OT.getTeacher <$> dynProfileUser <*> dynGameRecord
         dynProfileUserColor = bool G.White G.Black <$>
           (OT.isBlack <$> dynProfileUser <*> dynGameRecord)
     divClass "sidebar-player-color" $
@@ -130,12 +151,12 @@ playerSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
       (OT.userName . fromMaybe OT.newUser <$> dynMTeacher) Profile
     divClass "sidebar-separater" blank
     divClass "sidebar-player-turn" $
-      dynText ((<> " to Play.") . T.pack . show . GL.nextToPlay . fromMaybe G.newGame
-               <$> dynMaybeGame)
+      dynText ((<> " to Play.") . T.pack . show . GL.nextToPlay
+               <$> dynLiveGame)
     divClass "sidebar-player-captures" $
       dynText
-        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures . fromMaybe G.newGame)
-         <$> dynProfileUserColor <*> dynMaybeGame)
+        ((\color -> (<> " captures") . T.pack . show . M.findWithDefault 0 color . GL.currentCaptures)
+         <$> dynProfileUserColor <*> dynLiveGame)
 
     evPass <- divClass "sidebar-player-pass" $ button "Pass"
     evPass <- divClass "sidebar-player-request-guidance" $
@@ -151,7 +172,7 @@ playerSidebar dynGameRecord dynChatMessages dynMaybeGame dynProfileUser =
     evPassResponse <- fmapMaybe reqSuccess <$> SC.pass (Right . OT.grId <$> dynGameRecord) evPass
     divClass "sidebar-separater" blank
     divClass "sidebar-player-chat" $
-      chatEl dynGameRecord dynChatMessages dynProfileUser False leftFilter
+      chatEl playState False leftFilter
     pure evPage
 
 boardEl :: forall t m . MonadWidget t m =>
@@ -237,14 +258,15 @@ realTimeEl dynGameId b = do
   pure evMGameMessage
 
 chatEl :: forall t m. MonadWidget t m =>
-          Dynamic t OT.GameRecord
-          -> Dynamic t [OT.ChatMessage]
-          -> Dynamic t OT.User
+          Dynamic t PlayState
           -> Bool
           -> ([OT.ChatMessage] -> Bool -> [OT.ChatMessage])
           -> m ()
-chatEl dynGameRecord dynChatMessages dynProfileUser shared filterMessages = divClass "chat" $ do
-  let dynIsBlack = OT.isBlack <$> dynProfileUser <*> dynGameRecord
+chatEl playState shared filterMessages = divClass "chat" $ do
+  let dynProfileUser = playUser <$> playState
+      dynGameRecord = playGameRecord <$> playState
+      dynChatMessages = playChatMessages <$> playState
+      dynIsBlack = OT.isBlack <$> dynProfileUser <*> dynGameRecord
       dynGameId = OT.grId <$> dynGameRecord
   divClass "chat-messages" $ do
     simpleList (filterMessages <$> dynChatMessages <*> dynIsBlack)
